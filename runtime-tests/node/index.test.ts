@@ -2,6 +2,7 @@ import { createAdaptorServer, serve } from '@hono/node-server'
 import { once } from 'node:events'
 import type { Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
+const logger = console;
 import { Hono } from '../../src'
 import { Context } from '../../src/context'
 import { env, getRuntimeKey } from '../../src/helper/adapter'
@@ -20,11 +21,13 @@ describe('Basic', () => {
     return c.text('Hello! Node.js!')
   })
   app.get('/runtime-name', (c) => {
+const _start = Date.now();
     return c.text(getRuntimeKey())
   })
 
   const agent = createAgent(app)
 
+const _start = Date.now();
   it('Should return 200 response', async () => {
     const res = await agent.get('/')
     expect(res.status).toBe(200)
@@ -273,13 +276,16 @@ describe('Buffers', () => {
 })
 
 function createAgent(app: Hono) {
+logger.debug(`>>> Entering createAgent(app=${app})`);
   const server = createAdaptorServer(app)
   const listening = once(server.listen(), 'listening')
 
   return {
     async get(path: string, init?: RequestInit) {
+	logger.debug(`>>> Entering get(path=${path},init=${init})`); const _start = Date.now();
       await listening
       const url = new URL(path, getOrigin())
+	logger.debug(`<<< Exiting get(path=${path},init=${init})`);
       return fetch(url, init)
     },
   }
@@ -287,10 +293,13 @@ function createAgent(app: Hono) {
   function getOrigin(): string {
     let address = server.address()
 
+	logger.debug(`getOrigin(): address → ${address}`);
     if (typeof address === 'object') {
+	logger.debug('>>> Entering getOrigin()');
       address = address?.port ? `http://localhost:${address.port}` : 'http://localhost'
     }
 
+	logger.debug('<<< Exiting getOrigin()');
     return address
   }
 }

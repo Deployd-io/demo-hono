@@ -1,4 +1,5 @@
 import type { GetConnInfo } from '../../helper/conninfo'
+const logger = console;
 
 /**
  * Get conninfo with Deno
@@ -6,6 +7,7 @@ import type { GetConnInfo } from '../../helper/conninfo'
  * @returns ConnInfo
  */
 export const getConnInfo: GetConnInfo = (c) => {
+logger.debug(`>>> Entering getConnInfo(c=${c})`);
   const { remoteAddr } = c.env
   return {
     remote: {
@@ -14,4 +16,5 @@ export const getConnInfo: GetConnInfo = (c) => {
       transport: remoteAddr.transport,
     },
   }
+logger.debug(`<<< Exiting getConnInfo(c=${c})`);
 }

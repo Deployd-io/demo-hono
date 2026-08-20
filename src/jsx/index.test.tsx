@@ -17,6 +17,7 @@ import DefaultExport, {
   version,
 } from '.'
 import type { Context, FC, PropsWithChildren } from '.'
+const logger = console;
 
 interface SiteData {
   title: string
@@ -32,6 +33,8 @@ describe('JSX middleware', () => {
 
   it('Should render HTML strings', async () => {
     app.get('/', (c) => {
+	logger.debug(`>>> Entering GET_root(c=${c})`);
+	logger.debug(`<<< Exiting GET_root(c=${c})`);
       return c.html(<h1>Hello</h1>)
     })
     const res = await app.request('http://localhost/')
@@ -83,12 +86,16 @@ describe('JSX middleware', () => {
 
   it('Should render async component', async () => {
     const ChildAsyncComponent = async () => {
+	logger.debug('>>> Entering ChildAsyncComponent()');
       await new Promise((resolve) => setTimeout(resolve, 10))
+	logger.debug('<<< Exiting ChildAsyncComponent()');
       return <span>child async component</span>
     }
 
     const AsyncComponent = async () => {
+	logger.debug('>>> Entering AsyncComponent()');
       await new Promise((resolve) => setTimeout(resolve, 10))
+	logger.debug('<<< Exiting AsyncComponent()');
       return (
         <h1>
           Hello from async component
@@ -134,7 +141,9 @@ describe('JSX middleware', () => {
       return <h1>Hello from async component</h1>
     }
     const AsyncErrorComponent = async () => {
+	logger.debug('>>> Entering AsyncErrorComponent()');
       await new Promise((resolve) => setTimeout(resolve, 0))
+	logger.debug('<<< Exiting AsyncErrorComponent()');
       throw componentError
     }
 
@@ -493,14 +502,18 @@ describe('render to string', () => {
   describe('Functions as Children', () => {
     it('Function', () => {
       function Repeat(props: any) {
+		logger.debug(`>>> Entering Repeat(props=${props})`);
         const items = []
         for (let i = 0; i < props.numTimes; i++) {
           items.push((props.children as Function)(i))
         }
+		logger.debug(`<<< Exiting Repeat(props=${props})`);
         return <div>{items}</div>
       }
 
       function ListOfTenThings() {
+		logger.debug('>>> Entering ListOfTenThings()');
+		logger.debug('<<< Exiting ListOfTenThings()');
         return (
           <Repeat numTimes={10}>
             {(index: string) => <div key={index}>This is item {index} in the list</div>}

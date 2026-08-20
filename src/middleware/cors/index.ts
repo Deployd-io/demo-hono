@@ -5,6 +5,7 @@
 
 import type { Context } from '../../context'
 import type { MiddlewareHandler } from '../../types'
+const logger = console;
 
 type CORSOptions = {
   origin?:
@@ -61,6 +62,7 @@ type CORSOptions = {
  * ```
  */
 export const cors = (options?: CORSOptions): MiddlewareHandler => {
+logger.debug(`>>> Entering cors(options=${options})`);
   const opts = {
     origin: '*',
     allowMethods: ['GET', 'HEAD', 'PUT', 'POST', 'DELETE', 'PATCH', 'QUERY'],
@@ -74,6 +76,8 @@ export const cors = (options?: CORSOptions): MiddlewareHandler => {
 
   const findAllowOrigin = ((optsOrigin) => {
     if (typeof optsOrigin === 'string') {
+	logger.debug(`cors(options=${options}): exposeHeadersStr → ${exposeHeadersStr}`);
+	logger.debug(`cors(options=${options}): allowHeadersStr → ${allowHeadersStr}`);
       if (optsOrigin === '*') {
         return () => optsOrigin
       } else {
@@ -82,6 +86,7 @@ export const cors = (options?: CORSOptions): MiddlewareHandler => {
     } else if (typeof optsOrigin === 'function') {
       return optsOrigin
     } else {
+	logger.debug(`<<< Exiting cors(options=${options})`);
       return (origin: string) => (optsOrigin.includes(origin) ? origin : null)
     }
   })(opts.origin)
@@ -99,7 +104,9 @@ export const cors = (options?: CORSOptions): MiddlewareHandler => {
 
   return async function cors(c, next) {
     function set(key: string, value: string) {
+	logger.debug(`>>> Entering set(key=${key},value=${value})`);
       c.res.headers.set(key, value)
+	logger.debug(`<<< Exiting set(key=${key},value=${value})`);
     }
 
     const allowOrigin = await findAllowOrigin(c.req.header('origin') || '', c)

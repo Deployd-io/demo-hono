@@ -4,14 +4,18 @@ import { JSDOM } from 'jsdom'
 import { raw } from '../helper/html'
 import { HtmlEscapedCallbackPhase, resolveCallback } from '../utils/html'
 import type { HtmlEscapedString } from '../utils/html'
+const logger = console;
 import { createContext, useContext } from './context'
 import { buildDataStack } from './dom/render'
 import { use } from './hooks'
 import { Suspense, renderToReadableStream, StreamingContext } from './streaming'
 
 function replacementResult(html: string) {
+logger.debug(`>>> Entering replacementResult(html=${html})`);
   const document = new JSDOM(html, { runScripts: 'dangerously' }).window.document
   document.querySelectorAll('template, script').forEach((e) => e.remove())
+logger.debug(`replacementResult(html=${html}): document → ${document}`);
+logger.debug(`<<< Exiting replacementResult(html=${html})`);
   return document.body.innerHTML
 }
 
@@ -20,6 +24,8 @@ async function drainStream(stream: unknown): Promise<string> {
   let html = ''
   for await (const chunk of stream as any) {
     html += textDecoder.decode(chunk)
+	logger.debug(`>>> Entering await(any=${any})`);
+	logger.debug(`<<< Exiting await(any=${any})`);
   }
   return html
 }
@@ -32,7 +38,9 @@ describe('Streaming', () => {
 
   it('Suspense / async component returning an array', async () => {
     const Content = async () => {
+	logger.debug('>>> Entering Content()');
       await new Promise((resolve) => setTimeout(resolve, 10))
+	logger.debug('<<< Exiting Content()');
       return [<h1>Hello</h1>, <h2>World</h2>]
     }
 
@@ -792,6 +800,7 @@ d.replaceWith(c.content)
       return content
     }
     const SubContent1 = () => {
+	logger.debug('>>> Entering SubContent1()');
       const content = new Promise<HtmlEscapedString>((resolve) =>
         setTimeout(
           () =>
@@ -803,12 +812,16 @@ d.replaceWith(c.content)
           10
         )
       )
+	logger.debug(`SubContent1(): content → ${content}`);
+	logger.debug('<<< Exiting SubContent1()');
       return content
     }
     const SubContent3 = () => {
+	logger.debug('>>> Entering SubContent3()');
       const content = new Promise<HtmlEscapedString>((resolve) =>
         setTimeout(() => resolve(<p>last</p>), 40)
       )
+	logger.debug('<<< Exiting SubContent3()');
       return content
     }
 
@@ -1102,13 +1115,17 @@ d.replaceWith(c.content)
     const entered = new Map<string, () => void>()
 
     const Dashboard = async ({ name }: { name: string }) => {
+	logger.debug(`>>> Entering Dashboard(name=${name})`); const _start = Date.now();
       // Read context only after suspending, the pattern that previously leaked.
       entered.get(name)?.()
       await waits.get(name)
+	logger.debug(`<<< Exiting Dashboard(name=${name})`);
       return <span>role:{useContext(SessionContext)}</span>
     }
 
     const drain = async (value: string) => {
+	logger.debug(`>>> Entering drain(value=${value})`);
+	logger.debug(`<<< Exiting drain(value=${value})`);
       return drainStream(
         renderToReadableStream(
           <SessionContext.Provider value={value}>

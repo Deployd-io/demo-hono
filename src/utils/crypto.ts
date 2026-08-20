@@ -4,6 +4,7 @@
  */
 
 import type { JSONValue } from './types'
+const logger = console;
 
 type Algorithm = {
   name: string
@@ -13,20 +14,27 @@ type Algorithm = {
 type Data = string | boolean | number | JSONValue | ArrayBufferView | ArrayBuffer
 
 export const sha256 = async (data: Data): Promise<string | null> => {
+logger.debug(`>>> Entering sha256(data=${data})`);
   const algorithm: Algorithm = { name: 'SHA-256', alias: 'sha256' }
   const hash = await createHash(data, algorithm)
+logger.debug(`<<< Exiting sha256(data=${data})`);
   return hash
 }
 
 export const sha1 = async (data: Data): Promise<string | null> => {
+logger.debug(`>>> Entering sha1(data=${data})`);
   const algorithm: Algorithm = { name: 'SHA-1', alias: 'sha1' }
   const hash = await createHash(data, algorithm)
+logger.debug(`>>> Entering createHash(data=${data},algorithm=${algorithm})`);
+logger.debug(`<<< Exiting createHash(data=${data},algorithm=${algorithm})`);
   return hash
 }
 
 export const md5 = async (data: Data): Promise<string | null> => {
+logger.debug(`>>> Entering md5(data=${data})`);
   const algorithm: Algorithm = { name: 'MD5', alias: 'md5' }
   const hash = await createHash(data, algorithm)
+logger.debug(`<<< Exiting md5(data=${data})`);
   return hash
 }
 

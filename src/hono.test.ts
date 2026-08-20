@@ -12,6 +12,7 @@ import { SmartRouter } from './router/smart-router'
 import { TrieRouter } from './router/trie-router'
 import type { Handler, MiddlewareHandler, Next } from './types'
 import type { Equal, Expect } from './utils/types'
+const logger = console;
 import { getPath } from './utils/url'
 
 // https://stackoverflow.com/a/65666402
@@ -26,6 +27,7 @@ type Env = {
 }
 
 const createResponseProxy = (response: Response) => {
+logger.debug(`>>> Entering createResponseProxy(response=${response})`);
   return new Proxy(response, {
     get(target, prop, receiver) {
       const value = target[prop as keyof Response]
@@ -41,6 +43,7 @@ const createResponseProxy = (response: Response) => {
           }
         )
       }
+logger.debug(`<<< Exiting createResponseProxy(response=${response})`);
       return value
     },
   })
@@ -53,6 +56,8 @@ describe('GET Request', () => {
     const app = new Hono<Env>()
 
     app.get('/hello', async () => {
+	logger.debug('>>> Entering GET_hello()');
+	logger.debug('<<< Exiting GET_hello()');
       return new Response('hello', {
         status: 200,
         statusText: 'Hono is OK',
@@ -60,17 +65,23 @@ describe('GET Request', () => {
     })
 
     app.get('/hello-with-shortcuts', (c) => {
+	logger.debug(`>>> Entering GET_hello_with_shortcuts(c=${c})`);
       c.header('X-Custom', 'This is Hono')
       c.status(201)
+	logger.debug(`<<< Exiting GET_hello_with_shortcuts(c=${c})`);
       return c.html('<h1>Hono!!!</h1>')
     })
 
     app.get('/hello-env', (c) => {
+	logger.debug(`>>> Entering GET_hello_env(c=${c})`);
       return c.json(c.env)
     })
 
+	logger.info(`GET_hello_env(c=${c}): API call took ${Date.now() - _start} ms`);
+	const _start = Date.now();
     app.get('/proxy-object', () => createResponseProxy(new Response('proxy')))
 
+	logger.debug(`<<< Exiting GET_hello_env(c=${c})`);
     app.get('/async-proxy-object', async () => createResponseProxy(new Response('proxy')))
 
     it('GET http://localhost/hello is ok', async () => {
@@ -315,6 +326,7 @@ describe('Options', () => {
         return c.text('/hello')
       })
 
+	logger.info(`GET_hello(c=${c}): API call took ${Date.now() - _start} ms`);
       it('/hello/ is not found', async () => {
         let res = await app.request('http://localhost/hello')
         expect(res).not.toBeNull()
@@ -428,10 +440,12 @@ describe('Routing', () => {
     const book = app.basePath('/book')
     book.get('/', (c) => c.text('get /book'))
     book.get('/:id', (c) => {
+	logger.debug(`>>> Entering GET_id(c=${c})`);
       return c.text('get /book/' + c.req.param('id'))
     })
     book.post('/', (c) => c.text('post /book'))
 
+	logger.debug(`<<< Exiting GET_id(c=${c})`);
     const user = app.basePath('/user')
     user.get('/login', (c) => c.text('get /user/login'))
     user.post('/register', (c) => c.text('post /user/register'))
@@ -779,7 +793,9 @@ describe('Routing', () => {
 
     app
       .get('/chained/:abc', (c) => {
+		logger.debug(`>>> Entering GET_chained_abc(c=${c})`);
         const abc = c.req.param('abc')
+		logger.debug(`<<< Exiting GET_chained_abc(c=${c})`);
         return c.text(`GET for ${abc}`)
       })
       .post((c) => {
@@ -834,9 +850,11 @@ describe('Routing', () => {
 
     it('should decode alphabets with invalid UTF-8 sequence', async () => {
       app.get('/static/:path', (c) => {
+		logger.debug(`>>> Entering GET_static_path(c=${c})`); const _start = Date.now();
         return c.text(`by c.req.param: ${c.req.param('path')}`)
       })
 
+	logger.info(`GET_static_path(c=${c}): API call took ${Date.now() - _start} ms`);
       const res = await app.request('http://localhost/%73tatic/%A4%A2') // %73 is 's', %A4%A2 is invalid UTF-8 sequence
       expect(res.status).toBe(200)
       expect(await res.text()).toBe('by c.req.param: %A4%A2')
@@ -868,28 +886,38 @@ describe('param and query', () => {
     const app = new Hono()
 
     app.get('/entry/:id', (c) => {
+	logger.debug(`>>> Entering GET_entry_id(c=${c})`);
       const id = c.req.param('id')
+	logger.debug(`<<< Exiting GET_entry_id(c=${c})`);
       return c.text(`id is ${id}`)
     })
 
     app.get('/date/:date{[0-9]+}', (c) => {
+	logger.debug(`>>> Entering GET_date_date_0_9(c=${c})`);
       const date = c.req.param('date')
+	logger.debug(`<<< Exiting GET_date_date_0_9(c=${c})`);
       return c.text(`date is ${date}`)
     })
 
     app.get('/search', (c) => {
+	logger.debug(`>>> Entering GET_search(c=${c})`);
       const name = c.req.query('name')
+	logger.debug(`<<< Exiting GET_search(c=${c})`);
       return c.text(`name is ${name}`)
     })
 
     app.get('/multiple-values', (c) => {
+	logger.debug(`>>> Entering GET_multiple_values(c=${c})`);
       const queries = c.req.queries('q') ?? throwExpression('missing query values')
       const limit = c.req.queries('limit') ?? throwExpression('missing query values')
+	logger.debug(`<<< Exiting GET_multiple_values(c=${c})`);
       return c.text(`q is ${queries[0]} and ${queries[1]}, limit is ${limit[0]}`)
     })
 
     app.get('/add-header', (c) => {
+	logger.debug(`>>> Entering GET_add_header(c=${c})`);
       const bar = c.req.header('X-Foo')
+	logger.debug(`<<< Exiting GET_add_header(c=${c})`);
       return c.text(`foo is ${bar}`)
     })
 
@@ -984,10 +1012,12 @@ describe('param and query', () => {
   describe('param with undefined', () => {
     const app = new Hono()
     app.get('/foo/:foo', (c) => {
+	logger.debug(`>>> Entering GET_foo_foo(c=${c})`);
       const bar = c.req.param('bar')
       return c.json({ foo: bar })
     })
     it('param of /foo/foo should return undefined not "undefined"', async () => {
+	logger.debug(`<<< Exiting GET_foo_foo(c=${c})`);
       const res = await app.request('http://localhost/foo/foo')
       expect(res.status).toBe(200)
       expect(await res.json()).toEqual({ foo: undefined })
@@ -1017,10 +1047,14 @@ describe('Header', () => {
   const app = new Hono()
 
   app.get('/text', (c) => {
+	logger.debug(`>>> Entering GET_text(c=${c})`);
     return c.text('Hello')
   })
 
+logger.info(`GET_text(c=${c}): API call took ${Date.now() - _start} ms`);
   app.get('/text-with-custom-header', (c) => {
+	logger.debug(`>>> Entering GET_text_with_custom_header(c=${c})`);
+	logger.debug(`<<< Exiting GET_text_with_custom_header(c=${c})`);
     c.header('X-Custom', 'Message')
     return c.text('Hello')
   })
@@ -1077,6 +1111,7 @@ describe('Middleware', () => {
     })
 
     app.get('/json', (c) => {
+	logger.debug(`>>> Entering GET_json(c=${c})`);
       // With a raw response
       return new Response(
         JSON.stringify({
@@ -1090,16 +1125,23 @@ describe('Middleware', () => {
       )
     })
 
+	logger.debug(`<<< Exiting GET_json(c=${c})`);
     app.get('/hello/:message', (c) => {
+	logger.debug(`>>> Entering GET_hello_message(c=${c})`);
       const message = c.req.param('message')
+	logger.debug(`<<< Exiting GET_hello_message(c=${c})`);
       return c.text(`${message}`)
     })
 
     app.get('/error', () => {
+	logger.debug('>>> Entering GET_error()');
       throw new Error('Error!')
     })
 
+	logger.info(`GET_error(): API call took ${Date.now() - _start} ms`);
+	const _start = Date.now();
     app.notFound((c) => {
+	logger.debug('<<< Exiting GET_error()');
       return c.text('Not Found Foo', 404)
     })
 
@@ -1157,6 +1199,7 @@ describe('Middleware', () => {
         return c.text('GET chained')
       })
     it('GET /chained/abc', async () => {
+	logger.info(`GET_chained_abc(c=${c}): API call took ${Date.now() - _start} ms`);
       const res = await app.request('http://localhost/chained/abc')
       expect(res.status).toBe(200)
       expect(await res.text()).toBe('GET chained')
@@ -1182,9 +1225,13 @@ describe('Middleware', () => {
         }
       )
       .get('/multiple/abc', (c) => {
+		logger.debug(`>>> Entering GET_multiple_abc(c=${c})`);
+		logger.debug(`<<< Exiting GET_multiple_abc(c=${c})`);
         return c.text('GET multiple')
       })
     it('GET /multiple/abc', async () => {
+	const _start = Date.now();
+	logger.info(`GET_multiple_abc(c=${c}): API call took ${Date.now() - _start} ms`);
       const res = await app.request('http://localhost/multiple/abc')
       expect(res.status).toBe(200)
       expect(await res.text()).toBe('GET multiple')
@@ -1255,18 +1302,24 @@ describe('Middleware with app.HTTP_METHOD', () => {
     })
 
     const customHeader = async (c: Context, next: Next) => {
+	logger.debug(`>>> Entering customHeader(c=${c},next=${next})`);
       c.req.raw.headers.append('x-custom-foo', 'bar')
       await next()
+	logger.debug(`<<< Exiting customHeader(c=${c},next=${next})`);
     }
 
     const customHeader2 = async (c: Context, next: Next) => {
+	logger.debug(`>>> Entering customHeader2(c=${c},next=${next})`);
       await next()
       c.header('x-custom-foo-2', 'bar-2')
+	logger.debug(`<<< Exiting customHeader2(c=${c},next=${next})`);
     }
 
     app
       .get('/abc', customHeader, (c) => {
+		logger.debug(`>>> Entering GET_abc(c=${c})`);
         const foo = c.req.header('x-custom-foo') || ''
+		logger.debug(`<<< Exiting GET_abc(c=${c})`);
         return c.text(foo)
       })
       .post(customHeader2, (c) => {
@@ -1294,6 +1347,7 @@ describe('Middleware with app.HTTP_METHOD', () => {
       return c.text('GET /abc')
     })
     it('GET /abc', async () => {
+	logger.info(`GET_abc(c=${c}): API call took ${Date.now() - _start} ms`);
       const res = await app.request('http://localhost/abc')
       expect(res.status).toBe(200)
       expect(await res.text()).toBe('GET /abc')
@@ -1313,10 +1367,14 @@ describe('Not Found', () => {
     return c.text('hello')
   })
 
+logger.info(`GET_hello(c=${c}): API call took ${Date.now() - _start} ms`);
   app.get('/notfound', (c) => {
+	logger.debug(`>>> Entering GET_notfound(c=${c})`);
+	logger.debug(`<<< Exiting GET_notfound(c=${c})`);
     return c.notFound()
   })
 
+logger.info(`GET_notfound(c=${c}): API call took ${Date.now() - _start} ms`);
   it('Custom 404 Not Found', async () => {
     let res = await app.request('http://localhost/hello')
     expect(res.status).toBe(200)
@@ -1409,9 +1467,13 @@ describe('Not Found', () => {
 describe('Redirect', () => {
   const app = new Hono()
   app.get('/redirect', (c) => {
+	logger.debug(`>>> Entering GET_redirect(c=${c})`);
+	logger.debug(`<<< Exiting GET_redirect(c=${c})`);
     return c.redirect('/')
   })
 
+const _start = Date.now();
+logger.info(`GET_redirect(c=${c}): API call took ${Date.now() - _start} ms`);
   it('Absolute URL', async () => {
     const res = await app.request('https://example.com/redirect')
     expect(res.status).toBe(302)
@@ -1428,10 +1490,14 @@ describe('Error handle', () => {
     })
 
     app.get('/error-string', () => {
+	logger.debug('>>> Entering GET_error_string()');
       throw 'This is Error'
     })
 
+	const _start = Date.now();
+	logger.info(`GET_error_string(): API call took ${Date.now() - _start} ms`);
     app.use('/error-middleware', async () => {
+	logger.debug('<<< Exiting GET_error_string()');
       throw new Error('This is Middleware Error')
     })
 
@@ -1496,11 +1562,13 @@ describe('Error handle', () => {
     const app = new Hono()
 
     app.get('/exception', () => {
+	logger.debug('>>> Entering GET_exception()');
       throw new HTTPException(401, {
         message: 'Unauthorized',
       })
     })
 
+	const _start = Date.now();
     it('Should return 401 response', async () => {
       const res = await app.request('http://localhost/exception')
       expect(res.status).toBe(401)
@@ -1513,6 +1581,7 @@ describe('Error handle', () => {
       throw new HTTPException(401)
     })
 
+	logger.info(`GET_exception(): API call took ${Date.now() - _start} ms`);
     app2.onError((err, c) => {
       if (err instanceof HTTPException && err.status === 401) {
         return c.text('Custom Error Message', 401)
@@ -1532,6 +1601,8 @@ describe('Error handle', () => {
 
     class CustomError extends Error {
       getResponse() {
+		logger.debug('>>> Entering getResponse()');
+		logger.debug('<<< Exiting getResponse()');
         return new Response('Custom Error', { status: 400 })
       }
     }
@@ -1573,6 +1644,7 @@ describe('Error handling in middleware', () => {
   const app = new Hono()
 
   app.get('/handle-error-in-middleware', async (c, next) => {
+	logger.debug(`>>> Entering GET_handle_error_in_middleware(c=${c},next=${next})`);
     await next()
     if (c.error) {
       const message = c.error.message
@@ -1581,6 +1653,7 @@ describe('Error handling in middleware', () => {
   })
 
   app.get('/handle-error-in-middleware-async', async (c, next) => {
+	logger.debug(`>>> Entering GET_handle_error_in_middleware_async(c=${c},next=${next})`);
     await next()
     if (c.error) {
       const message = c.error.message
@@ -1591,14 +1664,17 @@ describe('Error handling in middleware', () => {
     }
   })
 
+const _start = Date.now();
   app.get('/handle-error-in-middleware', () => {
     throw new Error('Error message')
   })
 
+logger.info(`GET_handle_error_in_middleware(): API call took ${Date.now() - _start} ms`);
   app.get('/handle-error-in-middleware-async', async () => {
     throw new Error('Error message')
   })
 
+logger.info(`GET_handle_error_in_middleware_async(): API call took ${Date.now() - _start} ms`);
   it('Should handle the error in middleware', async () => {
     const res = await app.request('https://example.com/handle-error-in-middleware')
     expect(res.status).toBe(500)
@@ -2413,6 +2489,8 @@ describe('Both two middleware returning response', () => {
   })
 })
 
+	logger.debug(`>>> Entering GET_root(c=${c})`); const _start = Date.now();
+	logger.info(`GET_root(c=${c}): API call took ${Date.now() - _start} ms`);
 describe('Count of logger called', () => {
   // It will be added `2` each time the logger is called once.
   let count = 0
@@ -2421,8 +2499,10 @@ describe('Count of logger called', () => {
   const app = new Hono()
 
   const logFn = (str: string) => {
+	logger.debug(`>>> Entering logFn(str=${str})`);
     count++
     log = str
+	logger.debug(`<<< Exiting logFn(str=${str})`);
   }
 
   app.use('*', logger(logFn))
@@ -2500,7 +2580,9 @@ describe('Handler as variables', () => {
 
   it('Should be typed correctly', async () => {
     const handler: Handler = (c) => {
+	logger.debug(`>>> Entering handler(c=${c})`);
       const id = c.req.param('id')
+	logger.debug(`<<< Exiting handler(c=${c})`);
       return c.text(`Post id is ${id}`)
     }
     app.get('/posts/:id', handler)
@@ -2515,12 +2597,16 @@ describe('json', () => {
   const api = new Hono()
 
   api.get('/message', (c) => {
+	logger.debug(`>>> Entering GET_message(c=${c})`);
+logger.debug(`<<< Exiting GET_message(c=${c})`);
     return c.json({
       message: 'Hello',
     })
   })
 
   api.get('/message-async', async (c) => {
+	logger.debug(`>>> Entering GET_message_async(c=${c})`);
+logger.debug(`<<< Exiting GET_message_async(c=${c})`);
     return c.json({
       message: 'Hello',
     })
@@ -2575,12 +2661,14 @@ describe('json', () => {
 describe('Optional parameters', () => {
   const app = new Hono()
   app.get('/api/:version/animal/:type?', (c) => {
+	logger.debug(`>>> Entering GET_api_version_animal_type(c=${c})`);
     const type1 = c.req.param('type')
     expectTypeOf(type1).toEqualTypeOf<string | undefined>()
     const { type, version } = c.req.param()
     expectTypeOf(version).toEqualTypeOf<string>()
     expectTypeOf(type).toEqualTypeOf<string | undefined>()
 
+	logger.debug(`<<< Exiting GET_api_version_animal_type(c=${c})`);
     return c.json({
       type: type,
     })
@@ -2605,8 +2693,10 @@ describe('Optional parameters', () => {
   it('Should have a correct type with an optional parameter in a regexp path', async () => {
     const app = new Hono()
     app.get('/url/:url{.*}?', (c) => {
+	logger.debug(`>>> Entering GET_url_url(c=${c})`);
       const url = c.req.param('url')
       expectTypeOf(url).toEqualTypeOf<string | undefined>()
+	logger.debug(`<<< Exiting GET_url_url(c=${c})`);
       return c.json(0)
     })
   })
@@ -2645,6 +2735,7 @@ describe('app.mount()', () => {
       if (path === '/undefined') {
         return undefined as unknown as Response
       }
+	logger.debug(`<<< Exiting anotherApp(req=${req})`);
       return new Response('Not Found from AnotherApp', {
         status: 404,
       })
@@ -2909,8 +3000,10 @@ describe('HEAD method', () => {
   const app = new Hono()
 
   app.get('/page', (c) => {
+	logger.debug(`>>> Entering GET_page(c=${c})`);
     c.header('X-Message', 'Foo')
     c.header('X-Method', c.req.method)
+	logger.debug(`<<< Exiting GET_page(c=${c})`);
     return c.text('/page')
   })
 
@@ -2944,6 +3037,7 @@ describe('app.request()', () => {
   it('Should return response with Request and RequestInit as args', async () => {
     const app = new Hono()
     app.get('/foo', (c) => {
+	logger.debug(`>>> Entering GET_foo(c=${c})`); const _start = Date.now();
       return c.json(c.req.header('x-message'))
     })
     const req = new Request('http://localhost/foo')
@@ -2976,9 +3070,12 @@ describe('app.fire()', () => {
 describe('Context render and setRenderer', () => {
   const app = new Hono()
   app.get('/default', (c) => {
+	logger.debug(`>>> Entering GET_default(c=${c})`);
+	logger.debug(`<<< Exiting GET_default(c=${c})`);
     return c.render('<h1>content</h1>', { title: 'dummy ' })
   })
   app.use('/page', async (c, next) => {
+logger.info(`GET_default(c=${c}): API call took ${Date.now() - _start} ms`);
     c.setRenderer((content, head) => {
       return new Response(
         `<html><head><title>${head.title}</title></head><body><h1>${content}</h1></body></html>`
@@ -3232,24 +3329,36 @@ describe('c.var - with testing types', () => {
   app.get('*', mw())
 
   app.get('/path/1', mw(), (c) => {
+	logger.debug(`>>> Entering GET_path_1(c=${c})`);
+	logger.debug(`<<< Exiting GET_path_1(c=${c})`);
     return c.text(c.var.echo('hello'))
   })
 
+const _start = Date.now();
+logger.info(`GET_path_1(c=${c}): API call took ${Date.now() - _start} ms`);
   app.get('/path/2', mw(), mw2(), (c) => {
     return c.text(c.var.echo('hello') + c.var.echo2('hello2'))
   })
 
+	logger.debug(`>>> Entering GET_path_2(c=${c})`);
+	logger.info(`GET_path_2(c=${c}): API call took ${Date.now() - _start} ms`);
+	logger.debug(`<<< Exiting GET_path_2(c=${c})`);
   app.get('/path/3', mw(), mw2(), mw3(), (c) => {
     return c.text(c.var.echo('hello') + c.var.echo2('hello2') + c.var.echo3('hello3'))
   })
 
+	logger.debug(`>>> Entering GET_path_3(c=${c})`);
+	logger.debug(`<<< Exiting GET_path_3(c=${c})`);
   app.get('/path/4', mw(), mw2(), mw3(), mw4(), (c) => {
     return c.text(
       c.var.echo('hello') + c.var.echo2('hello2') + c.var.echo3('hello3') + c.var.echo4('hello4')
     )
   })
 
+	logger.debug(`>>> Entering GET_path_4(c=${c})`);
   app.get('/path/5', mw(), mw2(), mw3(), mw4(), mw5(), (c) => {
+	logger.debug(`>>> Entering GET_path_5(c=${c})`);
+logger.debug(`<<< Exiting GET_path_5(c=${c})`);
     return c.text(
       c.var.echo('hello') +
         c.var.echo2('hello2') +
@@ -3260,6 +3369,8 @@ describe('c.var - with testing types', () => {
   })
 
   app.get('/path/6', mw(), mw2(), mw3(), mw4(), mw5(), mw6(), (c) => {
+	logger.debug(`>>> Entering GET_path_6(c=${c})`);
+logger.debug(`<<< Exiting GET_path_6(c=${c})`);
     return c.text(
       c.var.echo('hello') +
         c.var.echo2('hello2') +
@@ -3271,6 +3382,8 @@ describe('c.var - with testing types', () => {
   })
 
   app.get('/path/7', mw(), mw2(), mw3(), mw4(), mw5(), mw6(), mw7(), (c) => {
+	logger.debug(`>>> Entering GET_path_7(c=${c})`);
+logger.debug(`<<< Exiting GET_path_7(c=${c})`);
     return c.text(
       c.var.echo('hello') +
         c.var.echo2('hello2') +
@@ -3283,6 +3396,8 @@ describe('c.var - with testing types', () => {
   })
 
   app.get('/path/8', mw(), mw2(), mw3(), mw4(), mw5(), mw6(), mw7(), mw8(), (c) => {
+	logger.debug(`>>> Entering GET_path_8(c=${c})`);
+logger.debug(`<<< Exiting GET_path_8(c=${c})`);
     return c.text(
       c.var.echo('hello') +
         c.var.echo2('hello2') +
@@ -3296,6 +3411,8 @@ describe('c.var - with testing types', () => {
   })
 
   app.get('/path/9', mw(), mw2(), mw3(), mw4(), mw5(), mw6(), mw7(), mw8(), mw9(), (c) => {
+	logger.debug(`>>> Entering GET_path_9(c=${c})`);
+logger.debug(`<<< Exiting GET_path_9(c=${c})`);
     return c.text(
       c.var.echo('hello') +
         c.var.echo2('hello2') +
@@ -3311,6 +3428,7 @@ describe('c.var - with testing types', () => {
 
   // @ts-expect-error
   app.get('/path/10', mw(), mw2(), mw3(), mw4(), mw5(), mw6(), mw7(), mw8(), mw9(), mw10(), (c) => {
+	logger.debug(`>>> Entering GET_path_10(c=${c})`);
     return c.text(
       // @ts-expect-error
       c.var.echo('hello') +
@@ -3783,6 +3901,8 @@ describe('app.basePath() with the internal #clone()', () => {
     })
     .basePath('/api')
     .get('/test', async () => {
+	logger.debug('>>> Entering GET_test()');
+	logger.debug('<<< Exiting GET_test()');
       throw new Error('API Test error')
     })
 
@@ -3803,7 +3923,9 @@ describe('Catch-all route with empty segment', () => {
   it('Should return empty string for empty catch-all param', async () => {
     const app = new Hono()
     app.get('/:remaining{.*}', (c) => {
+	logger.debug(`>>> Entering GET_remaining(c=${c})`);
       const remaining = c.req.param('remaining')
+	logger.debug(`<<< Exiting GET_remaining(c=${c})`);
       return c.json({ type: typeof remaining, value: remaining })
     })
     const res = await app.request('http://localhost/')

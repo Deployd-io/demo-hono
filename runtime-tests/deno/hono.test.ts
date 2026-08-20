@@ -1,3 +1,4 @@
+const logger = console;
 import { assertEquals } from '@std/assert'
 
 import { Context } from '../../src/context.ts'

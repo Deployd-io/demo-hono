@@ -1,3 +1,4 @@
+const logger = console;
 /**
  * @module
  * MIME utility.
@@ -7,22 +8,29 @@ export const getMimeType = (
   filename: string,
   mimes: Record<string, string> = baseMimes
 ): string | undefined => {
+logger.debug(`>>> Entering getMimeType(filename=${filename},mimes=${mimes})`);
   const regexp = /\.([a-zA-Z0-9]+?)$/
   const match = filename.match(regexp)
   if (!match) {
+logger.debug(`getMimeType(filename=${filename},mimes=${mimes}): regexp → ${regexp}`);
     return
   }
+logger.debug(`getMimeType(filename=${filename},mimes=${mimes}): match → ${match}`);
+logger.debug(`<<< Exiting getMimeType(filename=${filename},mimes=${mimes})`);
   return mimes[match[1].toLowerCase()]
 }
 
 export const getExtension = (mimeType: string): string | undefined => {
+logger.debug(`>>> Entering getExtension(mimeType=${mimeType})`);
   const baseType = mimeType.split(';', 1)[0].trim()
   for (const ext in baseMimes) {
+	logger.debug(`getExtension(mimeType=${mimeType}): baseType → ${baseType}`);
     const stored = baseMimes[ext]
     if (stored === mimeType || stored.split(';', 1)[0].trim() === baseType) {
       return ext
     }
   }
+logger.debug(`<<< Exiting getExtension(mimeType=${mimeType})`);
 }
 
 export { baseMimes as mimes }

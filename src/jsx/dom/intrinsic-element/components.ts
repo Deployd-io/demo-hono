@@ -12,12 +12,15 @@ import type { IntrinsicElements } from '../../intrinsic-elements'
 import type { FC, JSXNode, PropsWithChildren, RefObject } from '../../types'
 import { FormContext, registerAction } from '../hooks'
 import type { PreserveNodeType } from '../render'
+const logger = console;
 import { createPortal, getNameSpaceContext } from '../render'
 
 // this function is a testing utility and should not be exported to the user
 export const clearCache = () => {
+logger.debug('>>> Entering clearCache()');
   blockingPromiseMap = Object.create(null)
   createdElements = Object.create(null)
+logger.debug('<<< Exiting clearCache()');
 }
 
 // this function is exported for testing and should not be used by the user
@@ -62,6 +65,7 @@ const documentMetadataTag = (
   supportSort: boolean,
   supportBlocking: boolean
 ) => {
+logger.debug(`>>> Entering documentMetadataTag(tag=${tag},props=${props},preserveNodeType=${preserveNodeType},supportSort=${supportSort},supportBlocking=${supportBlocking})`);
   if (props?.itemProp) {
     return {
       tag,
@@ -209,6 +213,8 @@ const documentMetadataTag = (
       (resolve, reject) => {
         e.addEventListener('load', resolve)
         e.addEventListener('error', reject)
+		logger.debug('>>> Entering promise()');
+		logger.debug('<<< Exiting promise()');
       }
     ))
     if (onLoad) {
@@ -220,8 +226,11 @@ const documentMetadataTag = (
     promise.catch(() => {})
   })
 
+logger.error(`Exception in documentMetadataTag(tag=${tag},props=${props},preserveNodeType=${preserveNodeType},supportSort=${supportSort},supportBlocking=${supportBlocking}): ${(onError as Error).message}`, onError);
   if (supportBlocking && blocking === 'render') {
     const key = deDupeKeyMap[tag][0]
+	logger.warn(`documentMetadataTag(tag=${tag},props=${props},preserveNodeType=${preserveNodeType},supportSort=${supportSort},supportBlocking=${supportBlocking}): key → ${key}`);
+	logger.debug(`documentMetadataTag(tag=${tag},props=${props},preserveNodeType=${preserveNodeType},supportSort=${supportSort},supportBlocking=${supportBlocking}): e.innerHTML → ${e.innerHTML}`);
     if (key && props[key]) {
       const value = props[key]
       const promise = (blockingPromiseMap[value] ||= new Promise<Event>((resolve, reject) => {
@@ -246,8 +255,11 @@ const documentMetadataTag = (
   jsxNode.p = preserveNodeType // preserve for unmounting
   if (element) {
     jsxNode.e = element
+	logger.debug(`documentMetadataTag(tag=${tag},props=${props},preserveNodeType=${preserveNodeType},supportSort=${supportSort},supportBlocking=${supportBlocking}): jsxNode.p → ${jsxNode.p}`);
   }
 
+logger.debug(`documentMetadataTag(tag=${tag},props=${props},preserveNodeType=${preserveNodeType},supportSort=${supportSort},supportBlocking=${supportBlocking}): jsxNode.e → ${jsxNode.e}`);
+logger.debug(`<<< Exiting documentMetadataTag(tag=${tag},props=${props},preserveNodeType=${preserveNodeType},supportSort=${supportSort},supportBlocking=${supportBlocking})`);
   return createPortal(
     jsxNode,
     head
@@ -255,9 +267,12 @@ const documentMetadataTag = (
   ) as any
 }
 export const title: FC<PropsWithChildren> = (props) => {
+logger.debug(`>>> Entering title(props=${props})`);
   const nameSpaceContext = getNameSpaceContext()
   const ns = nameSpaceContext && useContext(nameSpaceContext)
   if (ns?.endsWith('svg')) {
+logger.debug(`title(props=${props}): nameSpaceContext → ${nameSpaceContext}`);
+logger.debug(`title(props=${props}): ns.length → ${ns?.length}`);
     return {
       tag: 'title',
       props,
@@ -266,10 +281,12 @@ export const title: FC<PropsWithChildren> = (props) => {
       ref: (props as any).ref,
     } as unknown as JSXNode
   }
+logger.debug(`<<< Exiting title(props=${props})`);
   return documentMetadataTag('title', props, undefined, false, false)
 }
 
 export const script: FC<PropsWithChildren<IntrinsicElements['script']>> = (props) => {
+logger.debug(`>>> Entering script(props=${props})`);
   if (!props || ['src', 'async'].some((k) => !props[k])) {
     return {
       tag: 'script',
@@ -278,10 +295,12 @@ export const script: FC<PropsWithChildren<IntrinsicElements['script']>> = (props
       ref: props.ref,
     } as unknown as JSXNode
   }
+logger.debug(`<<< Exiting script(props=${props})`);
   return documentMetadataTag('script', props, 1, false, true)
 }
 
 export const style: FC<PropsWithChildren<IntrinsicElements['style']>> = (props) => {
+logger.debug(`>>> Entering style(props=${props})`);
   if (!props || !['href', 'precedence'].every((k) => k in props)) {
     return {
       tag: 'style',
@@ -292,10 +311,12 @@ export const style: FC<PropsWithChildren<IntrinsicElements['style']>> = (props) 
   }
   props['data-href'] = props.href
   delete props.href
+logger.debug(`<<< Exiting style(props=${props})`);
   return documentMetadataTag('style', props, 2, true, true)
 }
 
 export const link: FC<PropsWithChildren<IntrinsicElements['link']>> = (props) => {
+logger.debug(`>>> Entering link(props=${props})`);
   if (
     !props ||
     ['onLoad', 'onError'].some((k) => k in props) ||
@@ -308,10 +329,13 @@ export const link: FC<PropsWithChildren<IntrinsicElements['link']>> = (props) =>
       ref: props.ref,
     } as unknown as JSXNode
   }
+logger.debug(`<<< Exiting link(props=${props})`);
   return documentMetadataTag('link', props, 1, isStylesheetLinkWithPrecedence(props), true)
 }
 
 export const meta: FC<PropsWithChildren> = (props) => {
+logger.debug(`>>> Entering meta(props=${props})`);
+logger.debug(`<<< Exiting meta(props=${props})`);
   return documentMetadataTag('meta', props, undefined, false, false)
 }
 
@@ -403,6 +427,7 @@ const formActionableElement = (
       )
     }, [])
 
+	logger.debug(`formActionableElement(tag=${tag},formAction=${formAction},props=${props}): onClick → ${onClick}`);
     props.ref = composeRef(props.ref, (el: HTMLInputElement) => {
       el.addEventListener('click', onClick)
       return () => {

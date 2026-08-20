@@ -1,3 +1,4 @@
+const logger = console;
 declare namespace Deno {
   interface FileHandleLike {
     readonly readable: ReadableStream<Uint8Array>
@@ -22,6 +23,7 @@ declare namespace Deno {
    * @returns Stats object.
    */
   export function lstatSync(path: string): StatsLike
+logger.debug(`>>> Entering lstatSync(path=${path})`);
 
   /**
    * Creates a new directory with the specified path.
@@ -30,6 +32,7 @@ declare namespace Deno {
    * @param options Options for creating a directory.
    * @returns A promise that resolves when the directory is created.
    */
+logger.debug(`<<< Exiting lstatSync(path=${path})`);
   export function mkdir(path: string, options?: { recursive?: boolean }): Promise<void>
 
   /**
@@ -46,6 +49,7 @@ declare namespace Deno {
    */
   export const errors: Record<string, Function>
 
+logger.debug(`>>> Entering writeFile(path=${path},data=${data})`);
   export function upgradeWebSocket(
     req: Request,
     options: UpgradeWebSocketOptions
@@ -53,6 +57,7 @@ declare namespace Deno {
     response: Response
     socket: WebSocket
   }
+logger.debug(`<<< Exiting writeFile(path=${path},data=${data})`);
 
   /**
    * Options of `upgradeWebSocket`

@@ -16,6 +16,7 @@ import type {
 import type { ContentfulStatusCode, StatusCode } from '../utils/http-status'
 import type { Equal, Expect } from '../utils/types'
 import type { ValidationFunction } from './validator'
+const logger = console;
 import { validator } from './validator'
 
 // Helper type to extract the response type from the validation function
@@ -43,10 +44,13 @@ const zodValidator = <
   schema: T
 ) => {
   const validationFunc = (value: unknown, c: Context<E, P>) => {
+	logger.debug(`>>> Entering validationFunc(value=${value},c=${c})`);
     const result = schema.safeParse(value)
     if (!result.success) {
       return c.text('Invalid!', 400)
     }
+	logger.debug(`validationFunc(value=${value},c=${c}): result → ${result}`);
+	logger.debug(`<<< Exiting validationFunc(value=${value},c=${c})`);
     return result.data as z.output<T>
   }
 
@@ -66,9 +70,11 @@ describe('Basic', () => {
   const route = app.get(
     '/search',
     async (_c, next) => {
+	logger.debug(`>>> Entering GET_search(_c=${_c},next=${next})`);
       await next()
     },
     validator('query', (value, c) => {
+	logger.debug(`<<< Exiting GET_search(_c=${_c},next=${next})`);
       type verify = Expect<Equal<Record<string, string | string[]>, typeof value>>
       if (!value.q) {
         return c.text('Invalid!', 400)
@@ -117,9 +123,11 @@ describe('Basic', () => {
 })
 
 const onErrorHandler: ErrorHandler = (e, c) => {
+logger.debug(`>>> Entering onErrorHandler(e=${e},c=${c})`);
   if (e instanceof HTTPException) {
     return c.json({ message: e.message, success: false }, e.status)
   }
+logger.debug(`<<< Exiting onErrorHandler(e=${e},c=${c})`);
   return c.json({ message: e.message }, 500)
 }
 
@@ -129,6 +137,8 @@ describe('JSON', () => {
     '/post',
     validator('json', (value) => value),
     (c) => {
+	logger.debug(`>>> Entering POST_post(c=${c})`);
+	logger.debug(`<<< Exiting POST_post(c=${c})`);
       return c.json(c.req.valid('json'))
     }
   )
@@ -405,8 +415,10 @@ describe('JSON and FormData', () => {
     validator('json', (value) => value),
     validator('form', (value) => value),
     async (c) => {
+	logger.debug(`>>> Entering POST_root(c=${c})`);
       const jsonData = c.req.valid('json')
       const formData = c.req.valid('form')
+	logger.debug(`<<< Exiting POST_root(c=${c})`);
       return c.json({
         json: jsonData,
         form: formData,
@@ -779,6 +791,8 @@ describe('Validator middleware with Zod validates param', () => {
     title: z.string(),
   })
   app.get('/users/:id/books/:title', zodValidator('param', schema), (c) => {
+	logger.debug(`>>> Entering GET_users_id_books_title(c=${c})`);
+	logger.debug(`<<< Exiting GET_users_id_books_title(c=${c})`);
     const param = c.req.valid('param')
     return c.json({
       param: param,
@@ -811,7 +825,9 @@ describe('Validator middleware with Zod validates header values', () => {
   })
 
   app.get('/ping', zodValidator('header', schema), (c) => {
+	logger.debug(`>>> Entering GET_ping(c=${c})`);
     const data = c.req.valid('header')
+	logger.debug(`<<< Exiting GET_ping(c=${c})`);
     const xRequestId = data['x-request-id']
     return c.json({
       xRequestId,
@@ -849,6 +865,8 @@ describe('Validator middleware with Zod validates cookies', () => {
   })
 
   app.get('/api/user', zodValidator('cookie', schema), (c) => {
+	logger.debug(`>>> Entering GET_api_user(c=${c})`);
+	logger.debug(`<<< Exiting GET_api_user(c=${c})`);
     const { debug } = c.req.valid('cookie')
     return c.json({
       debug,
@@ -902,12 +920,16 @@ describe('Validator middleware with Zod multiple validators', () => {
       })
     ),
     (c) => {
+	logger.debug(`>>> Entering POST_posts(c=${c})`);
       const id = c.get('id')
       type verify = Expect<Equal<number, typeof id>>
+	logger.debug(`POST_posts(c=${c}): id → ${id}`);
       const formValidatedData = c.req.valid('form')
       type verify2 = Expect<Equal<{ title: string }, typeof formValidatedData>>
+	logger.debug(`POST_posts(c=${c}): formValidatedData → ${formValidatedData}`);
       const { page } = c.req.valid('query')
       const { title } = c.req.valid('form')
+	logger.debug(`<<< Exiting POST_posts(c=${c})`);
       return c.json({ page, title })
     }
   )
@@ -982,11 +1004,13 @@ it('With path parameters', () => {
   const route = app.put(
     '/posts/:id',
     validator('param', () => {
+	logger.debug('>>> Entering PUT_posts_id()');
       return {
         id: '123',
       }
     }),
     validator('form', () => {
+	logger.debug('<<< Exiting PUT_posts_id()');
       return {
         title: 'Foo',
       }
@@ -1074,6 +1098,7 @@ it('`app.on`', () => {
     .get(
       '/posts',
       validator('query', () => {
+		logger.debug('>>> Entering GET_posts()');
         return {
           page: '2',
         }
@@ -1171,6 +1196,7 @@ describe('Clone Request object', () => {
     app.post(
       '/cached',
       async (c, next) => {
+		logger.debug(`>>> Entering POST_cached(c=${c},next=${next})`);
         await c.req.parseBody()
         await next()
       },
@@ -1250,6 +1276,7 @@ describe('Validator with using Zod directly', () => {
       validator('json', (value, c) => {
         const parsed = testSchema.safeParse(value)
         if (!parsed.success) {
+		logger.debug(`POST_posts(value=${value},c=${c}): parsed → ${parsed}`);
           return c.json({ foo: 'bar' }, 401)
         }
         return parsed.data
@@ -1311,9 +1338,11 @@ describe('Transform', () => {
     const route = new Hono().get(
       '/',
       validator('query', async () => {
+		logger.debug('>>> Entering GET_root()');
         return {
           page: 1,
         }
+		logger.debug('<<< Exiting GET_root()');
       }),
       (c) => {
         const { page } = c.req.valid('query')
@@ -1406,9 +1435,11 @@ describe('Raw Request cloning after validation', () => {
       '/json-validation',
       validator('json', (data) => data),
       async (c) => {
+		logger.debug(`>>> Entering POST_json_validation(c=${c})`);
         const clonedReq = await cloneRawRequest(c.req)
         const clonedJSON = await clonedReq.json()
 
+		logger.debug(`<<< Exiting POST_json_validation(c=${c})`);
         return c.json({
           originalMethod: c.req.raw.method,
           clonedMethod: clonedReq.method,

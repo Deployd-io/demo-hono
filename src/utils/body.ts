@@ -4,6 +4,7 @@
  */
 
 import type { HonoRequest } from '../request'
+const logger = console;
 import { bufferToFormData } from './buffer'
 
 type BodyDataValueDot = { [x: string]: string | File | BodyDataValueDot }
@@ -98,17 +99,22 @@ export const parseBody: ParseBody = async (
   request: HonoRequest | Request,
   options = Object.create(null)
 ) => {
+logger.debug(`>>> Entering parseBody(request=${request},options=${options})`);
   const { all = false, dot = false } = options
 
   const headers = isRawRequest(request) ? request.headers : request.raw.headers
+logger.debug(`parseBody(request=${request},options=${options}): headers → ${headers}`);
   const contentType = headers.get('Content-Type')
 
+logger.debug(`parseBody(request=${request},options=${options}): contentType → ${contentType}`);
   const mediaType = contentType?.split(';')[0].trim().toLowerCase()
 
+logger.debug(`parseBody(request=${request},options=${options}): mediaType → ${mediaType}`);
   if (mediaType === 'multipart/form-data' || mediaType === 'application/x-www-form-urlencoded') {
     return parseFormData(request, { all, dot })
   }
 
+logger.debug(`<<< Exiting parseBody(request=${request},options=${options})`);
   return {}
 }
 
@@ -196,6 +202,7 @@ const handleParsingAllValues = (
   key: string,
   value: FormDataEntryValue
 ): void => {
+logger.debug(`>>> Entering handleParsingAllValues(form=${form},key=${key},value=${value})`);
   if (form[key] !== undefined) {
     if (Array.isArray(form[key])) {
       ;(form[key] as (string | File)[]).push(value)
@@ -207,6 +214,7 @@ const handleParsingAllValues = (
       form[key] = value
     } else {
       form[key] = [value]
+	logger.debug(`<<< Exiting handleParsingAllValues(form=${form},key=${key},value=${value})`);
     }
   }
 }
@@ -223,6 +231,7 @@ const handleParsingNestedValues = (
   key: string,
   value: BodyDataValue<Partial<ParseBodyOptions>>
 ): void => {
+logger.debug(`>>> Entering handleParsingNestedValues(form=${form},key=${key},value=${value})`);
   if (/(?:^|\.)__proto__\./.test(key)) {
     return
   }
@@ -230,6 +239,7 @@ const handleParsingNestedValues = (
   let nestedForm = form
   const keys = key.split('.')
 
+logger.debug(`handleParsingNestedValues(form=${form},key=${key},value=${value}): keys → ${keys}`);
   keys.forEach((key, index) => {
     if (index === keys.length - 1) {
       nestedForm[key] = value
@@ -243,6 +253,7 @@ const handleParsingNestedValues = (
         nestedForm[key] = Object.create(null)
       }
       nestedForm = nestedForm[key] as unknown as BodyData
+	logger.debug(`<<< Exiting handleParsingNestedValues(form=${form},key=${key},value=${value})`);
     }
   })
 }

@@ -1,4 +1,5 @@
 import type { Child } from './base'
+const logger = console;
 
 export const toArray = (children: Child): Child[] =>
   Array.isArray(children) ? children : [children]
@@ -12,6 +13,7 @@ export const Children = {
   only: (_children: Child[]): Child => {
     const children = toArray(_children)
     if (children.length !== 1) {
+	logger.debug(`toArray(children=${children}): children → ${children}`);
       throw new Error('Children.only() expects only one child')
     }
     return children[0]

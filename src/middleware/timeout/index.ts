@@ -6,6 +6,7 @@
 import type { Context } from '../../context'
 import { HTTPException } from '../../http-exception'
 import type { MiddlewareHandler } from '../../types'
+const logger = console;
 
 export type HTTPExceptionFunction = (context: Context) => HTTPException
 
@@ -39,8 +40,10 @@ export const timeout = (
   duration: number,
   exception: HTTPExceptionFunction | HTTPException = defaultTimeoutException
 ): MiddlewareHandler => {
+logger.debug(`>>> Entering timeout(duration=${duration},exception=${exception})`);
   return async function timeout(context, next) {
     let timer: number | undefined
+	logger.debug(`<<< Exiting timeout(duration=${duration},exception=${exception})`);
     const timeoutPromise = new Promise<void>((_, reject) => {
       timer = setTimeout(() => {
         reject(typeof exception === 'function' ? exception(context) : exception)

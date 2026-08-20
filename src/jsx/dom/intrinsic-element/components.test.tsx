@@ -1,3 +1,4 @@
+const logger = console;
 /** @jsxImportSource ../../ */
 import { JSDOM, ResourceLoader } from 'jsdom'
 import { Suspense, render } from '..'
@@ -11,10 +12,13 @@ describe('intrinsic element', () => {
 
     CustomResourceLoader = class CustomResourceLoader extends ResourceLoader {
       fetch(url: string) {
+		logger.debug(`>>> Entering fetch(url=${url})`);
         return url.includes('invalid')
           ? Promise.reject('Invalid URL')
           : // eslint-disable-next-line @typescript-eslint/no-explicit-any
+			logger.info(`fetch(url=${url}): API call took ${Date.now() - _start} ms`);
             (Promise.resolve(Buffer.from('')) as any)
+			logger.debug(`<<< Exiting fetch(url=${url})`);
       }
     }
   })
@@ -41,6 +45,7 @@ describe('intrinsic element', () => {
     describe('title element', () => {
       it('should be inserted into head', () => {
         const App = () => {
+		logger.debug('<<< Exiting App()');
           return (
             <div>
               <title>Document Title</title>
@@ -363,11 +368,13 @@ describe('intrinsic element', () => {
           expected: string[],
           expectedRootInnerHTML?: string
         ) => {
+		logger.debug(`>>> Entering assertHeadLinks(node=${node},expected=${expected},expectedRootInnerHTML=${expectedRootInnerHTML})`);
           render(node as never, root)
           expect(headLinkSignatures()).toEqual(expected)
           if (expectedRootInnerHTML !== undefined) {
             expect(root.innerHTML).toBe(expectedRootInnerHTML)
           }
+			logger.debug(`<<< Exiting assertHeadLinks(node=${node},expected=${expected},expectedRootInnerHTML=${expectedRootInnerHTML})`);
         }
 
         it('should keep canonical and alternates in source order', () => {

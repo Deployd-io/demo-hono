@@ -10,6 +10,7 @@ import { Fragment, createContext, jsx, useContext } from '../../jsx'
 import type { FC, Context as JSXContext, JSXNode, PropsWithChildren } from '../../jsx'
 import { renderToReadableStream } from '../../jsx/streaming'
 import type { Env, Input, MiddlewareHandler } from '../../types'
+const logger = console;
 
 export const RequestContext: JSXContext<Context<any, any, {}> | null> =
   createContext<Context | null>(null)
@@ -116,13 +117,16 @@ export const jsxRenderer = <E extends Env = Env>(
   options?: RendererOptions | ((c: Context<E>) => RendererOptions)
 ): MiddlewareHandler =>
   function jsxRenderer(c, next) {
+	logger.debug(`>>> Entering jsxRenderer(c=${c},next=${next})`);
     const Layout = (c.getLayout() ?? Fragment) as FC
     if (component) {
+	logger.debug(`jsxRenderer(c=${c},next=${next}): Layout → ${Layout}`);
       c.setLayout((props) => {
         return component({ ...props, Layout }, c)
       })
     }
     c.setRenderer(createRenderer(c, Layout, component, options) as any)
+	logger.debug(`<<< Exiting jsxRenderer(c=${c},next=${next})`);
     return next()
   }
 

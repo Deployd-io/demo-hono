@@ -1,3 +1,4 @@
+const logger = console;
 import {
   convertIPv4BinaryToString,
   convertIPv4ToBinary,
@@ -9,13 +10,16 @@ import {
 } from './ipaddr'
 
 const expectInvalidIPAddressError = (fn: () => unknown) => {
+logger.debug(`>>> Entering expectInvalidIPAddressError(fn=${fn})`);
   try {
     fn()
   } catch (error) {
+	logger.error(`Exception in expectInvalidIPAddressError(fn=${fn}): ${(error as Error).message}`, error);
     expect(error).toBeInstanceOf(TypeError)
     expect(error).toHaveProperty('code', INVALID_IP_ADDRESS_ERROR_CODE)
     return
   }
+logger.debug(`<<< Exiting expectInvalidIPAddressError(fn=${fn})`);
   throw new Error('Expected invalid IP address error')
 }
 

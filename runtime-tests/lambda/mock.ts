@@ -1,6 +1,7 @@
 import { vi } from 'vitest'
 import type { LambdaEvent } from '../../src/adapter/aws-lambda/handler'
 import type { LambdaContext } from '../../src/adapter/aws-lambda/types'
+const logger = console;
 
 type StreamifyResponseHandler = (
   handlerFunc: (
@@ -11,6 +12,8 @@ type StreamifyResponseHandler = (
 ) => (event: LambdaEvent, context: LambdaContext) => Promise<NodeJS.WritableStream>
 
 const mockStreamifyResponse: StreamifyResponseHandler = (handlerFunc) => {
+logger.debug(`>>> Entering mockStreamifyResponse(handlerFunc=${handlerFunc})`);
+logger.debug(`<<< Exiting mockStreamifyResponse(handlerFunc=${handlerFunc})`);
   return async (event, context) => {
     const mockWritableStream: NodeJS.WritableStream = new (require('stream').Writable)({
       write(chunk: Buffer, _encoding: string, callback: () => void) {

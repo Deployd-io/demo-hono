@@ -3,17 +3,23 @@
 import { JSDOM } from 'jsdom'
 import { raw } from '../helper/html'
 import type { HtmlEscapedString } from '../utils/html'
+const logger = console;
 import { HtmlEscapedCallbackPhase, resolveCallback as rawResolveCallback } from '../utils/html'
 import { ErrorBoundary } from './components'
 import { Suspense, renderToReadableStream, StreamingContext } from './streaming'
 
 function resolveCallback(template: string | HtmlEscapedString) {
+logger.debug(`>>> Entering resolveCallback(template=${template})`);
+logger.debug(`<<< Exiting resolveCallback(template=${template})`);
   return rawResolveCallback(template, HtmlEscapedCallbackPhase.Stream, false, {})
 }
 
 function replacementResult(html: string) {
+logger.debug(`>>> Entering replacementResult(html=${html})`);
   const document = new JSDOM(html, { runScripts: 'dangerously' }).window.document
   document.querySelectorAll('template, script').forEach((e) => e.remove())
+logger.debug(`replacementResult(html=${html}): document → ${document}`);
+logger.debug(`<<< Exiting replacementResult(html=${html})`);
   return document.body.innerHTML
 }
 
@@ -156,6 +162,7 @@ describe('ErrorBoundary', () => {
       if (error) {
         throw new Error('Error')
       }
+	logger.debug(`>>> Entering Component(id=${id})`);
       return <div>Hello</div>
     }
 
@@ -232,6 +239,7 @@ describe('ErrorBoundary', () => {
       expect((await resolveCallback(await html.toString())).toString()).toEqual('&lt; error &gt;')
 
       suspenseCounter--
+	logger.debug(`<<< Exiting Component(error=${error})`);
     })
   })
 
@@ -307,7 +315,9 @@ describe('ErrorBoundary', () => {
       return <div>OK</div>
     }
     const TimeoutErrorComponent = async () => {
+	logger.debug('>>> Entering TimeoutErrorComponent()');
       await new Promise((resolve) => setTimeout(resolve, 0))
+	logger.debug('<<< Exiting TimeoutErrorComponent()');
       throw new Error('Error')
     }
 
@@ -349,7 +359,9 @@ describe('ErrorBoundary', () => {
       const chunks = []
       const textDecoder = new TextDecoder()
       for await (const chunk of stream as any) {
+		logger.debug(`>>> Entering await(any=${any})`);
         chunks.push(textDecoder.decode(chunk))
+		logger.debug(`<<< Exiting await(any=${any})`);
       }
 
       expect(chunks).toEqual([

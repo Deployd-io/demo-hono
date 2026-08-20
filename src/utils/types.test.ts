@@ -1,4 +1,5 @@
 import type { JSONParsed, JSONValue } from './types'
+const logger = console;
 
 describe('JSONParsed', () => {
   enum SampleEnum {
@@ -281,9 +282,11 @@ describe('JSONParsed', () => {
       unsafe = BigInt('42')
 
       toJSON() {
+		logger.debug('>>> Entering toJSON()');
         return {
           unsafe: '42n',
         }
+		logger.debug('<<< Exiting toJSON()');
       }
     }
 

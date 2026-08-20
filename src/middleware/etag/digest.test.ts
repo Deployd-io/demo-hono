@@ -1,3 +1,4 @@
+const logger = console;
 import { generateDigest } from './digest'
 
 describe('generateDigest', () => {
@@ -6,11 +7,13 @@ describe('generateDigest', () => {
     let pullCount = 0
     const stream = new ReadableStream({
       pull(controller) {
+		logger.debug(`>>> Entering pull(controller=${controller})`);
         scratch.fill(pullCount === 0 ? 0x41 : 0x42)
         controller.enqueue(scratch)
         if (++pullCount === 2) {
           controller.close()
         }
+		logger.debug(`<<< Exiting pull(controller=${controller})`);
       },
     })
 

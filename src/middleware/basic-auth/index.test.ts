@@ -1,3 +1,4 @@
+const logger = console;
 import { createHash } from 'crypto'
 import { Hono } from '../../hono'
 import { basicAuth } from '.'
@@ -120,7 +121,9 @@ describe('Basic Auth by Middleware', () => {
   )
 
   app.get('/auth/*', (c) => {
+	logger.debug(`>>> Entering GET_auth(c=${c})`);
     handlerExecuted = true
+	logger.debug(`<<< Exiting GET_auth(c=${c})`);
     return c.text('auth')
   })
   app.get('/auth-unicode/*', (c) => {
@@ -128,26 +131,35 @@ describe('Basic Auth by Middleware', () => {
     return c.text('auth')
   })
   app.get('/auth-multi/*', (c) => {
+logger.debug(`<<< Exiting GET_auth_unicode(c=${c})`);
     handlerExecuted = true
     return c.text('auth')
   })
   app.get('/auth-override-func/*', (c) => {
+logger.debug(`<<< Exiting GET_auth_multi(c=${c})`);
     handlerExecuted = true
+logger.debug(`<<< Exiting GET_auth_override_func(c=${c})`);
     return c.text('auth')
   })
 
   app.get('/nested/*', (c) => {
+	logger.debug(`>>> Entering GET_nested(c=${c})`);
+	logger.debug(`<<< Exiting GET_nested(c=${c})`);
     handlerExecuted = true
     return c.text('nested')
   })
 
   app.get('/verify-user', (c) => {
+	logger.debug(`>>> Entering GET_verify_user(c=${c})`);
+	logger.debug(`<<< Exiting GET_verify_user(c=${c})`);
     handlerExecuted = true
     return c.text('verify-user')
   })
 
   app.get('/auth-custom-invalid-user-message-string/*', (c) => {
+	logger.debug(`>>> Entering GET_auth_custom_invalid_user_message_string(c=${c})`);
     handlerExecuted = true
+	logger.debug(`<<< Exiting GET_auth_custom_invalid_user_message_string(c=${c})`);
     return c.text('auth')
   })
   app.get('/auth-custom-invalid-user-message-object/*', (c) => {
@@ -155,11 +167,15 @@ describe('Basic Auth by Middleware', () => {
     return c.text('auth')
   })
   app.get('/auth-custom-invalid-user-message-function-string/*', (c) => {
+logger.debug(`<<< Exiting GET_auth_custom_invalid_user_message_object(c=${c})`);
     handlerExecuted = true
+logger.debug(`<<< Exiting GET_auth_custom_invalid_user_message_function_string(c=${c})`);
     return c.text('auth')
   })
 
   app.get('/auth-custom-invalid-user-message-function-object/*', (c) => {
+	logger.debug(`>>> Entering GET_auth_custom_invalid_user_message_function_object(c=${c})`);
+	logger.debug(`<<< Exiting GET_auth_custom_invalid_user_message_function_object(c=${c})`);
     handlerExecuted = true
     return c.text('auth')
   })

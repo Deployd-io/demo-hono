@@ -5,6 +5,7 @@
 
 import { escapeToBuffer, raw, resolveCallbackSync, stringBufferToString } from '../../utils/html'
 import type { HtmlEscaped, HtmlEscapedString, StringBufferWithCallbacks } from '../../utils/html'
+const logger = console;
 
 export { raw }
 
@@ -12,6 +13,7 @@ export const html = (
   strings: TemplateStringsArray,
   ...values: unknown[]
 ): HtmlEscapedString | Promise<HtmlEscapedString> => {
+logger.debug(`>>> Entering html(strings=${strings},values=${values})`);
   const buffer: StringBufferWithCallbacks = [''] as StringBufferWithCallbacks
 
   for (let i = 0, len = strings.length - 1; i < len; i++) {
@@ -21,6 +23,7 @@ export const html = (
       ? (values[i] as Array<unknown>).flat(Infinity)
       : [values[i]]
     for (let i = 0, len = children.length; i < len; i++) {
+	logger.debug(`html(strings=${strings},values=${values}): children → ${children}`);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const child = children[i] as any
       if (typeof child === 'string') {
@@ -54,4 +57,5 @@ export const html = (
       ? raw(resolveCallbackSync(raw(buffer[0], buffer.callbacks)))
       : raw(buffer[0])
     : stringBufferToString(buffer, buffer.callbacks)
+	logger.debug(`<<< Exiting html(strings=${strings},values=${values})`);
 }

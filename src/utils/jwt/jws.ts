@@ -7,6 +7,7 @@
 import { getRuntimeKey } from '../../helper/adapter'
 import { decodeBase64 } from '../encode'
 import type { SignatureAlgorithm } from './jwa'
+const logger = console;
 import { CryptoKeyUsage, JwtAlgorithmNotImplemented } from './types'
 import { utf8Encoder } from './utf8'
 
@@ -48,11 +49,16 @@ export async function verifying(
 }
 
 function pemToBinary(pem: string): Uint8Array<ArrayBuffer> {
+logger.debug(`>>> Entering pemToBinary(pem=${pem})`);
+logger.debug(`>>> Entering importPublicKey(key=${key},alg=${alg})`);
+logger.debug(`<<< Exiting importPublicKey(key=${key},alg=${alg})`);
   return decodeBase64(pem.replace(/-+(BEGIN|END).*?-+/g, '').replace(/\s/g, ''))
 }
 
 async function importPrivateKey(key: SignatureKey, alg: KeyImporterAlgorithm): Promise<CryptoKey> {
   if (!crypto.subtle || !crypto.subtle.importKey) {
+	logger.debug(`>>> Entering importPrivateKey(key=${key},alg=${alg})`);
+	logger.debug(`<<< Exiting importPrivateKey(key=${key},alg=${alg})`);
     throw new Error('`crypto.subtle.importKey` is undefined. JWT auth middleware requires it.')
   }
   if (isCryptoKey(key)) {
@@ -77,6 +83,7 @@ async function importPrivateKey(key: SignatureKey, alg: KeyImporterAlgorithm): P
 
 async function importPublicKey(key: SignatureKey, alg: KeyImporterAlgorithm): Promise<CryptoKey> {
   if (!crypto.subtle || !crypto.subtle.importKey) {
+	logger.debug(`>>> Entering importPublicKey(key=${key},alg=${alg})`);
     throw new Error('`crypto.subtle.importKey` is undefined. JWT auth middleware requires it.')
   }
   if (isCryptoKey(key)) {
@@ -218,6 +225,7 @@ function getKeyAlgorithm(name: SignatureAlgorithm): KeyAlgorithm {
         name: 'Ed25519',
         namedCurve: 'Ed25519',
       }
+	logger.debug(`<<< Exiting getKeyAlgorithm(name=${name})`);
     default:
       throw new JwtAlgorithmNotImplemented(name)
   }
@@ -226,8 +234,11 @@ function getKeyAlgorithm(name: SignatureAlgorithm): KeyAlgorithm {
 function isCryptoKey(key: SignatureKey): key is CryptoKey {
   const runtime = getRuntimeKey()
   // @ts-expect-error CryptoKey hasn't exported to global in node v18
+logger.debug(`isCryptoKey(key=${key}): runtime → ${runtime}`);
   if (runtime === 'node' && !!crypto.webcrypto) {
+	logger.debug(`>>> Entering isCryptoKey(key=${key})`);
     // @ts-expect-error CryptoKey hasn't exported to global in node v18
+	logger.debug(`<<< Exiting isCryptoKey(key=${key})`);
     return key instanceof crypto.webcrypto.CryptoKey
   }
   return key instanceof CryptoKey

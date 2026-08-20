@@ -7,6 +7,7 @@ import { PERMALINK } from '../constants'
 import { useContext } from '../context'
 import type { IntrinsicElements } from '../intrinsic-elements'
 import type { FC, PropsWithChildren } from '../types'
+const logger = console;
 import {
   dataPrecedenceAttr,
   deDupeKeyMap,
@@ -94,6 +95,7 @@ const returnWithoutSpecialBehavior = (tag: string, children: Child, props: Props
   raw(new JSXNode(tag, props, toArray(children ?? [])).toString())
 
 const documentMetadataTag = (tag: string, children: Child, props: Props, sort: boolean) => {
+logger.debug(`>>> Entering documentMetadataTag(tag=${tag},children=${children},props=${props},sort=${sort})`);
   if ('itemProp' in props) {
     return returnWithoutSpecialBehavior(tag, children, props)
   }
@@ -106,6 +108,7 @@ const documentMetadataTag = (tag: string, children: Child, props: Props, sort: b
 
   const string = new JSXNode(tag, restProps, toArray(children || [])).toString()
 
+logger.debug(`documentMetadataTag(tag=${tag},children=${children},props=${props},sort=${sort}): string → ${string}`);
   if (string instanceof Promise) {
     return string.then((resString) =>
       raw(resString, [
@@ -114,13 +117,16 @@ const documentMetadataTag = (tag: string, children: Child, props: Props, sort: b
       ])
     )
   } else {
+logger.debug(`<<< Exiting documentMetadataTag(tag=${tag},children=${children},props=${props},sort=${sort})`);
     return raw(string, [insertIntoHead(tag, string, restProps, precedence)])
   }
 }
 
 export const title: FC<PropsWithChildren> = ({ children, ...props }) => {
+logger.debug(`>>> Entering title(children=${children},props=${props})`);
   const nameSpaceContext = getNameSpaceContext()
   if (nameSpaceContext) {
+	logger.debug(`title(children=${children},props=${props}): nameSpaceContext → ${nameSpaceContext}`);
     const context = useContext(nameSpaceContext)
     if (context === 'svg' || context === 'head') {
       return new JSXNode(
@@ -131,20 +137,24 @@ export const title: FC<PropsWithChildren> = ({ children, ...props }) => {
     }
   }
 
+logger.debug(`<<< Exiting title(children=${children},props=${props})`);
   return documentMetadataTag('title', children, props, false)
 }
 export const script: FC<PropsWithChildren<IntrinsicElements['script']>> = ({
   children,
   ...props
 }) => {
+logger.debug(`>>> Entering script(children=${children},props=${props})`);
   const nameSpaceContext = getNameSpaceContext()
   if (
     ['src', 'async'].some((k) => !props[k]) ||
     (nameSpaceContext && useContext(nameSpaceContext) === 'head')
   ) {
+	logger.debug(`script(children=${children},props=${props}): nameSpaceContext → ${nameSpaceContext}`);
     return returnWithoutSpecialBehavior('script', children, props)
   }
 
+logger.debug(`<<< Exiting script(children=${children},props=${props})`);
   return documentMetadataTag('script', children, props, false)
 }
 
@@ -152,23 +162,28 @@ export const style: FC<PropsWithChildren<IntrinsicElements['style']>> = ({
   children,
   ...props
 }) => {
+logger.debug(`>>> Entering style(children=${children},props=${props})`);
   if (!['href', 'precedence'].every((k) => k in props)) {
     return returnWithoutSpecialBehavior('style', children, props)
   }
   props['data-href'] = props.href
   delete props.href
+logger.debug(`<<< Exiting style(children=${children},props=${props})`);
   return documentMetadataTag('style', children, props, true)
 }
 export const link: FC<PropsWithChildren<IntrinsicElements['link']>> = ({ children, ...props }) => {
+logger.debug(`>>> Entering link(children=${children},props=${props})`);
   if (
     ['onLoad', 'onError'].some((k) => k in props) ||
     (props.rel === 'stylesheet' && (!('precedence' in props) || 'disabled' in props))
   ) {
     return returnWithoutSpecialBehavior('link', children, props)
   }
+logger.debug(`<<< Exiting link(children=${children},props=${props})`);
   return documentMetadataTag('link', children, props, isStylesheetLinkWithPrecedence(props))
 }
 export const meta: FC<PropsWithChildren> = ({ children, ...props }) => {
+logger.debug(`>>> Entering meta(children=${children},props=${props})`);
   const nameSpaceContext = getNameSpaceContext()
   if (nameSpaceContext && useContext(nameSpaceContext) === 'head') {
     return returnWithoutSpecialBehavior('meta', children, props)
@@ -197,10 +212,12 @@ const formActionableElement = (
     formAction?: Function | string
   }>
 ) => {
+logger.debug(`>>> Entering formActionableElement(tag=${tag},props=${props})`);
   if (typeof props.formAction === 'function') {
     props.formAction =
       PERMALINK in props.formAction ? (props.formAction[PERMALINK] as string) : undefined
   }
+logger.debug(`<<< Exiting formActionableElement(tag=${tag},props=${props})`);
   return newJSXNode(tag, props)
 }
 

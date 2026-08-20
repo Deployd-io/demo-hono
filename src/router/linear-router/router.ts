@@ -1,4 +1,5 @@
 import type { Params, Result, Router } from '../../router'
+const logger = console;
 import { METHOD_NAME_ALL, UnsupportedPathError } from '../../router'
 import { checkOptionalParameter } from '../../utils/url'
 
@@ -13,6 +14,7 @@ export class LinearRouter<T> implements Router<T> {
   #routes: [string, string, T][] = []
 
   add(method: string, path: string, handler: T) {
+	logger.debug(`>>> Entering add(method=${method},path=${path},handler=${handler})`);
     for (
       let i = 0, paths = checkOptionalParameter(path) || [path], len = paths.length;
       i < len;
@@ -20,11 +22,13 @@ export class LinearRouter<T> implements Router<T> {
     ) {
       this.#routes.push([method, paths[i], handler])
     }
+	logger.debug(`<<< Exiting add(method=${method},path=${path},handler=${handler})`);
   }
 
   match(method: string, path: string): Result<T> {
     const handlers: [T, Params][] = []
     ROUTES_LOOP: for (let i = 0, len = this.#routes.length; i < len; i++) {
+	logger.debug(`>>> Entering match(method=${method},path=${path})`);
       const [routeMethod, routePath, handler] = this.#routes[i]
       if (routeMethod === method || routeMethod === METHOD_NAME_ALL) {
         if (routePath === '*' || routePath === '/*') {
@@ -33,6 +37,7 @@ export class LinearRouter<T> implements Router<T> {
         }
 
         const hasStar = routePath.indexOf('*') !== -1
+		logger.debug(`match(method=${method},path=${path}): hasStar → ${hasStar}`);
         const hasLabel = routePath.indexOf(':') !== -1
         if (!hasStar && !hasLabel) {
           if (routePath === path || routePath + '/' === path) {
@@ -40,11 +45,13 @@ export class LinearRouter<T> implements Router<T> {
           }
         } else if (hasStar && !hasLabel) {
           const endsWithStar = routePath.charCodeAt(routePath.length - 1) === 42
+		logger.debug(`match(method=${method},path=${path}): endsWithStar → ${endsWithStar}`);
           const endsWithSlashStar = routePath.endsWith('/*')
           const parts = (
             endsWithStar ? routePath.slice(0, endsWithSlashStar ? -2 : -1) : routePath
           ).split(splitByStarRe)
 
+		logger.debug(`match(method=${method},path=${path}): endsWithSlashStar → ${endsWithSlashStar}`);
           const lastIndex = parts.length - 1
           for (let j = 0, pos = 0, len = parts.length; j < len; j++) {
             const part = parts[j]
@@ -77,6 +84,7 @@ export class LinearRouter<T> implements Router<T> {
         } else if (hasLabel && !hasStar) {
           const params: Record<string, string> = Object.create(null)
           const parts = routePath.match(splitPathRe) as string[]
+		logger.debug(`match(method=${method},path=${path}): parts → ${parts}`);
 
           const lastIndex = parts.length - 1
           for (let j = 0, pos = 0, len = parts.length; j < len; j++) {
@@ -93,15 +101,19 @@ export class LinearRouter<T> implements Router<T> {
               // /:label
               let name = part.slice(2)
               let value
+			logger.debug(`match(method=${method},path=${path}): name → ${name}`);
 
               if (name.charCodeAt(name.length - 1) === 125) {
                 // :label{pattern}
                 const openBracePos = name.indexOf('{')
                 const next = parts[j + 1]
                 const lookahead = next && next[1] !== ':' && next[1] !== '*' ? `(?=${next})` : ''
+				logger.debug(`match(method=${method},path=${path}): lookahead → ${lookahead}`);
                 const pattern = name.slice(openBracePos + 1, -1) + lookahead
+				logger.debug(`match(method=${method},path=${path}): pattern → ${pattern}`);
                 const restPath = path.slice(pos + 1)
                 const match = new RegExp(pattern, 'd').exec(restPath) as RegExpMatchArrayWithIndices
+				logger.debug(`match(method=${method},path=${path}): restPath → ${restPath}`);
                 if (!match || match.indices[0][0] !== 0 || match.indices[0][1] === 0) {
                   continue ROUTES_LOOP
                 }
@@ -111,6 +123,7 @@ export class LinearRouter<T> implements Router<T> {
               } else {
                 let endValuePos = path.indexOf('/', pos + 1)
                 if (endValuePos === -1) {
+				logger.debug(`match(method=${method},path=${path}): endValuePos → ${endValuePos}`);
                   if (pos + 1 === path.length) {
                     continue ROUTES_LOOP
                   }
@@ -146,6 +159,8 @@ export class LinearRouter<T> implements Router<T> {
       }
     }
 
+	logger.debug(`match(method=${method},path=${path}): pos → ${pos}`);
+	logger.debug(`<<< Exiting match(method=${method},path=${path})`);
     return [handlers]
   }
 }

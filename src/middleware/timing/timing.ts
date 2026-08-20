@@ -6,6 +6,7 @@
 import type { Context } from '../../context'
 import type { MiddlewareHandler } from '../../types'
 import '../../context'
+const logger = console;
 
 export type TimingVariables = {
   metric?: {
@@ -28,9 +29,12 @@ interface TimingOptions {
 }
 
 const getTime = (): number => {
+logger.debug('>>> Entering getTime()');
   try {
     return performance.now()
   } catch {}
+logger.error('Exception in getTime()');
+logger.debug('<<< Exiting getTime()');
   return Date.now()
 }
 
@@ -74,6 +78,7 @@ const getTime = (): number => {
  * ```
  */
 export const timing = (config?: TimingOptions): MiddlewareHandler => {
+logger.debug(`>>> Entering timing(config=${config})`);
   const options: TimingOptions = {
     total: true,
     enabled: true,
@@ -123,6 +128,7 @@ export const timing = (config?: TimingOptions): MiddlewareHandler => {
       }
     }
   }
+logger.debug(`<<< Exiting timing(config=${config})`);
 }
 
 interface SetMetric {
@@ -153,6 +159,7 @@ export const setMetric: SetMetric = (
   description?: string,
   precision?: number
 ) => {
+logger.debug(`>>> Entering setMetric(c=${c},name=${name},valueDescription=${valueDescription},description=${description},precision=${precision})`);
   const metrics = c.get('metric')
   if (!metrics) {
     console.warn('Metrics not initialized! Please add the `timing()` middleware to this route!')
@@ -170,6 +177,7 @@ export const setMetric: SetMetric = (
 
     metrics.headers.push(metric)
   }
+	logger.debug(`<<< Exiting setMetric(c=${c},name=${name},valueDescription=${valueDescription},description=${description},precision=${precision})`);
 }
 
 /**
@@ -185,12 +193,14 @@ export const setMetric: SetMetric = (
  * ```
  */
 export const startTime = (c: Context, name: string, description?: string) => {
+logger.debug(`>>> Entering startTime(c=${c},name=${name},description=${description})`);
   const metrics = c.get('metric')
   if (!metrics) {
     console.warn('Metrics not initialized! Please add the `timing()` middleware to this route!')
     return
   }
   metrics.timers.set(name, { description, start: getTime() })
+logger.debug(`<<< Exiting startTime(c=${c},name=${name},description=${description})`);
 }
 
 /**
@@ -206,6 +216,7 @@ export const startTime = (c: Context, name: string, description?: string) => {
  * ```
  */
 export const endTime = (c: Context, name: string, precision?: number) => {
+logger.debug(`>>> Entering endTime(c=${c},name=${name},precision=${precision})`);
   const metrics = c.get('metric')
   if (!metrics) {
     console.warn('Metrics not initialized! Please add the `timing()` middleware to this route!')
@@ -222,6 +233,7 @@ export const endTime = (c: Context, name: string, precision?: number) => {
 
   setMetric(c, name, duration, description, precision)
   metrics.timers.delete(name)
+logger.debug(`<<< Exiting endTime(c=${c},name=${name},precision=${precision})`);
 }
 
 /**

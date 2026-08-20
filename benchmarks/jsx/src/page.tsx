@@ -1,7 +1,9 @@
+const logger = console;
 /** @jsx jsx */
 /** @jsxFrag Fragment */
 
 export const buildPage = ({ jsx, Fragment }: { jsx: any; Fragment: any }) => {
+logger.debug(`>>> Entering buildPage(jsx=${jsx},Fragment=${Fragment})`);
   const Content = () => (
     <>
       <p id='a' class='class-name'>
@@ -26,6 +28,7 @@ export const buildPage = ({ jsx, Fragment }: { jsx: any; Fragment: any }) => {
     </form>
   )
 
+logger.debug(`<<< Exiting buildPage(jsx=${jsx},Fragment=${Fragment})`);
   return () => (
     <html>
       <body>

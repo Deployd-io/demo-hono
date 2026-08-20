@@ -1,6 +1,7 @@
 import { expectTypeOf } from 'vitest'
 import { Hono } from '../../hono'
 import type { Context, MiddlewareHandler } from '../../index'
+const logger = console;
 import { bearerAuth } from '.'
 
 describe('Bearer Auth by Middleware', () => {
@@ -21,19 +22,25 @@ describe('Bearer Auth by Middleware', () => {
       await next()
     })
     app.get('/auth/*', (c) => {
+	logger.debug(`>>> Entering GET_auth(c=${c})`);
       handlerExecuted = true
+	logger.debug(`<<< Exiting GET_auth(c=${c})`);
       return c.text('auth')
     })
 
     app.use('/authBot/*', bearerAuth({ token, prefix: 'Bot' }))
     app.get('/authBot/*', (c) => {
+	logger.debug(`>>> Entering GET_authBot(c=${c})`);
       handlerExecuted = true
+	logger.debug(`<<< Exiting GET_authBot(c=${c})`);
       return c.text('auth bot')
     })
 
     app.use('/apiKey/*', bearerAuth({ token, prefix: '', headerName: 'X-Api-Key' }))
     app.get('/apiKey/*', (c) => {
+	logger.debug(`>>> Entering GET_apiKey(c=${c})`);
       handlerExecuted = true
+	logger.debug(`<<< Exiting GET_apiKey(c=${c})`);
       return c.text('auth apiKey')
     })
 
@@ -42,13 +49,17 @@ describe('Bearer Auth by Middleware', () => {
       return auth(c, next)
     })
     app.get('/nested/*', (c) => {
+	logger.debug(`>>> Entering GET_nested(c=${c})`);
       handlerExecuted = true
+	logger.debug(`<<< Exiting GET_nested(c=${c})`);
       return c.text('auth nested')
     })
 
     app.use('/auths/*', bearerAuth({ token: tokens }))
     app.get('/auths/*', (c) => {
+	logger.debug(`>>> Entering GET_auths(c=${c})`);
       handlerExecuted = true
+	logger.debug(`<<< Exiting GET_auths(c=${c})`);
       return c.text('auths')
     })
 
@@ -61,13 +72,17 @@ describe('Bearer Auth by Middleware', () => {
       })
     )
     app.get('/auth-verify-token/*', (c) => {
+	logger.debug(`>>> Entering GET_auth_verify_token(c=${c})`);
       handlerExecuted = true
+	logger.debug(`<<< Exiting GET_auth_verify_token(c=${c})`);
       return c.text('auth-verify-token')
     })
 
     app.use('/auth-custom-header/*', bearerAuth({ token: tokens, headerName: 'X-Auth' }))
     app.get('/auth-custom-header/*', (c) => {
+	logger.debug(`>>> Entering GET_auth_custom_header(c=${c})`);
       handlerExecuted = true
+	logger.debug(`<<< Exiting GET_auth_custom_header(c=${c})`);
       return c.text('auth-custom-header')
     })
 
@@ -81,7 +96,9 @@ describe('Bearer Auth by Middleware', () => {
       })
     )
     app.get('/auth-custom-no-authentication-header-wwwAuthenticateHeader-string/*', (c) => {
+	logger.debug(`>>> Entering GET_auth_custom_no_authentication_header_wwwAuthenticateHeader_string(c=${c})`);
       handlerExecuted = true
+	logger.debug(`<<< Exiting GET_auth_custom_no_authentication_header_wwwAuthenticateHeader_string(c=${c})`);
       return c.text('auth')
     })
 
@@ -98,7 +115,9 @@ describe('Bearer Auth by Middleware', () => {
       })
     )
     app.get('/auth-custom-no-authentication-header-wwwAuthenticateHeader-object/*', (c) => {
+	logger.debug(`>>> Entering GET_auth_custom_no_authentication_header_wwwAuthenticateHeader_object(c=${c})`);
       handlerExecuted = true
+	logger.debug(`<<< Exiting GET_auth_custom_no_authentication_header_wwwAuthenticateHeader_object(c=${c})`);
       return c.text('auth')
     })
 
@@ -115,7 +134,9 @@ describe('Bearer Auth by Middleware', () => {
     app.get(
       '/auth-custom-no-authentication-header-wwwAuthenticateHeader-function-string/*',
       (c) => {
+		logger.debug(`>>> Entering GET_auth_custom_no_authentication_header_wwwAuthenticateHeader_function_string(c=${c})`);
         handlerExecuted = true
+		logger.debug(`<<< Exiting GET_auth_custom_no_authentication_header_wwwAuthenticateHeader_function_string(c=${c})`);
         return c.text('auth')
       }
     )
@@ -135,7 +156,9 @@ describe('Bearer Auth by Middleware', () => {
     app.get(
       '/auth-custom-no-authentication-header-wwwAuthenticateHeader-function-object/*',
       (c) => {
+		logger.debug(`>>> Entering GET_auth_custom_no_authentication_header_wwwAuthenticateHeader_function_object(c=${c})`);
         handlerExecuted = true
+		logger.debug(`<<< Exiting GET_auth_custom_no_authentication_header_wwwAuthenticateHeader_function_object(c=${c})`);
         return c.text('auth')
       }
     )
@@ -148,7 +171,9 @@ describe('Bearer Auth by Middleware', () => {
       })
     )
     app.get('/auth-custom-no-authentication-header-message-string/*', (c) => {
+	logger.debug(`>>> Entering GET_auth_custom_no_authentication_header_message_string(c=${c})`);
       handlerExecuted = true
+	logger.debug(`<<< Exiting GET_auth_custom_no_authentication_header_message_string(c=${c})`);
       return c.text('auth')
     })
 
@@ -162,7 +187,9 @@ describe('Bearer Auth by Middleware', () => {
       })
     )
     app.get('/auth-custom-no-authentication-header-message-object/*', (c) => {
+	logger.debug(`>>> Entering GET_auth_custom_no_authentication_header_message_object(c=${c})`);
       handlerExecuted = true
+	logger.debug(`<<< Exiting GET_auth_custom_no_authentication_header_message_object(c=${c})`);
       return c.text('auth')
     })
 
@@ -176,7 +203,9 @@ describe('Bearer Auth by Middleware', () => {
       })
     )
     app.get('/auth-custom-no-authentication-header-message-function-string/*', (c) => {
+	logger.debug(`>>> Entering GET_auth_custom_no_authentication_header_message_function_string(c=${c})`);
       handlerExecuted = true
+	logger.debug(`<<< Exiting GET_auth_custom_no_authentication_header_message_function_string(c=${c})`);
       return c.text('auth')
     })
 
@@ -192,7 +221,9 @@ describe('Bearer Auth by Middleware', () => {
       })
     )
     app.get('/auth-custom-no-authentication-header-message-function-object/*', (c) => {
+	logger.debug(`>>> Entering GET_auth_custom_no_authentication_header_message_function_object(c=${c})`);
       handlerExecuted = true
+	logger.debug(`<<< Exiting GET_auth_custom_no_authentication_header_message_function_object(c=${c})`);
       return c.text('auth')
     })
 
@@ -206,7 +237,9 @@ describe('Bearer Auth by Middleware', () => {
       })
     )
     app.get('/auth-custom-invalid-authentication-header-wwwAuthenticateHeader-string/*', (c) => {
+	logger.debug(`>>> Entering GET_auth_custom_invalid_authentication_header_wwwAuthenticateHeader_string(c=${c})`);
       handlerExecuted = true
+	logger.debug(`<<< Exiting GET_auth_custom_invalid_authentication_header_wwwAuthenticateHeader_string(c=${c})`);
       return c.text('auth')
     })
 
@@ -223,7 +256,9 @@ describe('Bearer Auth by Middleware', () => {
       })
     )
     app.get('/auth-custom-invalid-authentication-header-wwwAuthenticateHeader-object/*', (c) => {
+	logger.debug(`>>> Entering GET_auth_custom_invalid_authentication_header_wwwAuthenticateHeader_object(c=${c})`);
       handlerExecuted = true
+	logger.debug(`<<< Exiting GET_auth_custom_invalid_authentication_header_wwwAuthenticateHeader_object(c=${c})`);
       return c.text('auth')
     })
 
@@ -240,7 +275,9 @@ describe('Bearer Auth by Middleware', () => {
     app.get(
       '/auth-custom-invalid-authentication-header-wwwAuthenticateHeader-function-string/*',
       (c) => {
+		logger.debug(`>>> Entering GET_auth_custom_invalid_authentication_header_wwwAuthenticateHeader_function_string(c=${c})`);
         handlerExecuted = true
+		logger.debug(`<<< Exiting GET_auth_custom_invalid_authentication_header_wwwAuthenticateHeader_function_string(c=${c})`);
         return c.text('auth')
       }
     )
@@ -260,7 +297,9 @@ describe('Bearer Auth by Middleware', () => {
     app.get(
       '/auth-custom-invalid-authentication-header-wwwAuthenticateHeader-function-object/*',
       (c) => {
+		logger.debug(`>>> Entering GET_auth_custom_invalid_authentication_header_wwwAuthenticateHeader_function_object(c=${c})`);
         handlerExecuted = true
+		logger.debug(`<<< Exiting GET_auth_custom_invalid_authentication_header_wwwAuthenticateHeader_function_object(c=${c})`);
         return c.text('auth')
       }
     )
@@ -275,7 +314,9 @@ describe('Bearer Auth by Middleware', () => {
       })
     )
     app.get('/auth-custom-invalid-authentication-header-message-string/*', (c) => {
+	logger.debug(`>>> Entering GET_auth_custom_invalid_authentication_header_message_string(c=${c})`);
       handlerExecuted = true
+	logger.debug(`<<< Exiting GET_auth_custom_invalid_authentication_header_message_string(c=${c})`);
       return c.text('auth')
     })
 
@@ -291,7 +332,9 @@ describe('Bearer Auth by Middleware', () => {
       })
     )
     app.get('/auth-custom-invalid-authentication-header-message-object/*', (c) => {
+	logger.debug(`>>> Entering GET_auth_custom_invalid_authentication_header_message_object(c=${c})`);
       handlerExecuted = true
+	logger.debug(`<<< Exiting GET_auth_custom_invalid_authentication_header_message_object(c=${c})`);
       return c.text('auth')
     })
 
@@ -305,7 +348,9 @@ describe('Bearer Auth by Middleware', () => {
       })
     )
     app.get('/auth-custom-invalid-authentication-header-message-function-string/*', (c) => {
+	logger.debug(`>>> Entering GET_auth_custom_invalid_authentication_header_message_function_string(c=${c})`);
       handlerExecuted = true
+	logger.debug(`<<< Exiting GET_auth_custom_invalid_authentication_header_message_function_string(c=${c})`);
       return c.text('auth')
     })
 
@@ -321,7 +366,9 @@ describe('Bearer Auth by Middleware', () => {
       })
     )
     app.get('/auth-custom-invalid-authentication-header-message-function-object/*', (c) => {
+	logger.debug(`>>> Entering GET_auth_custom_invalid_authentication_header_message_function_object(c=${c})`);
       handlerExecuted = true
+	logger.debug(`<<< Exiting GET_auth_custom_invalid_authentication_header_message_function_object(c=${c})`);
       return c.text('auth')
     })
 
@@ -335,7 +382,9 @@ describe('Bearer Auth by Middleware', () => {
       })
     )
     app.get('/auth-custom-invalid-token-wwwAuthenticateHeader-string/*', (c) => {
+	logger.debug(`>>> Entering GET_auth_custom_invalid_token_wwwAuthenticateHeader_string(c=${c})`);
       handlerExecuted = true
+	logger.debug(`<<< Exiting GET_auth_custom_invalid_token_wwwAuthenticateHeader_string(c=${c})`);
       return c.text('auth')
     })
 
@@ -352,7 +401,9 @@ describe('Bearer Auth by Middleware', () => {
       })
     )
     app.get('/auth-custom-invalid-token-wwwAuthenticateHeader-object/*', (c) => {
+	logger.debug(`>>> Entering GET_auth_custom_invalid_token_wwwAuthenticateHeader_object(c=${c})`);
       handlerExecuted = true
+	logger.debug(`<<< Exiting GET_auth_custom_invalid_token_wwwAuthenticateHeader_object(c=${c})`);
       return c.text('auth')
     })
 
@@ -367,7 +418,9 @@ describe('Bearer Auth by Middleware', () => {
       })
     )
     app.get('/auth-custom-invalid-token-wwwAuthenticateHeader-function-string/*', (c) => {
+	logger.debug(`>>> Entering GET_auth_custom_invalid_token_wwwAuthenticateHeader_function_string(c=${c})`);
       handlerExecuted = true
+	logger.debug(`<<< Exiting GET_auth_custom_invalid_token_wwwAuthenticateHeader_function_string(c=${c})`);
       return c.text('auth')
     })
 
@@ -384,7 +437,9 @@ describe('Bearer Auth by Middleware', () => {
       })
     )
     app.get('/auth-custom-invalid-token-wwwAuthenticateHeader-function-object/*', (c) => {
+	logger.debug(`>>> Entering GET_auth_custom_invalid_token_wwwAuthenticateHeader_function_object(c=${c})`);
       handlerExecuted = true
+	logger.debug(`<<< Exiting GET_auth_custom_invalid_token_wwwAuthenticateHeader_function_object(c=${c})`);
       return c.text('auth')
     })
 
@@ -396,7 +451,9 @@ describe('Bearer Auth by Middleware', () => {
       })
     )
     app.get('/auth-custom-invalid-token-message-string/*', (c) => {
+	logger.debug(`>>> Entering GET_auth_custom_invalid_token_message_string(c=${c})`);
       handlerExecuted = true
+	logger.debug(`<<< Exiting GET_auth_custom_invalid_token_message_string(c=${c})`);
       return c.text('auth')
     })
 
@@ -408,7 +465,9 @@ describe('Bearer Auth by Middleware', () => {
       })
     )
     app.get('/auth-custom-invalid-token-message-object/*', (c) => {
+	logger.debug(`>>> Entering GET_auth_custom_invalid_token_message_object(c=${c})`);
       handlerExecuted = true
+	logger.debug(`<<< Exiting GET_auth_custom_invalid_token_message_object(c=${c})`);
       return c.text('auth')
     })
 
@@ -420,7 +479,9 @@ describe('Bearer Auth by Middleware', () => {
       })
     )
     app.get('/auth-custom-invalid-token-message-function-string/*', (c) => {
+	logger.debug(`>>> Entering GET_auth_custom_invalid_token_message_function_string(c=${c})`);
       handlerExecuted = true
+	logger.debug(`<<< Exiting GET_auth_custom_invalid_token_message_function_string(c=${c})`);
       return c.text('auth')
     })
 
@@ -436,6 +497,8 @@ describe('Bearer Auth by Middleware', () => {
       })
     )
     app.get('/auth-custom-invalid-token-message-function-object/*', (c) => {
+	logger.debug(`>>> Entering GET_auth_custom_invalid_token_message_function_object(c=${c})`);
+	logger.debug(`<<< Exiting GET_auth_custom_invalid_token_message_function_object(c=${c})`);
       handlerExecuted = true
       return c.text('auth')
     })
@@ -945,7 +1008,9 @@ describe('Bearer Auth with prefix containing regex metacharacters', () => {
   it('Should authorize with prefix containing parentheses', async () => {
     app.use('/*', bearerAuth({ token, prefix: 'Bearer(v2)' }))
     app.get('/*', (c) => {
+	logger.debug(`>>> Entering GET_root(c=${c})`);
       handlerExecuted = true
+	logger.debug(`<<< Exiting GET_root(c=${c})`);
       return c.text('ok')
     })
 

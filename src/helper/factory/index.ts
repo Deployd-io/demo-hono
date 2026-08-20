@@ -334,8 +334,10 @@ export class Factory<E extends Env = Env, P extends string = string> {
   #defaultAppOptions?: HonoOptions<E>
 
   constructor(init?: { initApp?: InitApp<E>; defaultAppOptions?: HonoOptions<E> }) {
+	logger.debug(`>>> Entering constructor(init=${init})`);
     this.initApp = init?.initApp
     this.#defaultAppOptions = init?.defaultAppOptions
+	logger.debug(`<<< Exiting constructor(init=${init})`);
   }
 
   createApp = (options?: HonoOptions<E>): Hono<E> => {

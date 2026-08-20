@@ -1,3 +1,4 @@
+const logger = console;
 import { Hono } from '../../hono'
 import { env, getRuntimeKey } from '.'
 
@@ -20,7 +21,9 @@ describe('env', () => {
     it('Should not throw type errors with env has generics', () => {
       const app = new Hono()
       app.get('/var', (c) => {
+		logger.debug(`>>> Entering GET_var(c=${c})`);
         const { MY_VAR } = env<{ MY_VAR: string }>(c)
+		logger.debug(`<<< Exiting GET_var(c=${c})`);
         expectTypeOf<string>(MY_VAR)
         return c.json({
           var: MY_VAR,

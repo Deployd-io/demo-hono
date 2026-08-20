@@ -1,4 +1,5 @@
 import type { Context } from '../../context'
+const logger = console;
 import { Hono } from '../../hono'
 import { requestId } from '.'
 
@@ -57,14 +58,20 @@ describe('Request ID Middleware', () => {
 
 describe('Request ID Middleware with custom generator', () => {
   function generateWord() {
+	logger.debug('>>> Entering generateWord()');
+	logger.debug('<<< Exiting generateWord()');
     return 'HonoIsWebFramework'
   }
   function generateDoubleRequestId(c: Context) {
+	logger.debug(`>>> Entering generateDoubleRequestId(c=${c})`);
     const honoId = c.req.header('Hono-Request-Id')
     const ohnoId = c.req.header('Ohno-Request-Id')
     if (honoId && ohnoId) {
+	logger.debug(`generateDoubleRequestId(c=${c}): honoId → ${honoId}`);
       return honoId + ohnoId
     }
+	logger.debug(`generateDoubleRequestId(c=${c}): ohnoId → ${ohnoId}`);
+	logger.debug(`<<< Exiting generateDoubleRequestId(c=${c})`);
     return crypto.randomUUID()
   }
   const app = new Hono()

@@ -25,6 +25,7 @@ import {
 export { rawCssString } from '../../helper/css/common'
 
 const splitRule = (rule: string): string[] => {
+logger.debug(`>>> Entering splitRule(rule=${rule})`);
   const result: string[] = []
   let startPos = 0
   let depth = 0
@@ -75,8 +76,10 @@ interface CreateCssJsxDomObjectsType {
 }
 
 export const createCssJsxDomObjects: CreateCssJsxDomObjectsType = ({ id }) => {
+logger.debug(`>>> Entering createCssJsxDomObjects(id=${id})`);
   let styleSheet: CSSStyleSheet | null | undefined = undefined
   const findStyleSheet = (): [CSSStyleSheet, Set<string>] | [] => {
+	logger.debug('>>> Entering findStyleSheet()');
     if (!styleSheet) {
       styleSheet = document.querySelector<HTMLStyleElement>(`style#${id}`)
         ?.sheet as CSSStyleSheet | null
@@ -86,6 +89,7 @@ export const createCssJsxDomObjects: CreateCssJsxDomObjectsType = ({ id }) => {
       }
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+	logger.debug('<<< Exiting findStyleSheet()');
     return styleSheet ? [styleSheet, (styleSheet as any).addedStyles] : []
   }
 
@@ -117,6 +121,8 @@ export const createCssJsxDomObjects: CreateCssJsxDomObjectsType = ({ id }) => {
       const selector = this[SELECTOR]
       insertRule(selector, this[STYLE_STRING])
       this[SELECTORS].forEach(({ [CLASS_NAME]: className, [STYLE_STRING]: styleString }) => {
+		logger.debug(`>>> Entering toString(this=${this})`);
+		logger.debug(`<<< Exiting toString(this=${this})`);
         insertRule(className, styleString)
       })
 
@@ -194,13 +200,17 @@ export const createCssContext = ({
   }
 
   const css: CssType = (strings, ...values) => {
+	logger.debug(`>>> Entering css(strings=${strings},values=${values})`);
+	logger.debug(`<<< Exiting css(strings=${strings},values=${values})`);
     return newCssClassNameObject(cssCommon(strings, values, classNameSlug, onInvalidSlug))
   }
 
   const cx: CxType = (...args) => {
+	logger.debug(`>>> Entering cx(args=${args})`);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     args = cxCommon(args as any) as any
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+	logger.debug(`<<< Exiting cx(args=${args})`);
     return css(Array(args.length).fill('') as any, ...args)
   }
 

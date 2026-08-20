@@ -1,5 +1,6 @@
 import { Context } from '../../context'
 import type { WSContextInit } from '.'
+const logger = console;
 import { WSContext, createWSMessageEvent, defineWebSocketHelper } from '.'
 
 describe('`createWSMessageEvent`', () => {
@@ -61,7 +62,9 @@ describe('WSContext', () => {
     const promise = new Promise<Result>((resolve) => {
       ws = new WSContext({
         close(code, reason) {
+		logger.debug(`>>> Entering close(code=${code},reason=${reason})`);
           resolve([code, reason])
+		logger.debug(`<<< Exiting close(code=${code},reason=${reason})`);
         },
       } as WSContextInit)
     })
@@ -75,7 +78,9 @@ describe('WSContext', () => {
     const promise = new Promise<string | ArrayBuffer | Uint8Array<ArrayBuffer>>((resolve) => {
       ws = new WSContext({
         send(data: string | ArrayBuffer | Uint8Array<ArrayBuffer>, _options) {
+		logger.debug(`>>> Entering send(data=${data},_options=${_options})`);
           resolve(data)
+		logger.debug(`<<< Exiting send(data=${data},_options=${_options})`);
         },
       } as WSContextInit)
     })
@@ -108,7 +113,9 @@ describe('WSContext', () => {
     let data: string | ArrayBuffer | Uint8Array | null = null
     const wsContext = new WSContext({
       send(received, _options) {
+		logger.debug(`>>> Entering send(received=${received},_options=${_options})`);
         data = received
+		logger.debug(`<<< Exiting send(received=${received},_options=${_options})`);
       },
     } as WSContextInit)
 

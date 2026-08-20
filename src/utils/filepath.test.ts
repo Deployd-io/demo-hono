@@ -1,3 +1,4 @@
+const logger = console;
 import { getFilePath, getFilePathWithoutDefaultDocument } from './filepath'
 
 describe('getFilePathWithoutDefaultDocument', () => {
@@ -74,5 +75,7 @@ describe('getFilePath', () => {
 })
 
 function slashToBackslash(filename: string) {
+logger.debug(`>>> Entering slashToBackslash(filename=${filename})`);
+logger.debug(`<<< Exiting slashToBackslash(filename=${filename})`);
   return filename.split('/').join('\\')
 }

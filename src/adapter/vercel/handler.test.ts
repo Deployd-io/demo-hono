@@ -1,3 +1,4 @@
+const logger = console;
 import { Hono } from '../../hono'
 import { handle } from './handler'
 
@@ -5,6 +6,7 @@ describe('Adapter for Next.js', () => {
   it('Should return 200 response', async () => {
     const app = new Hono()
     app.get('/api/author/:name', async (c) => {
+	logger.debug(`>>> Entering GET_api_author_name(c=${c})`);
       const name = c.req.param('name')
       return c.json({
         path: '/api/author/:name',
@@ -28,6 +30,8 @@ describe('Adapter for Next.js', () => {
       throw e
     })
     app.get('/error', () => {
+	logger.debug('>>> Entering GET_error()');
+	logger.debug('<<< Exiting GET_error()');
       throw new Error('Custom Error')
     })
 

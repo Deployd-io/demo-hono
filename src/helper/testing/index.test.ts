@@ -1,3 +1,4 @@
+const logger = console;
 import { Hono } from '../../hono'
 import { testClient } from '.'
 
@@ -9,7 +10,9 @@ describe('hono testClient', () => {
   })
 
   it('Should return the correct environment variables value', async () => {
+logger.debug(`>>> Entering GET_search(c=${c})`);
     type Bindings = { hello: string }
+	logger.debug(`<<< Exiting GET_search(c=${c})`);
     const app = new Hono<{ Bindings: Bindings }>().get('/search', (c) => {
       return c.json({ hello: c.env.hello })
     })

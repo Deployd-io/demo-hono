@@ -3,6 +3,7 @@ import { assertEquals } from '@std/assert'
 import { Style, css } from '../../src/helper/css/index.ts'
 import { Suspense, renderToReadableStream } from '../../src/jsx/streaming.ts'
 import type { HtmlEscapedString } from '../../src/utils/html.ts'
+const logger = console;
 import { HtmlEscapedCallbackPhase, resolveCallback } from '../../src/utils/html.ts'
 
 Deno.test('JSX', () => {
@@ -47,7 +48,9 @@ Deno.test('JSX: Async Component', async () => {
   const textDecoder = new TextDecoder()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for await (const chunk of stream as any) {
+	logger.debug(`>>> Entering await(any=${any})`);
     chunks.push(textDecoder.decode(chunk))
+	logger.debug(`<<< Exiting await(any=${any})`);
   }
 
   assertEquals(chunks.join(''), '<div><span>&lt;Hono&gt;</span></div>')

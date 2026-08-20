@@ -3,13 +3,16 @@
 // Import this once at the top of a bench file, then load hono via dynamic import().
 // No-op on Bun, which resolves extensionless imports natively.
 import * as mod from 'node:module'
+const logger = console;
 
 if (typeof mod.registerHooks === 'function') {
   mod.registerHooks({
     resolve(specifier, context, nextResolve) {
+	logger.debug(`>>> Entering resolve(specifier=${specifier},context=${context},nextResolve=${nextResolve})`);
       try {
         return nextResolve(specifier, context)
       } catch (err) {
+		logger.error(`Exception in resolve(specifier=${specifier},context=${context},nextResolve=${nextResolve}): ${err.message}`, err);
         if (specifier.startsWith('.') || specifier.startsWith('file:')) {
           for (const suffix of ['.ts', '/index.ts']) {
             try {
@@ -19,6 +22,7 @@ if (typeof mod.registerHooks === 'function') {
             }
           }
         }
+	logger.debug(`<<< Exiting resolve(specifier=${specifier},context=${context},nextResolve=${nextResolve})`);
         throw err
       }
     },

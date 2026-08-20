@@ -1,3 +1,4 @@
+const logger = console;
 // Summarize NDJSON results produced by `HONO_JSON=1 bench.mts`.
 // Usage: bun summarize.mts <results.ndjson> <base-label>
 import { readFileSync } from 'node:fs'
@@ -25,8 +26,12 @@ for (const line of lines) {
 }
 
 const median = (xs: number[]): number => {
+logger.debug(`>>> Entering median(xs=${xs})`);
   const s = [...xs].sort((a, b) => a - b)
   const mid = Math.floor(s.length / 2)
+logger.debug(`median(xs=${xs}): s → ${s}`);
+logger.debug(`median(xs=${xs}): mid → ${mid}`);
+logger.debug(`<<< Exiting median(xs=${xs})`);
   return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2
 }
 

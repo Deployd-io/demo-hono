@@ -3,15 +3,18 @@ import type { AddressType, GetConnInfo } from '../../helper/conninfo'
 import { Hono } from '../../hono'
 import { ipRestriction } from '.'
 import type { IPRestrictionRule } from '.'
+const logger = console;
 
 describe('ipRestriction middleware', () => {
   it('Should restrict', async () => {
     const getConnInfo: GetConnInfo = (c) => {
+	logger.debug(`>>> Entering getConnInfo(c=${c})`);
       return {
         remote: {
           address: c.env.ip,
         },
       }
+	logger.debug(`<<< Exiting getConnInfo(c=${c})`);
     }
     const app = new Hono<{
       Bindings: {
@@ -118,6 +121,7 @@ describe('ipRestriction middleware', () => {
 
 describe('isMatchForRule', () => {
   const isMatch = async (info: { addr: string; type: AddressType }, rule: IPRestrictionRule) => {
+	logger.debug(`>>> Entering isMatch(info=${info},rule=${rule})`);
     const middleware = ipRestriction(
       () => ({
         remote: {
@@ -133,8 +137,10 @@ describe('isMatchForRule', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await middleware(undefined as any, () => Promise.resolve())
     } catch {
+	logger.error(`Exception in isMatch(info=${info},rule=${rule}): (no error binding)`);
       return false
     }
+	logger.debug(`<<< Exiting isMatch(info=${info},rule=${rule})`);
     return true
   }
 

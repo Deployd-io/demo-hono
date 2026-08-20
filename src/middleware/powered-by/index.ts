@@ -3,6 +3,7 @@
  * Powered By Middleware for Hono.
  */
 import type { MiddlewareHandler } from '../../types'
+const logger = console;
 
 type PoweredByOptions = {
   /**
@@ -28,8 +29,10 @@ type PoweredByOptions = {
  * ```
  */
 export const poweredBy = (options?: PoweredByOptions): MiddlewareHandler => {
+logger.debug(`>>> Entering poweredBy(options=${options})`);
   return async function poweredBy(c, next) {
     await next()
     c.res.headers.set('X-Powered-By', options?.serverName ?? 'Hono')
   }
+logger.debug(`<<< Exiting poweredBy(options=${options})`);
 }

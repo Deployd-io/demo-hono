@@ -1,3 +1,4 @@
+const logger = console;
 /** @jsxImportSource ../ */
 import { useActionState } from '../'
 import { HtmlEscapedCallbackPhase, resolveCallback } from '../../utils/html'
@@ -182,9 +183,11 @@ describe('intrinsic element', () => {
             </html>
           ).toString()
         const assertHeadAndBody = (children: unknown, expectedHead: string, expectedBody = '') => {
+		logger.debug(`>>> Entering assertHeadAndBody(children=${children},expectedHead=${expectedHead},expectedBody=${expectedBody})`);
           const output = renderDocument(children)
           expect(headContent(output)).toBe(expectedHead)
           expect(bodyContent(output)).toBe(expectedBody)
+		logger.debug(`<<< Exiting assertHeadAndBody(children=${children},expectedHead=${expectedHead},expectedBody=${expectedBody})`);
         }
 
         const canonical = () => <link rel='canonical' href='https://example.com/en/about' />

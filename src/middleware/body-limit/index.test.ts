@@ -1,7 +1,9 @@
+const logger = console;
 import { Hono } from '../../hono'
 import { bodyLimit } from '.'
 
 const buildRequestInit = (init: RequestInit = {}): RequestInit & { duplex: 'half' } => {
+logger.debug('>>> Entering buildRequestInit()');
   const headers: Record<string, string> = {
     'Content-Type': 'text/plain',
   }
@@ -15,6 +17,7 @@ const buildRequestInit = (init: RequestInit = {}): RequestInit & { duplex: 'half
     ...init,
     duplex: 'half',
   }
+logger.debug('<<< Exiting buildRequestInit()');
 }
 
 describe('Body Limit Middleware', () => {
@@ -28,6 +31,8 @@ describe('Body Limit Middleware', () => {
     app.use('*', bodyLimit({ maxSize: 14 }))
     app.get('/', (c) => c.text('index'))
     app.post('/body-limit-15byte', async (c) => {
+	logger.debug(`>>> Entering POST_body_limit_15byte(c=${c})`);
+logger.debug(`<<< Exiting POST_body_limit_15byte(c=${c})`);
       return c.text(await c.req.raw.text())
     })
   })
@@ -68,9 +73,11 @@ describe('Body Limit Middleware', () => {
         const contents = ['a', 'b', 'c']
         const stream = new ReadableStream({
           start(controller) {
+			logger.debug('>>> Entering start()');
             while (contents.length) {
               controller.enqueue(new TextEncoder().encode(contents.shift() as string))
             }
+			logger.debug('<<< Exiting start()');
             controller.close()
           },
         })
@@ -114,6 +121,8 @@ describe('Body Limit Middleware', () => {
           },
         }),
         (c) => {
+		logger.debug(`>>> Entering POST_text_limit_15byte_custom(c=${c})`);
+		logger.debug(`<<< Exiting POST_text_limit_15byte_custom(c=${c})`);
           return c.text('yes')
         }
       )
@@ -136,6 +145,8 @@ describe('Body Limit Middleware', () => {
       app = new Hono()
       app.use('*', bodyLimit({ maxSize: 10 }))
       app.post('/test', async (c) => {
+		logger.debug(`>>> Entering POST_test(c=${c})`);
+	logger.debug(`<<< Exiting POST_test(c=${c})`);
         return c.text(await c.req.text())
       })
     })
@@ -220,23 +231,30 @@ describe('Body Limit Middleware', () => {
       app = new Hono()
       app.use('*', bodyLimit({ maxSize: 8 }))
       app.post('/no-read', (c) => {
+		logger.debug(`>>> Entering POST_no_read(c=${c})`);
         handler()
+		logger.debug(`<<< Exiting POST_no_read(c=${c})`);
         return c.text('NO-READ-OK')
       })
       app.post('/partial-read', async (c) => {
         handler()
         const reader = c.req.raw.body?.getReader()
         const chunk = reader ? await reader.read() : { value: undefined }
+		logger.debug(`POST_partial_read(c=${c}): reader → ${reader}`);
         return c.text(new TextDecoder().decode(chunk.value))
       })
       app.post('/swallow-error', async (c) => {
+	logger.debug(`<<< Exiting POST_partial_read(c=${c})`);
         handler()
         const body = c.req.raw.body
+		logger.debug(`>>> Entering POST_swallow_error(c=${c})`);
         if (!body) {
           return c.text('no body')
         }
         const reader = body.getReader()
         let seen = ''
+		logger.debug(`POST_swallow_error(c=${c}): reader → ${reader}`);
+		logger.debug(`POST_swallow_error(c=${c}): seen → ${seen}`);
         try {
           for (;;) {
             const { done, value } = await reader.read()
@@ -246,8 +264,10 @@ describe('Body Limit Middleware', () => {
             seen += new TextDecoder().decode(value)
           }
         } catch {
+		logger.debug(`<<< Exiting POST_swallow_error(c=${c})`);
           // intentionally swallow read errors
         }
+		logger.error(`Exception in POST_swallow_error(c=${c}): (no error binding)`);
         return c.text(`processed:${seen}`)
       })
     })

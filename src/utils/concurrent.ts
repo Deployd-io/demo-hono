@@ -1,3 +1,4 @@
+const logger = console;
 /**
  * @module
  * Concurrent utility.
@@ -16,6 +17,7 @@ export const createPool = ({
   concurrency?: number
   interval?: number
 } = {}): Pool => {
+logger.debug(`>>> Entering createPool(concurrency=${concurrency},interval=${interval})`);
   concurrency ||= DEFAULT_CONCURRENCY
 
   if (concurrency === Infinity) {
@@ -51,5 +53,6 @@ export const createPool = ({
       return result
     }
   }
+logger.debug(`<<< Exiting createPool(concurrency=${concurrency},interval=${interval})`);
   return { run }
 }

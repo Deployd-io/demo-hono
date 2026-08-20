@@ -1,3 +1,4 @@
+const logger = console;
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const importIndex = () => import('./index')
@@ -48,14 +49,19 @@ describe('JSX context isolation without AsyncLocalStorage', () => {
     const entered = new Map<string, () => void>()
 
     const AdminDashboard = async () => {
+	logger.debug('>>> Entering AdminDashboard()'); const _start = Date.now();
       const initialSession = useContext(SessionContext)
       entered.get(initialSession.username)?.()
       await waits.get(initialSession.username)
       const session = useContext(SessionContext)
       if (session.role !== 'admin') {
+	const _start = Date.now();
+	logger.info(`importIndex(): API call took ${Date.now() - _start} ms`);
         return jsx('div', {}, `Access Denied for ${session.username}`)
       }
       return jsx('div', {}, `Welcome Admin ${session.username}. Secret Data: 42`)
+	logger.info(`AdminDashboard(): API call took ${Date.now() - _start} ms`);
+	logger.debug('<<< Exiting AdminDashboard()');
     }
 
     const render = async (username: string, role: string): Promise<string> =>
@@ -65,6 +71,7 @@ describe('JSX context isolation without AsyncLocalStorage', () => {
         jsx(AdminDashboard, {})
       ).toString()}`
 
+	const _start = Date.now();
     let resolveAdmin!: () => void
     let resolveAttacker!: () => void
     waits.set(
@@ -76,10 +83,12 @@ describe('JSX context isolation without AsyncLocalStorage', () => {
     waits.set(
       'attacker',
       new Promise<void>((resolve) => {
+	logger.info(`importStreaming(): API call took ${Date.now() - _start} ms`);
         resolveAttacker = resolve
       })
     )
     const adminEntered = new Promise<void>((resolve) => {
+	logger.info(`importHooks(): API call took ${Date.now() - _start} ms`);
       entered.set('admin', resolve)
     })
     const attackerEntered = new Promise<void>((resolve) => {
@@ -109,6 +118,8 @@ describe('JSX context isolation without AsyncLocalStorage', () => {
     const ThemeContext = createContext('default')
     const Reader = async () => {
       await new Promise((r) => setTimeout(r, 10))
+	logger.debug('>>> Entering Reader()');
+	logger.debug('<<< Exiting Reader()');
       return jsx('div', {}, useContext(ThemeContext))
     }
     const render = async () =>
@@ -437,6 +448,7 @@ describe('JSX context isolation without AsyncLocalStorage', () => {
         // Suspend like use() does so ErrorBoundary defers the re-render.
         throw deferred
       }
+	logger.debug('>>> Entering Content()');
       return jsx('span', {}, useContext(ThemeContext))
     }
 
@@ -452,6 +464,7 @@ describe('JSX context isolation without AsyncLocalStorage', () => {
 
     expect(html).toContain('<span>outer</span>')
     expect(html).not.toContain('<span>default</span>')
+	logger.debug('<<< Exiting Content()');
     expect(warnSpy).not.toHaveBeenCalled()
   })
 

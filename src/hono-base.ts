@@ -29,6 +29,7 @@ import { COMPOSED_HANDLER } from './utils/constants'
 import { getPath, getPathNoStrict, mergePath } from './utils/url'
 
 const notFoundHandler: NotFoundHandler = (c) => {
+logger.debug(`>>> Entering notFoundHandler(c=${c})`);
   return c.text('404 Not Found', 404)
 }
 
@@ -125,6 +126,7 @@ class Hono<
   routes: RouterRoute[] = []
 
   constructor(options: HonoOptions<E> = {}) {
+	logger.debug(`>>> Entering constructor(options=${options})`);
     // Implementation of app.get(...handlers[]) or app.get(path, ...handlers[])
     const allMethods = [...METHODS, METHOD_NAME_ALL_LOWERCASE]
     allMethods.forEach((method) => {
@@ -171,16 +173,21 @@ class Hono<
     const { strict, ...optionsWithoutStrict } = options
     Object.assign(this, optionsWithoutStrict)
     this.getPath = (strict ?? true) ? (options.getPath ?? getPath) : getPathNoStrict
+	logger.debug(`<<< Exiting constructor(options=${options})`);
   }
 
   #clone(): Hono<E, S, BasePath, CurrentPath> {
+	logger.debug('>>> Entering clone()');
     const clone = new Hono<E, S, BasePath, CurrentPath>({
       router: this.router,
       getPath: this.getPath,
     })
     clone.errorHandler = this.errorHandler
+	logger.debug(`clone(): clone.errorHandler → ${clone.errorHandler}`);
     clone.#notFoundHandler = this.#notFoundHandler
     clone.routes = this.routes
+	logger.debug(`clone(): clone.routes → ${clone.routes}`);
+	logger.debug('<<< Exiting clone()');
     return clone
   }
 
@@ -248,8 +255,10 @@ class Hono<
   basePath<SubPath extends string>(
     path: SubPath
   ): Hono<E, S, MergePath<BasePath, SubPath>, MergePath<BasePath, SubPath>> {
+	logger.debug(`>>> Entering basePath(path=${path})`);
     const subApp = this.#clone()
     subApp._basePath = mergePath(this._basePath, path)
+	logger.debug(`basePath(path=${path}): subApp → ${subApp}`);
     return subApp
   }
 
@@ -335,6 +344,7 @@ class Hono<
     let replaceRequest: MountReplaceRequest | undefined
     let optionHandler: MountOptionHandler | undefined
     if (options) {
+	logger.debug(`>>> Entering mount(path=${path},applicationHandler=${applicationHandler},options=${options})`);
       if (typeof options === 'function') {
         optionHandler = options
       } else {
@@ -371,19 +381,24 @@ class Hono<
     })()
 
     const handler: MiddlewareHandler = async (c, next) => {
+	logger.debug(`>>> Entering handler(c=${c},next=${next})`);
       const res = await applicationHandler(replaceRequest(c.req.raw), ...getOptions(c))
 
+	logger.debug(`handler(c=${c},next=${next}): res → ${res}`);
       if (res) {
+		logger.debug(`<<< Exiting handler(c=${c},next=${next})`);
         return res
       }
 
       await next()
     }
     this.#addRoute(METHOD_NAME_ALL, mergePath(path, '*'), handler)
+	logger.debug(`<<< Exiting mount(path=${path},applicationHandler=${applicationHandler},options=${options})`);
     return this
   }
 
   #addRoute(method: string, path: string, handler: H, baseRoutePath?: string): void {
+	logger.debug(`>>> Entering addRoute(method=${method},path=${path},handler=${handler},baseRoutePath=${baseRoutePath})`);
     method = method.toUpperCase()
     path = mergePath(this._basePath, path)
     const r: RouterRoute = {
@@ -399,8 +414,10 @@ class Hono<
 
   #handleError(err: unknown, c: Context<E>): Response | Promise<Response> {
     if (err instanceof Error) {
+	logger.debug(`>>> Entering handleError(err=${err},c=${c})`);
       return this.errorHandler(err, c)
     }
+	logger.debug(`<<< Exiting handleError(err=${err},c=${c})`);
     throw err
   }
 
@@ -412,6 +429,7 @@ class Hono<
   ): Response | Promise<Response> {
     // Handle HEAD method
     if (method === 'HEAD') {
+	logger.debug(`>>> Entering dispatch(request=${request},executionCtx=${executionCtx},env=${env},method=${method})`);
       return (async () =>
         new Response(null, await this.#dispatch(request, executionCtx, env, 'GET')))()
     }
@@ -435,6 +453,7 @@ class Hono<
           c.res = await this.#notFoundHandler(c)
         })
       } catch (err) {
+		logger.error(`Exception in dispatch(request=${request},executionCtx=${executionCtx},env=${env},method=${method}): ${(err as Error).message}`, err);
         return this.#handleError(err, c)
       }
 
@@ -450,6 +469,7 @@ class Hono<
 
     const composed = compose(matchResult[0], this.errorHandler, this.#notFoundHandler)
 
+	logger.debug(`<<< Exiting dispatch(request=${request},executionCtx=${executionCtx},env=${env},method=${method})`);
     return (async () => {
       try {
         const context = await composed(c)

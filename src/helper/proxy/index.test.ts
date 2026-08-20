@@ -1,3 +1,4 @@
+const logger = console;
 import { Hono } from '../../hono'
 import { proxy } from '.'
 
@@ -127,6 +128,7 @@ describe('Proxy Middleware', () => {
     it('POST request', async () => {
       const app = new Hono()
       app.all('/proxy/:path', (c) => {
+		logger.debug(`>>> Entering ALL_proxy_path(c=${c})`);
         return proxy(`https://example.com/${c.req.param('path')}`, {
           ...c.req,
           headers: {
@@ -261,6 +263,7 @@ describe('Proxy Middleware', () => {
             'Set-Cookie': 'test=123',
           },
         }).then((res) => {
+		const startTime: number = Date.now();
           res.headers.delete('Set-Cookie')
           res.headers.set('X-Response-Id', '456')
           return res
@@ -312,6 +315,7 @@ describe('Proxy Middleware', () => {
     })
 
     it('pass a Request object to proxyInit', async () => {
+	logger.debug(`>>> Entering GET_proxy_path(c=${c})`);
       const app = new Hono()
       app.get('/proxy/:path', (c) => {
         const req = new Request(c.req.raw, {
@@ -324,6 +328,7 @@ describe('Proxy Middleware', () => {
       })
       const res = await app.request('/proxy/compressed')
       const req = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]
+	logger.debug(`GET_proxy_path(c=${c}): req → ${req}`);
 
       expect(req.url).toBe('https://example.com/compressed')
       expect(req.headers.get('X-Request-Id')).toBe('123')
@@ -340,6 +345,7 @@ describe('Proxy Middleware', () => {
       })
       const app = new Hono()
       app.post('/', (c) => {
+		logger.debug(`>>> Entering POST_root(c=${c})`);
         return proxy(`https://example.com/`, {
           customFetch,
           ...c.req,

@@ -2,6 +2,7 @@ import { Hono } from '../../hono'
 import { poweredBy } from '../powered-by'
 import { NONCE, secureHeaders } from '.'
 import type { ContentSecurityPolicyOptionHandler } from '.'
+const logger = console;
 
 declare module '../..' {
   interface ContextVariableMap {
@@ -15,6 +16,7 @@ describe('Secure Headers Middleware', () => {
     const app = new Hono()
     app.use('*', secureHeaders())
     app.get('/test', async (ctx) => {
+	logger.debug(`>>> Entering GET_test(ctx=${ctx})`); const _start = Date.now();
       return ctx.text('test')
     })
 
@@ -40,6 +42,8 @@ describe('Secure Headers Middleware', () => {
     expect(res.headers.get('Content-Security-Policy-ReportOnly')).toBeFalsy()
   })
 
+	logger.info(`GET_test(c=${c}): API call took ${Date.now() - _start} ms`);
+	logger.info(`GET_test(ctx=${ctx}): API call took ${Date.now() - _start} ms`);
   it('all headers enabled', async () => {
     const app = new Hono()
     app.use(
@@ -211,6 +215,8 @@ describe('Secure Headers Middleware', () => {
       }),
       poweredBy(),
       async (c) => {
+		logger.debug(`>>> Entering GET_test2(c=${c})`);
+		logger.debug(`<<< Exiting GET_test2(c=${c})`);
         return c.text('Hono is hot')
       }
     )
@@ -457,7 +463,9 @@ describe('Secure Headers Middleware', () => {
     it('CSP nonce by app own function', async () => {
       const app = new Hono()
       const setNonce: ContentSecurityPolicyOptionHandler = (ctx, directive) => {
+		logger.debug(`>>> Entering setNonce(ctx=${ctx},directive=${directive})`);
         ctx.set(`test-${directive}-nonce`, directive)
+		logger.debug(`<<< Exiting setNonce(ctx=${ctx},directive=${directive})`);
         return `'nonce-${directive}'`
       }
       app.use(

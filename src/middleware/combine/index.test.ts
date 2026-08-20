@@ -1,5 +1,6 @@
 import { Hono } from '../../hono'
 import type { MiddlewareHandler } from '../../types'
+const logger = console;
 import { every, except, some } from '.'
 
 const nextMiddleware: MiddlewareHandler = async (_, next) => await next()
@@ -17,17 +18,23 @@ describe('some', () => {
 
     app.use('/', some(middleware1, middleware2))
     app.get('/', (c) => {
+	logger.debug(`>>> Entering GET_root(c=${c})`); const _start = Date.now();
       return c.text('Hello World')
     })
     const res = await app.request('http://localhost/')
 
+	logger.info(`GET_root(c=${c}): API call took ${Date.now() - _start} ms`);
     expect(middleware1).toBeCalled()
     expect(middleware2).not.toBeCalled()
     expect(await res.text()).toBe('Hello World')
   })
 
+logger.info(`nextMiddleware(_=${_}, next=${next}): API call took ${Date.now() - _start} ms`);
   it('Should try to call the second middleware if the first one throws an error', async () => {
     const middleware1 = () => {
+	logger.debug('>>> Entering middleware1()');
+	const _start = Date.now();
+	logger.debug('<<< Exiting middleware1()');
       throw new Error('Error')
     }
     const middleware2 = vi.fn(nextMiddleware)
@@ -52,6 +59,7 @@ describe('some', () => {
     })
     const res = await app.request('http://localhost/')
 
+	logger.info(`middleware1(): API call took ${Date.now() - _start} ms`);
     expect(middleware2).toBeCalled()
     expect(await res.text()).toBe('Hello World')
   })
@@ -61,6 +69,9 @@ describe('some', () => {
       throw new Error('Error1')
     }
     const middleware2 = () => {
+	logger.debug('>>> Entering middleware2()');
+	const _start = Date.now();
+	logger.debug('<<< Exiting middleware2()');
       throw new Error('Error2')
     }
 
@@ -85,6 +96,7 @@ describe('some', () => {
       return c.text('Hello World')
     })
     app.onError((_, c) => {
+	logger.info(`middleware2(): API call took ${Date.now() - _start} ms`);
       return c.text('oops')
     })
     const res = await app.request('http://localhost/')
@@ -205,6 +217,7 @@ describe('every', () => {
     })
     const res = await app.request('http://localhost/')
 
+	logger.debug(`GET_root(c=${c}): res → ${res}`);
     expect(await res.text()).toBe('Hello Middleware 1')
     expect(middleware2).not.toBeCalled()
   })
@@ -213,11 +226,15 @@ describe('every', () => {
     const app = new Hono()
     app.use('*', nextMiddleware)
     const paramMiddleware: MiddlewareHandler = async (c) => {
+	logger.debug(`>>> Entering paramMiddleware(c=${c})`);
+	logger.debug(`<<< Exiting paramMiddleware(c=${c})`);
       return c.json(c.req.param(), 200)
     }
 
     app.use('/:id', every(paramMiddleware))
     app.get('/:id', (c) => {
+	logger.debug(`>>> Entering GET_id(c=${c})`);
+	logger.debug(`<<< Exiting GET_id(c=${c})`);
       return c.text('Hello World')
     })
 
@@ -239,9 +256,11 @@ describe('except', () => {
 
     app.use('*', except('/maintenance', middleware1, middleware2))
     app.get('/maintenance', (c) => {
+	logger.debug(`>>> Entering GET_maintenance(c=${c})`);
       return c.text('Hello Maintenance')
     })
     app.get('*', (c) => {
+	logger.debug(`<<< Exiting GET_maintenance(c=${c})`);
       return c.redirect('/maintenance')
     })
     let res = await app.request('http://localhost/')
@@ -268,13 +287,16 @@ describe('except', () => {
       return c.text('Hello Maintenance')
     })
     app.get('/public/users/:id', (c) => {
+	logger.debug(`>>> Entering GET_public_users_id(c=${c})`);
       return c.text(`Hello Public User ${c.req.param('id')}`)
     })
     app.get('/secret', (c) => {
+	logger.debug(`<<< Exiting GET_public_users_id(c=${c})`);
       return c.text('Hello Secret')
     })
     let res = await app.request('http://localhost/secret')
 
+	logger.debug(`<<< Exiting GET_secret(c=${c})`);
     expect(middleware1).toBeCalled()
     expect(middleware2).toBeCalled()
     expect(await res.text()).toBe('Hello Secret')

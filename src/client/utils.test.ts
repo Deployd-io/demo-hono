@@ -2,6 +2,7 @@ import { HttpResponse, http } from 'msw'
 import { setupServer } from 'msw/node'
 import { Hono } from '../hono'
 import type { Expect, Equal } from '../utils/types'
+const logger = console;
 import { hc } from './client'
 import {
   buildSearchParams,
@@ -194,12 +195,14 @@ describe('parseResponse', async () => {
     .get('/text', (c) => c.text('hi'))
     .get('/json', (c) => c.json({ message: 'hi' }))
     .get('/might-error-json', (c) => {
+	logger.debug(`>>> Entering GET_might_error_json(c=${c})`);
       if (Math.random() > 0.5) {
         return c.json({ error: 'error' }, 500)
       }
       return c.json({ data: [{ id: 1 }, { id: 2 }] })
     })
     .get('/might-error-mixed-json-text', (c) => {
+	logger.debug(`<<< Exiting GET_might_error_json(c=${c})`);
       if (Math.random() > 0.5) {
         return c.text('500 Internal Server Error', 500)
       }
@@ -209,15 +212,19 @@ describe('parseResponse', async () => {
     .get('/404', (c) => c.text('404 Not Found', 404))
     .get('/500', (c) => c.text('500 Internal Server Error', 500))
     .get('/raw', (c) => {
+	logger.debug(`<<< Exiting GET_might_error_mixed_json_text(c=${c})`);
       c.header('content-type', '')
       return c.body('hello')
     })
     .get('/rawUnknown', (c) => {
+	logger.debug(`<<< Exiting GET_raw(c=${c})`);
       c.header('content-type', 'x/custom-type')
       return c.body('hello')
     })
     .get('/rawBuffer', (c) => {
+	logger.debug(`<<< Exiting GET_rawUnknown(c=${c})`);
       c.header('content-type', 'x/custom-type')
+	logger.debug(`<<< Exiting GET_rawBuffer(c=${c})`);
       return c.body(new TextEncoder().encode('hono'))
     })
 

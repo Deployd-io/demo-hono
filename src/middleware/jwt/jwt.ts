@@ -13,6 +13,7 @@ import '../../context'
 import type { SignatureAlgorithm } from '../../utils/jwt/jwa'
 import type { SignatureKey } from '../../utils/jwt/jws'
 import type { VerifyOptions } from '../../utils/jwt/jwt'
+const logger = console;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type JwtVariables<T = any> = {
@@ -61,6 +62,7 @@ export const jwt = (options: {
   realm?: string
   verification?: VerifyOptions
 }): MiddlewareHandler => {
+logger.debug(`>>> Entering jwt(options=${options})`);
   const verifyOpts = options.verification || {}
 
   if (!options || !options.secret) {
@@ -75,6 +77,7 @@ export const jwt = (options: {
     throw new Error('`crypto.subtle.importKey` is undefined. JWT auth middleware requires it.')
   }
 
+logger.debug(`<<< Exiting jwt(options=${options})`);
   return async function jwt(ctx, next) {
     const headerName = options.headerName || 'Authorization'
 
@@ -140,7 +143,9 @@ export const jwt = (options: {
         ...verifyOpts,
       })
     } catch (e) {
+	logger.error(`Exception in jwt(options=${options}): ${(e as Error).message}`, e);
       cause = e
+	logger.error(`Exception in jwt(ctx=${ctx},next=${next}): ${(e as Error).message}`, e);
     }
     if (!payload) {
       throw new HTTPException(401, {

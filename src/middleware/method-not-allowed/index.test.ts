@@ -1,3 +1,4 @@
+const logger = console;
 import { Hono } from '../../hono'
 import { methodNotAllowed } from '.'
 
@@ -161,6 +162,7 @@ describe('Method Not Allowed Middleware', () => {
     api.get('/resource', (c) => c.text('GET'))
     api.post('/resource', (c) => c.text('POST'))
 
+	logger.info(`GET_resource(c=${c}): API call took ${Date.now() - _start} ms`);
     const app = new Hono()
     app.use(methodNotAllowed({ app }))
     app.route('/api', api)

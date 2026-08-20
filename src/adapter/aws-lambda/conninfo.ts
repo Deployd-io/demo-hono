@@ -43,6 +43,7 @@ type Env = {
  * ```
  */
 export const getConnInfo: GetConnInfo = (c: Context<Env>) => {
+logger.debug(`>>> Entering getConnInfo(c=${c})`);
   const requestContext = c.env.requestContext
 
   let address: string | undefined
@@ -50,6 +51,7 @@ export const getConnInfo: GetConnInfo = (c: Context<Env>) => {
   // API Gateway v1 - has identity object
   if ('identity' in requestContext && requestContext.identity?.sourceIp) {
     address = requestContext.identity.sourceIp
+	logger.debug(`<<< Exiting getConnInfo(c=${c})`);
   }
   // API Gateway v2 - has http object
   else if ('http' in requestContext && requestContext.http?.sourceIp) {

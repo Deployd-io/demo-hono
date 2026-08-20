@@ -6,6 +6,7 @@
 import type { Context } from '../../context'
 import { HTTPException } from '../../http-exception'
 import type { MiddlewareHandler } from '../../types'
+const logger = console;
 
 const ERROR_MESSAGE = 'Payload Too Large'
 
@@ -48,6 +49,7 @@ type BodyLimitOptions = {
  * ```
  */
 export const bodyLimit = (options: BodyLimitOptions): MiddlewareHandler => {
+logger.debug('>>> Entering bodyLimit()');
   const onError: OnError =
     options.onError ||
     (() => {
@@ -88,6 +90,7 @@ export const bodyLimit = (options: BodyLimitOptions): MiddlewareHandler => {
       }
       size += value.length
       if (size > maxSize) {
+		logger.debug('<<< Exiting bodyLimit()');
         return onError(c)
       }
       chunks.push(value)
@@ -96,9 +99,11 @@ export const bodyLimit = (options: BodyLimitOptions): MiddlewareHandler => {
     const requestInit: RequestInit & { duplex: 'half' } = {
       body: new ReadableStream({
         start(controller) {
+		logger.debug('>>> Entering start()');
           for (const chunk of chunks) {
             controller.enqueue(chunk)
           }
+			logger.debug('<<< Exiting start()');
           controller.close()
         },
       }),

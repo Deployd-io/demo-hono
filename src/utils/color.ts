@@ -1,3 +1,4 @@
+const logger = console;
 /**
  * @module
  * Color utility.
@@ -12,6 +13,7 @@
  * @returns {boolean}
  */
 export function getColorEnabled(): boolean {
+logger.debug('>>> Entering getColorEnabled()');
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { process, Deno } = globalThis as any
 
@@ -23,6 +25,7 @@ export function getColorEnabled(): boolean {
           'NO_COLOR' in process?.env
         : false
 
+logger.debug('<<< Exiting getColorEnabled()');
   return !isNoColor
 }
 
@@ -34,10 +37,12 @@ export function getColorEnabled(): boolean {
  * @returns {boolean}
  */
 export async function getColorEnabledAsync(): Promise<boolean> {
+logger.debug('>>> Entering getColorEnabledAsync()');
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { navigator } = globalThis as any
   // Avoid analysis of cloudflare scheme by bundlers
   const cfWorkers = 'cloudflare:workers'
+logger.debug(`getColorEnabledAsync(): cfWorkers → ${cfWorkers}`);
 
   const isNoColor =
     navigator !== undefined && navigator.userAgent === 'Cloudflare-Workers'
@@ -47,10 +52,12 @@ export async function getColorEnabledAsync(): Promise<boolean> {
             // @ts-ignore
             return 'NO_COLOR' in ((await import(cfWorkers)).env ?? {}) // {} is for backward compat
           } catch {
+			logger.error('Exception in getColorEnabledAsync()');
             return false
           }
         })()
       : !getColorEnabled()
 
+logger.debug('<<< Exiting getColorEnabledAsync()');
   return !isNoColor
 }

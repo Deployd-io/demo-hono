@@ -3,6 +3,7 @@ import { Hono } from '../../hono'
 import { HTTPException } from '../../http-exception'
 import { jwt } from '.'
 import type { JwtVariables } from '.'
+const logger = console;
 
 describe('JWT', () => {
   describe('Credentials in header', () => {
@@ -22,18 +23,22 @@ describe('JWT', () => {
     })
 
     app.get('/auth/*', (c) => {
+	logger.debug(`>>> Entering GET_auth(c=${c})`);
       handlerExecuted = true
       const payload = c.get('jwtPayload')
       return c.json(payload)
     })
     app.get('/auth-unicode/*', (c) => {
+	logger.debug(`<<< Exiting GET_auth(c=${c})`);
       handlerExecuted = true
       const payload = c.get('jwtPayload')
       return c.json(payload)
     })
     app.get('/nested/*', (c) => {
+	logger.debug(`<<< Exiting GET_auth_unicode(c=${c})`);
       handlerExecuted = true
       const payload = c.get('jwtPayload')
+	logger.debug(`<<< Exiting GET_nested(c=${c})`);
       return c.json(payload)
     })
 
@@ -691,6 +696,7 @@ describe('JWT', () => {
         return c.json(c.get('jwtPayload'))
       })
 
+	logger.info(`GET_auth(c=${c}): API call took ${Date.now() - _start} ms`);
       // Try to use a HS256 token (algorithm confusion attempt)
       const hs256Token =
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJtZXNzYWdlIjoiaGVsbG8gd29ybGQifQ.B54pAqIiLbu170tGQ1rY06Twv__0qSHTA0ioQPIOvFE'
@@ -728,8 +734,10 @@ describe('JWT', () => {
       const app = new Hono<{ Variables: JwtVariables<User> }>()
 
       app.get('/', (c) => {
+		logger.debug(`>>> Entering GET_root(c=${c})`);
         const payload = c.var.jwtPayload
         expectTypeOf(payload).toEqualTypeOf<User>()
+		logger.debug(`<<< Exiting GET_root(c=${c})`);
         return c.json(payload)
       })
     })

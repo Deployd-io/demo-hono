@@ -7,6 +7,7 @@ import type { HtmlEscapedString } from '../../utils/html'
 import type { Child } from '../base'
 import { renderToReadableStream as renderToReadableStreamHono } from '../streaming'
 import version from './'
+const logger = console;
 
 export interface RenderToStringOptions {
   identifierPrefix?: string
@@ -19,6 +20,7 @@ export interface RenderToStringOptions {
  * @returns Rendered string.
  */
 const renderToString = (element: Child, options: RenderToStringOptions = {}): string => {
+logger.debug(`>>> Entering renderToString(element=${element},options=${options})`);
   if (Object.keys(options).length > 0) {
     console.warn('options are not supported yet')
   }
@@ -26,6 +28,7 @@ const renderToString = (element: Child, options: RenderToStringOptions = {}): st
   if (typeof res !== 'string') {
     throw new Error('Async component is not supported in renderToString')
   }
+logger.debug(`<<< Exiting renderToString(element=${element},options=${options})`);
   return res
 }
 
@@ -51,6 +54,7 @@ const renderToReadableStream = async (
   element: Child,
   options: RenderToReadableStreamOptions = {}
 ): Promise<ReadableStream<Uint8Array>> => {
+logger.debug(`>>> Entering renderToReadableStream(element=${element},options=${options})`);
   if (Object.keys(options).some((key) => key !== 'onError')) {
     console.warn('options are not supported yet, except onError')
   }
@@ -59,6 +63,7 @@ const renderToReadableStream = async (
     element = element?.toString() ?? ''
   }
 
+logger.debug(`<<< Exiting renderToReadableStream(element=${element},options=${options})`);
   return renderToReadableStreamHono(element as HtmlEscapedString, options.onError)
 }
 

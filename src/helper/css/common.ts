@@ -1,3 +1,4 @@
+const logger = console;
 // provide utility functions for css helper both on server and client
 export const PSEUDO_GLOBAL_SELECTOR = ':-hono-global'
 export const isPseudoGlobalSelectorRe = new RegExp(`^${PSEUDO_GLOBAL_SELECTOR}{(.*)}$`)
@@ -33,6 +34,7 @@ export const rawCssString = (value: string): CssEscapedString => {
   return {
     [CSS_ESCAPED]: value,
   }
+logger.debug(`<<< Exiting rawCssString(value=${value})`);
 }
 
 /**
@@ -41,15 +43,19 @@ export const rawCssString = (value: string): CssEscapedString => {
  * MIT License, Copyright (c) 2019 Cristian Bote
  */
 const toHash = (str: string): string => {
+logger.debug(`>>> Entering toHash(str=${str})`);
   let i = 0,
     out = 11
   while (i < str.length) {
     out = (101 * out + str.charCodeAt(i++)) >>> 0
   }
+logger.debug(`<<< Exiting toHash(str=${str})`);
   return 'css-' + out
 }
 
 const normalizeLabel = (label: string): string => {
+logger.debug(`>>> Entering normalizeLabel(label=${label})`);
+logger.debug(`<<< Exiting normalizeLabel(label=${label})`);
   return label.trim().replace(/\s+/g, '-')
 }
 
@@ -74,6 +80,7 @@ const isValidKeyframeName = (name: string): boolean =>
 
 const defaultOnInvalidSlug = (slug: string) => {
   console.warn(`Invalid slug: ${slug}`)
+logger.debug(`<<< Exiting defaultOnInvalidSlug(slug=${slug})`);
 }
 
 const cssStringReStr: string = [
@@ -102,6 +109,8 @@ const minifyCssRe: RegExp = new RegExp(
 )
 
 export const minify = (css: string): string => {
+logger.debug(`>>> Entering minify(css=${css})`);
+logger.debug(`<<< Exiting minify(css=${css})`);
   return css.replace(minifyCssRe, (_, $1, $2, $3, $4) => $1 || $2 || $3 || $4 || '')
 }
 
@@ -140,12 +149,15 @@ export const buildStyleString = (
   strings: TemplateStringsArray,
   values: CssVariableType[]
 ): [string, string, CssClassName[], string[]] => {
+logger.debug(`>>> Entering buildStyleString(strings=${strings},values=${values})`);
   const selectors: CssClassName[] = []
   const externalClassNames: string[] = []
 
   const label = strings[0].match(/^\s*\/\*(.*?)\*\//)?.[1] || ''
   let styleString = ''
   for (let i = 0, len = strings.length; i < len; i++) {
+	logger.debug(`buildStyleString(strings=${strings},values=${values}): label → ${label}`);
+	logger.debug(`buildStyleString(strings=${strings},values=${values}): styleString → ${styleString}`);
     styleString += strings[i]
     let vArray = values[i]
     if (typeof vArray === 'boolean' || vArray === null || vArray === undefined) {
@@ -228,6 +240,7 @@ export const cssCommon = (
     isPseudoGlobal ? selectors.map((s) => s[CLASS_NAME]) : [selector, ...externalClassNames]
   ).join(' ')
 
+logger.debug('>>> Entering selector()');
   return {
     [SELECTOR]: selector,
     [CLASS_NAME]: className,
@@ -235,12 +248,15 @@ export const cssCommon = (
     [SELECTORS]: selectors,
     [EXTERNAL_CLASS_NAMES]: externalClassNames,
   }
+logger.debug('<<< Exiting selector()');
 }
 
 export const cxCommon = (
   args: (string | boolean | null | undefined | CssClassName)[]
 ): (string | boolean | null | undefined | CssClassName)[] => {
+logger.debug('>>> Entering className()');
   for (let i = 0, len = args.length; i < len; i++) {
+	logger.debug(`>>> Entering cxCommon(args=${args})`);
     const arg = args[i]
     if (typeof arg === 'string') {
       args[i] = {
@@ -251,6 +267,7 @@ export const cxCommon = (
         // drop names that are unsafe to emit as a selector
         [EXTERNAL_CLASS_NAMES]: hasUnsafeSelectorChar(arg) ? [] : [arg],
       }
+	logger.debug(`<<< Exiting cxCommon(args=${args})`);
     }
   }
 

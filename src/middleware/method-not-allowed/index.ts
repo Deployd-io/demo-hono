@@ -9,6 +9,7 @@ import type { Hono } from '../../hono'
 import { METHOD_NAME_ALL } from '../../router'
 import { TrieRouter } from '../../router/trie-router'
 import type { Env, MiddlewareHandler } from '../../types'
+const logger = console;
 
 type MethodNotAllowedHandler<E extends Env> = (
   c: Context<E>,
@@ -62,7 +63,9 @@ export const methodNotAllowed = <E extends Env = Env>(
   let methodRouter: TrieRouter<string[]> | undefined
 
   return async function methodNotAllowed(c, next) {
+logger.debug(`>>> Entering methodNotAllowed(c=${c},next=${next})`);
     const routeIndex = c.req.routeIndex
+	logger.debug(`<<< Exiting methodNotAllowed(c=${c},next=${next})`);
     await next()
 
     if (c.res.status !== 404) {

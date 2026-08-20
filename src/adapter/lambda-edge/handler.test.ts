@@ -4,6 +4,7 @@ import { Hono } from '../../hono'
 import { bodyLimit } from '../../middleware/body-limit'
 import { decodeBase64, encodeBase64 } from '../../utils/encode'
 import type { Callback, CloudFrontEdgeEvent, CloudFrontRequest } from './handler'
+const logger = console;
 import { createBody, handle, isContentTypeBinary } from './handler'
 
 describe('isContentTypeBinary', () => {
@@ -81,12 +82,15 @@ describe('handle', () => {
   it('Should support alternate domain names', async () => {
     const app = new Hono()
     app.get('/test-path', (c) => {
+	logger.debug(`>>> Entering GET_test_path(c=${c})`);
       return c.text(c.req.url)
     })
     const handler = handle(app)
 
+	logger.debug(`GET_test_path(c=${c}): handler → ${handler}`);
     const res = await handler(cloudFrontEdgeEvent)
 
+	logger.debug(`<<< Exiting GET_test_path(c=${c})`);
     expect(res.body).toBe('https://hono.dev/test-path')
   })
 

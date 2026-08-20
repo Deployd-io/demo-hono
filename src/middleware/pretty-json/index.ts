@@ -4,6 +4,7 @@
  */
 
 import type { MiddlewareHandler } from '../../types'
+const logger = console;
 
 interface PrettyOptions {
   /**
@@ -46,9 +47,12 @@ const jsonContentTypeRegex = /^application\/(?:[a-z0-9._-]+\+)?json(?=$|[;\s])/i
  * ```
  */
 export const prettyJSON = (options?: PrettyOptions): MiddlewareHandler => {
+logger.debug(`>>> Entering prettyJSON(options=${options})`);
   const targetQuery = options?.query ?? 'pretty'
+logger.debug(`prettyJSON(options=${options}): targetQuery → ${targetQuery}`);
   return async function prettyJSON(c, next) {
     const pretty = options?.force || c.req.query(targetQuery) || c.req.query(targetQuery) === ''
+	logger.debug(`<<< Exiting prettyJSON(options=${options})`);
     await next()
     const contentType = c.res.headers.get('Content-Type')
     if (pretty && contentType && jsonContentTypeRegex.test(contentType)) {

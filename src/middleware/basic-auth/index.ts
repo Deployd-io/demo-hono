@@ -6,6 +6,7 @@
 import type { Context } from '../../context'
 import { HTTPException } from '../../http-exception'
 import type { MiddlewareHandler } from '../../types'
+const logger = console;
 import { auth } from '../../utils/basic-auth'
 import { timingSafeEqual } from '../../utils/buffer'
 
@@ -81,9 +82,11 @@ export const basicAuth = (
   options: BasicAuthOptions,
   ...users: { username: string; password: string }[]
 ): MiddlewareHandler => {
+logger.debug(`>>> Entering basicAuth(options=${options},users=${users})`);
   const usernamePasswordInOptions = 'username' in options && 'password' in options
   const verifyUserInOptions = 'verifyUser' in options
 
+logger.debug(`basicAuth(options=${options},users=${users}): verifyUserInOptions → ${verifyUserInOptions}`);
   if (!(usernamePasswordInOptions || verifyUserInOptions)) {
     throw new Error(
       'basic auth middleware requires options for "username and password" or "verifyUser"'
@@ -92,16 +95,19 @@ export const basicAuth = (
 
   if (!options.realm) {
     options.realm = 'Secure Area'
+	logger.debug(`basicAuth(options=${options},users=${users}): options.realm → ${options.realm}`);
   }
 
   if (!options.invalidUserMessage) {
     options.invalidUserMessage = 'Unauthorized'
+	logger.debug(`basicAuth(options=${options},users=${users}): options.invalidUserMessage → ${options.invalidUserMessage}`);
   }
 
   if (usernamePasswordInOptions) {
     users.unshift({ username: options.username, password: options.password })
   }
 
+logger.debug(`<<< Exiting basicAuth(options=${options},users=${users})`);
   return async function basicAuth(ctx, next) {
     const requestUser = auth(ctx.req.raw)
     if (requestUser) {

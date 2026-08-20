@@ -1,3 +1,4 @@
+const logger = console;
 import { assertEquals } from '@std/assert'
 import { stream, streamSSE } from '../../src/helper/streaming/index.ts'
 import { Hono } from '../../src/hono.ts'
@@ -7,10 +8,12 @@ Deno.test('Should call onAbort via stream', async () => {
   let streamStarted = false
   let aborted = false
   app.get('/stream', (c) => {
+	logger.debug(`>>> Entering GET_stream(c=${c})`);
     return stream(c, (stream) => {
       streamStarted = true
       stream.onAbort(() => {
         aborted = true
+	logger.debug(`<<< Exiting GET_stream(c=${c})`);
       })
       return new Promise<void>((resolve) => {
         stream.onAbort(resolve)

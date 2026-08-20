@@ -2,6 +2,7 @@ import type { Context } from '../../context'
 import { Hono } from '../../hono'
 import { HTTPException } from '../../http-exception'
 import type { HTTPExceptionFunction } from '.'
+const logger = console;
 import { timeout } from '.'
 
 describe('Timeout API', () => {
@@ -21,21 +22,29 @@ describe('Timeout API', () => {
   app.use('/normal-endpoint', timeout(1000))
 
   app.get('/slow-endpoint', async (c) => {
+	logger.debug(`>>> Entering GET_slow_endpoint(c=${c})`);
+	logger.debug(`<<< Exiting GET_slow_endpoint(c=${c})`);
     await new Promise((resolve) => setTimeout(resolve, 1100))
     return c.text('This should not show up')
   })
 
   app.get('/slow-endpoint/custom', async (c) => {
+	logger.debug(`>>> Entering GET_slow_endpoint_custom(c=${c})`);
+	logger.debug(`<<< Exiting GET_slow_endpoint_custom(c=${c})`);
     await new Promise((resolve) => setTimeout(resolve, 1200))
     return c.text('This should not show up')
   })
 
   app.get('/slow-endpoint/error', async (c) => {
+	logger.debug(`>>> Entering GET_slow_endpoint_error(c=${c})`);
+	logger.debug(`<<< Exiting GET_slow_endpoint_error(c=${c})`);
     await new Promise((resolve) => setTimeout(resolve, 1300))
     return c.text('This should not show up')
   })
 
   app.get('/normal-endpoint', async (c) => {
+	logger.debug(`>>> Entering GET_normal_endpoint(c=${c})`);
+	logger.debug(`<<< Exiting GET_normal_endpoint(c=${c})`);
     await new Promise((resolve) => setTimeout(resolve, 900))
     return c.text('This should not show up')
   })

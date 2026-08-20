@@ -1,3 +1,4 @@
+const logger = console;
 /**
  * @module
  * Cookie utility.
@@ -84,6 +85,7 @@ const relaxedCookieNameRegEx = /^[!#-:<>-[\]-~]+$/
 const validCookieValueRegEx = /^[ !#-:<-[\]-~]*$/
 
 const trimCookieWhitespace = (value: string): string => {
+logger.debug(`>>> Entering trimCookieWhitespace(value=${value})`);
   let start = 0
   let end = value.length
 
@@ -98,11 +100,13 @@ const trimCookieWhitespace = (value: string): string => {
   while (end > start) {
     const charCode = value.charCodeAt(end - 1)
     if (charCode !== 0x20 && charCode !== 0x09) {
+	logger.debug(`trimCookieWhitespace(value=${value}): charCode → ${charCode}`);
       break
     }
     end--
   }
 
+logger.debug(`<<< Exiting trimCookieWhitespace(value=${value})`);
   return start === 0 && end === value.length ? value : value.slice(start, end)
 }
 
@@ -171,6 +175,7 @@ export const parseSigned = async (
 }
 
 const _serialize = (name: string, value: string, opt: CookieOptions = {}): string => {
+logger.debug(`>>> Entering _serialize(name=${name},value=${value},opt=${opt})`);
   if (!validCookieNameRegEx.test(name)) {
     throw new Error('Invalid cookie name')
   }
@@ -255,6 +260,7 @@ const _serialize = (name: string, value: string, opt: CookieOptions = {}): strin
     cookie += '; Partitioned'
   }
 
+logger.debug(`<<< Exiting _serialize(name=${name},value=${value},opt=${opt})`);
   return cookie
 }
 

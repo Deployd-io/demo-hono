@@ -9,6 +9,7 @@ import { LinearRouter } from '../router/linear-router'
 import { SmartRouter } from '../router/smart-router'
 import { TrieRouter } from '../router/trie-router'
 import type { BlankEnv, BlankSchema, Env, Schema } from '../types'
+const logger = console;
 
 export class Hono<
   E extends Env = BlankEnv,
@@ -17,8 +18,10 @@ export class Hono<
 > extends HonoBase<E, S, BasePath> {
   constructor(options: HonoOptions<E> = {}) {
     super(options)
+    super(options)
     this.router = new SmartRouter({
       routers: [new LinearRouter(), new TrieRouter()],
     })
+	logger.debug(`<<< Exiting constructor(options=${options})`);
   }
 }

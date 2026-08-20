@@ -1,5 +1,6 @@
 import { parseBody } from './body'
 import type { BodyData } from './body'
+const logger = console;
 
 type RecursiveRecord<K extends string, T> = {
   [key in K]: T | RecursiveRecord<K, T>
@@ -15,6 +16,8 @@ describe('Parse Body Util', () => {
     body: BodyInit,
     headers?: { [key: string]: string }
   ) => {
+	logger.debug(`>>> Entering createRequest(url=${url},method=${method},body=${body},headers=${headers})`);
+	logger.debug(`<<< Exiting createRequest(url=${url},method=${method},body=${body},headers=${headers})`);
     return new Request(url, {
       method,
       body,

@@ -5,6 +5,7 @@
 
 import type { Hono } from '../../hono'
 import type { Env, RouterRoute } from '../../types'
+const logger = console;
 import { getColorEnabled } from '../../utils/color'
 import { findTargetHandler, isMiddleware } from '../../utils/handler'
 
@@ -21,6 +22,8 @@ interface RouteData {
 }
 
 const handlerName = (handler: Function): string => {
+logger.debug(`>>> Entering handlerName(handler=${handler})`);
+logger.debug(`<<< Exiting handlerName(handler=${handler})`);
   return handler.name || (isMiddleware(handler) ? '[middleware]' : '[handler]')
 }
 

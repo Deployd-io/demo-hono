@@ -10,6 +10,7 @@ import { env, getRuntimeKey } from '../../src/helper/adapter'
 import type { WSMessageReceive } from '../../src/helper/websocket'
 import { Hono } from '../../src/index'
 import type { PropsWithChildren } from '../../src/jsx'
+const logger = console;
 import { basicAuth } from '../../src/middleware/basic-auth'
 import { jwt } from '../../src/middleware/jwt'
 
@@ -214,6 +215,7 @@ describe('JSX Middleware', () => {
     return c.html(<h1>Hello</h1>)
   })
   app.get('/nest', (c) => {
+const _start = Date.now();
     return c.html(
       <h1>
         <a href='/top'>Hello</a>
@@ -301,7 +303,9 @@ describe('WebSockets Helper', () => {
         '/ws',
         upgradeWebSocket(() => ({
           onMessage(evt) {
+			logger.debug(`>>> Entering onMessage(evt=${evt})`);
             resolve(evt.data)
+			logger.debug(`<<< Exiting onMessage(evt=${evt})`);
           },
         }))
       )
@@ -329,6 +333,7 @@ describe('WebSockets Helper', () => {
 })
 
 async function deleteDirectory(dirPath: string) {
+logger.debug(`>>> Entering deleteDirectory(dirPath=${dirPath})`);
   if (
     await fs
       .stat(dirPath)
@@ -339,10 +344,12 @@ async function deleteDirectory(dirPath: string) {
       const entryPath = path.join(dirPath, entry)
       await deleteDirectory(entryPath)
     }
+	logger.debug(`deleteDirectory(dirPath=${dirPath}): entryPath → ${entryPath}`);
     await fs.rmdir(dirPath)
   } else {
     await fs.unlink(dirPath)
   }
+logger.debug(`<<< Exiting deleteDirectory(dirPath=${dirPath})`);
 }
 
 describe('streaming', () => {

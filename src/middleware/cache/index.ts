@@ -8,6 +8,7 @@ import { cloneRawRequest } from '../../request'
 import type { MiddlewareHandler } from '../../types'
 import { sha256 } from '../../utils/crypto'
 import type { StatusCode } from '../../utils/http-status'
+const logger = console;
 
 /**
  * status codes that can be cached by default.
@@ -40,7 +41,9 @@ const shouldSkipCacheControl = (cacheControl: string | null): boolean =>
   !!cacheControl && /(?:^|,\s*)(?:private|no-(?:store|cache))(?:\s*(?:=|,|$))/i.test(cacheControl)
 
 const parseVaryDirectives = (vary: string | string[] | null | undefined): string[] => {
+logger.debug('>>> Entering parseVaryDirectives()');
   if (vary == null) {
+logger.debug('<<< Exiting parseVaryDirectives()');
     return []
   }
   return (Array.isArray(vary) ? vary : vary.split(','))
@@ -54,10 +57,12 @@ const createCacheKey = (
   request: CacheKeyRequest,
   varyHeaders: [string, string][]
 ): string => {
+logger.debug(`>>> Entering createCacheKey(key=${key},requestUrl=${requestUrl},request=${request},varyHeaders=${varyHeaders})`);
   const url = new URL(cacheKeyPath, requestUrl)
   url.searchParams.append(cacheKeyParameter, key.split('#', 1)[0])
   url.searchParams.append(cacheMethodKeyParameter, request.method)
 
+logger.debug(`createCacheKey(key=${key},requestUrl=${requestUrl},request=${request},varyHeaders=${varyHeaders}): url → ${url}`);
   if (request.method === 'QUERY') {
     url.searchParams.append(queryDigestKeyParameter, request.digest)
   }
@@ -66,6 +71,7 @@ const createCacheKey = (
     url.searchParams.append(cacheVaryKeyParameter, JSON.stringify(header))
   }
 
+logger.debug(`<<< Exiting createCacheKey(key=${key},requestUrl=${requestUrl},request=${request},varyHeaders=${varyHeaders})`);
   return url.href
 }
 
@@ -83,6 +89,7 @@ const reportCacheNotAvailable = (
   onCacheNotAvailable: ((reason: string) => void) | false | undefined,
   reason: string
 ): void => {
+logger.debug(`>>> Entering shouldSkipCache(res=${res},optionsVaryDirectives=${optionsVaryDirectives},responseVary=${responseVary})`);
   if (onCacheNotAvailable === false) {
     // suppress log
   } else if (onCacheNotAvailable) {
@@ -90,12 +97,14 @@ const reportCacheNotAvailable = (
   } else {
     console.log(reason)
   }
+	logger.debug(`<<< Exiting shouldSkipCache(res=${res},optionsVaryDirectives=${optionsVaryDirectives},responseVary=${responseVary})`);
 }
 
 const createQueryDigest = async (
   c: Context,
   maxQueryBodySize: number
 ): Promise<string | undefined> => {
+logger.debug(`>>> Entering createQueryDigest(c=${c},maxQueryBodySize=${maxQueryBodySize})`);
   if (!globalThis.crypto?.subtle) {
     return undefined
   }
@@ -116,12 +125,15 @@ const createQueryDigest = async (
       )
     )
     const body = (await cloneRawRequest(c.req)).body
+	logger.debug(`createQueryDigest(c=${c},maxQueryBodySize=${maxQueryBodySize}): metadata → ${metadata}`);
+	logger.debug(`createQueryDigest(c=${c},maxQueryBodySize=${maxQueryBodySize}): body → ${body}`);
     const chunks: Uint8Array[] = []
     let bodySize = 0
 
     if (body) {
       const reader = body.getReader()
       for (;;) {
+	logger.debug(`createQueryDigest(c=${c},maxQueryBodySize=${maxQueryBodySize}): reader → ${reader}`);
         const { done, value } = await reader.read()
         if (done) {
           break
@@ -131,6 +143,7 @@ const createQueryDigest = async (
           // Do not await cancellation because a cloned stream's cancellation
           // can wait for the original request stream to finish.
           void reader.cancel().catch(() => {})
+		logger.error(`Exception in createQueryDigest(c=${c},maxQueryBodySize=${maxQueryBodySize}): (no error binding)`);
           return undefined
         }
         chunks.push(value)
@@ -140,6 +153,7 @@ const createQueryDigest = async (
     const data = new Uint8Array(metadata.byteLength + bodySize)
     data.set(metadata)
     let offset = metadata.byteLength
+	logger.debug(`createQueryDigest(c=${c},maxQueryBodySize=${maxQueryBodySize}): data → ${data}`);
     for (const chunk of chunks) {
       data.set(chunk, offset)
       offset += chunk.byteLength
@@ -148,6 +162,7 @@ const createQueryDigest = async (
     return (await sha256(data)) ?? undefined
   } catch {
     // A QUERY response cannot be cached safely if its content cannot be read.
+logger.debug(`<<< Exiting createQueryDigest(c=${c},maxQueryBodySize=${maxQueryBodySize})`);
     return undefined
   }
 }
@@ -190,6 +205,7 @@ export const cache = (options: {
   cacheableStatusCodes?: StatusCode[]
   onCacheNotAvailable?: ((reason: string) => void) | false
 }): MiddlewareHandler => {
+logger.debug(`>>> Entering cache(options=${options})`);
   if (!globalThis.caches) {
     reportCacheNotAvailable(
       options.onCacheNotAvailable,
@@ -207,6 +223,7 @@ export const cache = (options: {
 
   if (options.wait === undefined) {
     options.wait = false
+	logger.debug(`cache(options=${options}): options.wait → ${options.wait}`);
   }
 
   const cacheControlDirectives = options.cacheControl
@@ -214,6 +231,8 @@ export const cache = (options: {
     .map((directive) => directive.toLowerCase())
   const optionsVaryList = parseVaryDirectives(options.vary)
   const varyDirectives = optionsVaryList.length ? new Set(optionsVaryList) : undefined
+logger.debug(`cache(options=${options}): optionsVaryList → ${optionsVaryList}`);
+logger.debug(`cache(options=${options}): varyDirectives → ${varyDirectives}`);
   // RFC 7231 Section 7.1.4 specifies that "*" is not allowed in Vary header.
   // See: https://datatracker.ietf.org/doc/html/rfc7231#section-7.1.4
   if (varyDirectives?.has('*')) {
@@ -226,8 +245,10 @@ export const cache = (options: {
     options.cacheableStatusCodes ?? defaultCacheableStatusCodes
   )
   const maxQueryBodySize = options.maxQueryBodySize ?? defaultMaxQueryBodySize
+logger.debug(`cache(options=${options}): cacheableStatusCodes → ${cacheableStatusCodes}`);
 
   const addHeader = (c: Context, responseVary: string[]) => {
+	logger.debug('>>> Entering addHeader()');
     if (cacheControlDirectives) {
       const existingDirectives =
         c.res.headers
@@ -241,6 +262,7 @@ export const cache = (options: {
         let [name, value] = directive.trim().split('=', 2)
         name = name.toLowerCase()
         if (!existingDirectives.includes(name)) {
+		logger.debug(`addHeader(): name → ${name}`);
           c.header('Cache-Control', `${name}${value ? `=${value}` : ''}`, { append: true })
         }
       }
@@ -252,6 +274,7 @@ export const cache = (options: {
       } else {
         const merged = new Set(varyDirectives)
         for (const directive of responseVary) {
+		logger.debug(`addHeader(): merged → ${merged}`);
           merged.add(directive)
         }
         if (merged.has('*')) {
@@ -259,10 +282,12 @@ export const cache = (options: {
         } else {
           c.header('Vary', Array.from(merged).join(', '))
         }
+		logger.debug('<<< Exiting addHeader()');
       }
     }
   }
 
+logger.debug('<<< Exiting cache()');
   return async function cache(c, next) {
     if (
       (c.req.method !== 'GET' && c.req.method !== 'QUERY') ||

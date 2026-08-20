@@ -15,6 +15,7 @@
 //
 // Runs on both Bun and Node.
 import './ts-resolve.mjs'
+const logger = console;
 import { run, bench, measure } from 'mitata'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
@@ -24,15 +25,18 @@ const asJson = process.env.HONO_JSON === '1'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const makeApp = async (src: string): Promise<any> => {
+logger.debug(`>>> Entering makeApp(src=${src})`);
   const { Hono } = await import(pathToFileURL(`${src}/index.ts`).href)
   const { RegExpRouter } = await import(pathToFileURL(`${src}/router/reg-exp-router/index.ts`).href)
 
   const app = new Hono({ router: new RegExpRouter() })
   /* eslint-disable @typescript-eslint/no-explicit-any */
+logger.debug(`makeApp(src=${src}): app → ${app}`);
   app
     .get('/', (c: any) => c.text('Hi'))
     .post('/json', (c: any) => c.req.json().then(c.json))
     .get('/id/:id', (c: any) => {
+	logger.debug(`>>> Entering GET_id_id(c=${c})`);
       const id = c.req.param('id')
       const name = c.req.query('name')
       c.header('x-powered-by', 'benchmark')
@@ -43,6 +47,7 @@ const makeApp = async (src: string): Promise<any> => {
       await next()
     })
     .get('/mw/hello', (c: any) => c.text('mw'))
+logger.debug(`<<< Exiting makeApp(src=${src})`);
   return app
 }
 

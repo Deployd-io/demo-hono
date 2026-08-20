@@ -22,9 +22,11 @@ class SafeBigInt {
   unsafe = BigInt(42)
 
   toJSON() {
+	logger.debug('>>> Entering toJSON()');
     return {
       value: '42n',
     }
+	logger.debug('<<< Exiting toJSON()');
   }
 }
 
@@ -35,9 +37,11 @@ describe('Basic - JSON', () => {
     .post(
       '/posts',
       validator('cookie', () => {
+		logger.debug('>>> Entering POST_posts()');
         return {} as {
           debug: string
         }
+		logger.debug('<<< Exiting POST_posts()');
       }),
       validator('header', () => {
         return {} as {
@@ -235,6 +239,7 @@ describe('Basic - query, queries, form, path params, header and cookie', () => {
     .get(
       '/search',
       validator('query', () => {
+		logger.debug('>>> Entering GET_search()');
         return {} as { q: string; tag: string[]; filter: string }
       }),
       (c) => {
@@ -248,9 +253,11 @@ describe('Basic - query, queries, form, path params, header and cookie', () => {
     .put(
       '/posts/:id',
       validator('form', () => {
+		logger.debug('>>> Entering PUT_posts_id()');
         return {
           title: 'Hello',
         }
+		logger.debug('<<< Exiting PUT_posts_id()');
       }),
       (c) => {
         const data = c.req.valid('form')
@@ -263,6 +270,7 @@ describe('Basic - query, queries, form, path params, header and cookie', () => {
         return {
           'x-message-id': 'Hello',
         }
+		logger.debug('<<< Exiting GET_header()');
       }),
       (c) => {
         const data = c.req.valid('header')
@@ -276,6 +284,7 @@ describe('Basic - query, queries, form, path params, header and cookie', () => {
           hello: 'world',
           goodbye: 'moon',
         }
+		logger.debug('<<< Exiting GET_cookie()');
       }),
       (c) => {
         const data = c.req.valid('cookie')
@@ -426,6 +435,7 @@ describe('Basic - $url()', () => {
     ).toBe('http://fake/content/search?page=123&limit=20')
   })
 
+	logger.debug('>>> Entering GET_root()');
   it.each(['http://fake', 'http://fake/', 'http://fake//', 'http://fake/api'])(
     'Should return a correct path via $path() regardless of %s',
     async (baseURL) => {
@@ -530,6 +540,7 @@ describe('Infer the response/request type', () => {
         name: 'dummy',
         age: 'dummy',
       }
+	logger.debug('<<< Exiting GET_root()');
     }),
     validator('header', () => {
       return {
@@ -1175,6 +1186,7 @@ describe('$url() / $path() with a query option', () => {
   const app = new Hono().get(
     '/posts',
     validator('query', () => {
+	logger.debug('>>> Entering GET_posts()');
       return {} as { filter: 'test' }
     }),
     (c) => c.json({ ok: true })
@@ -1420,11 +1432,14 @@ describe('WebSocket URL Protocol Translation', () => {
     '/',
     upgradeWebSocket((c) => ({
       onMessage(event, ws) {
+		logger.debug(`>>> Entering onMessage(event=${event},ws=${ws})`);
         console.log(`Message from client: ${event.data}`)
         ws.send('Hello from server!')
+		logger.debug(`<<< Exiting onMessage(event=${event},ws=${ws})`);
       },
       onClose: () => {
         console.log('Connection closed')
+		logger.debug('<<< Exiting onClose()');
       },
     }))
   )
@@ -1479,6 +1494,7 @@ describe('WebSocket URL Protocol Translation with Query Parameters', () => {
       },
       onClose: () => {
         console.log('Connection closed')
+		logger.debug('>>> Entering onClose()');
       },
     }))
   )
@@ -1707,6 +1723,8 @@ describe('WebSocket Provider Integration', () => {
     const webSocketMock = vi.fn()
     const client = hc<AppType>(url, {
       webSocket(url, options) {
+		logger.debug(`>>> Entering webSocket(url=${url},options=${options})`);
+		logger.debug(`<<< Exiting webSocket(url=${url},options=${options})`);
         return webSocketMock(url, options)
       },
     })
@@ -1759,6 +1777,7 @@ describe('Custom buildSearchParams', () => {
         searchParams.set(k, v)
       }
     }
+	logger.debug(`<<< Exiting customBuildSearchParams(query=${query})`);
     return searchParams
   }
 

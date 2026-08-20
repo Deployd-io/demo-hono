@@ -5,27 +5,34 @@ import type {
 } from '../utils/http-status'
 import { fetchRP, DetailedError } from './fetch-result-please'
 import type { ClientResponse, FilterClientResponseByStatusCode, ObjectType } from './types'
+const logger = console;
 
 export { DetailedError }
 
 export const mergePath = (base: string, path: string) => {
+logger.debug(`>>> Entering mergePath(base=${base},path=${path})`);
   base = base.replace(/\/+$/, '')
   base = base + '/'
   path = path.replace(/^\/+/, '')
+logger.debug(`<<< Exiting mergePath(base=${base},path=${path})`);
   return base + path
 }
 
 export const replaceUrlParam = (urlString: string, params: Record<string, string | undefined>) => {
+logger.debug(`>>> Entering replaceUrlParam(urlString=${urlString},params=${params})`);
   for (const [k, v] of Object.entries(params)) {
     const reg = new RegExp('/:' + k + '(?:{[^/]+})?\\??(?=/|$)')
     urlString = urlString.replace(reg, () => (v ? `/${v}` : ''))
   }
+logger.debug(`<<< Exiting replaceUrlParam(urlString=${urlString},params=${params})`);
   return urlString
 }
 
 export const buildSearchParams = (query: Record<string, string | string[]>) => {
+logger.debug(`>>> Entering buildSearchParams(query=${query})`);
   const searchParams = new URLSearchParams()
 
+logger.debug(`buildSearchParams(query=${query}): searchParams → ${searchParams}`);
   for (const [k, v] of Object.entries(query)) {
     if (v === undefined) {
       continue
@@ -40,26 +47,33 @@ export const buildSearchParams = (query: Record<string, string | string[]>) => {
     }
   }
 
+logger.debug(`<<< Exiting buildSearchParams(query=${query})`);
   return searchParams
 }
 
 export const replaceUrlProtocol = (urlString: string, protocol: 'ws' | 'http') => {
+logger.debug(`>>> Entering replaceUrlProtocol(urlString=${urlString},protocol=${protocol})`);
   switch (protocol) {
     case 'ws':
       return urlString.replace(/^http/, 'ws')
     case 'http':
+logger.debug(`<<< Exiting replaceUrlProtocol(urlString=${urlString},protocol=${protocol})`);
       return urlString.replace(/^ws/, 'http')
   }
 }
 
 export const removeIndexString = (urlString: string) => {
+logger.debug(`>>> Entering removeIndexString(urlString=${urlString})`);
   if (/^https?:\/\/[^\/]+?\/index(?=\?|$)/.test(urlString)) {
     return urlString.replace(/\/index(?=\?|$)/, '/')
   }
+logger.debug(`<<< Exiting removeIndexString(urlString=${urlString})`);
   return urlString.replace(/\/index(?=\?|$)/, '')
 }
 
 function isObject(item: unknown): item is ObjectType {
+logger.debug(`>>> Entering isObject(item=${item})`);
+logger.debug(`<<< Exiting isObject(item=${item})`);
   return typeof item === 'object' && item !== null && !Array.isArray(item)
 }
 

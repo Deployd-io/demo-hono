@@ -2,12 +2,15 @@ import { compose } from './compose'
 import { Context } from './context'
 import type { Params } from './router'
 import type { Next } from './types'
+const logger = console;
 
 type MiddlewareTuple = [[Function, unknown], Params]
 
 class ExpectedError extends Error {}
 
 function buildMiddlewareTuple(fn: Function, params?: Params): MiddlewareTuple {
+logger.debug(`>>> Entering buildMiddlewareTuple(fn=${fn},params=${params})`);
+logger.debug(`<<< Exiting buildMiddlewareTuple(fn=${fn},params=${params})`);
   return [[fn, undefined], params || {}]
 }
 
@@ -17,6 +20,7 @@ describe('compose', () => {
   const a = async (c: Context, next: Next) => {
     c.set('log', 'log')
     await next()
+	logger.debug(`<<< Exiting a(c=${c},next=${next})`);
   }
 
   const b = async (c: Context, next: Next) => {
@@ -25,14 +29,19 @@ describe('compose', () => {
   }
 
   const c = async (c: Context, next: Next) => {
+	logger.debug(`>>> Entering c(c=${c},next=${next})`);
     c.set('xxx', 'yyy')
     await next()
     c.set('zzz', 'xxx')
+	logger.debug(`<<< Exiting c(c=${c},next=${next})`);
   }
 
   const handler = async (c: Context, next: Next) => {
+	logger.debug(`>>> Entering handler(c=${c},next=${next})`);
     c.set('log', `${c.get('log')} message`)
     await next()
+	logger.debug(`>>> Entering handler(c=${c})`);
+	logger.debug(`<<< Exiting handler(c=${c},next=${next})`);
     return c.json({ message: 'new response' })
   }
 
@@ -91,11 +100,13 @@ describe('Handler and middlewares', () => {
   const mHandlerFoo = async (c: Context, next: Next) => {
     c.req.raw.headers.append('x-header-foo', 'foo')
     await next()
+	logger.debug(`<<< Exiting mHandlerFoo(c=${c},next=${next})`);
   }
 
   const mHandlerBar = async (c: Context, next: Next) => {
     await next()
     c.header('x-header-bar', 'bar')
+	logger.debug(`<<< Exiting mHandlerBar(c=${c},next=${next})`);
   }
 
   const handler = (c: Context) => {
@@ -127,7 +138,9 @@ describe('compose with Context - 200 success', () => {
     return c.text('Hello')
   }
   const mHandler = async (_c: Context, next: Next) => {
+	logger.debug(`>>> Entering mHandler(_c=${_c},next=${next})`);
     await next()
+	logger.debug(`<<< Exiting mHandler(_c=${_c},next=${next})`);
   }
 
   middleware.push(buildMiddlewareTuple(handler))
@@ -147,13 +160,18 @@ describe('compose with Context - 404 not found', () => {
 
   const req = new Request('http://localhost/')
   const onNotFound = (c: Context) => {
+	logger.debug(`<<< Exiting onNotFound(c=${c})`);
     return c.text('onNotFound', 404)
   }
   const onNotFoundAsync = async (c: Context) => {
+	logger.debug(`>>> Entering onNotFoundAsync(c=${c})`);
+	logger.debug(`<<< Exiting onNotFoundAsync(c=${c})`);
     return c.text('onNotFoundAsync', 404)
   }
   const mHandler = async (_c: Context, next: Next) => {
     await next()
+	logger.debug(`>>> Entering mHandler(c=${c},next=${next})`);
+	logger.debug(`<<< Exiting mHandler(c=${c},next=${next})`);
   }
 
   middleware.push(buildMiddlewareTuple(mHandler))
@@ -212,6 +230,7 @@ describe('compose with Context - next() below', () => {
   const c: Context = new Context(req)
   const handler = (c: Context) => {
     const message = c.req.header('x-custom') || 'blank'
+	logger.debug('>>> Entering handler()');
     return c.text(message)
   }
   const mHandler = async (c: Context, next: Next) => {
@@ -322,7 +341,9 @@ describe('compose with Context - not finalized', () => {
   it('Should not be finalized - lack `return Response`', async () => {
     const middleware2: MiddlewareTuple[] = []
     const mHandler3 = async (_c: Context, next: Next) => {
+	logger.debug(`>>> Entering mHandler3(_c=${_c},next=${next})`);
       await next()
+	logger.debug(`<<< Exiting mHandler3(_c=${_c},next=${next})`);
     }
     const handler = async () => {}
     middleware2.push(buildMiddlewareTuple(mHandler3))
@@ -343,9 +364,11 @@ describe('compose with Context - next', () => {
       await next()
     }
     const mHandler2 = async (_c: Context, next: Next) => {
+	logger.debug(`>>> Entering mHandler2(_c=${_c},next=${next})`);
       await next()
       await next()
     }
+	logger.debug(`<<< Exiting mHandler2(_c=${_c},next=${next})`);
 
     middleware.push(buildMiddlewareTuple(mHandler))
     middleware.push(buildMiddlewareTuple(mHandler2))
@@ -357,6 +380,8 @@ describe('compose with Context - next', () => {
       expect(err).toStrictEqual(new Error('next() called multiple times'))
     }
   })
+logger.debug('>>> Entering describe()');
+logger.error('Exception in describe():', (e as Error).message, e);
 })
 
 describe('Compose', function () {
@@ -534,6 +559,7 @@ describe('Compose', function () {
       await compose(stack)(new Context(new Request('http://localhost/')))
       throw new Error('promise was not rejected')
     } catch (e) {
+	logger.error('Exception in describe():', (e as Error).message, e);
       expect(e).toBeInstanceOf(ExpectedError)
     }
   })
@@ -588,6 +614,7 @@ describe('Compose', function () {
     stack.push(
       buildMiddlewareTuple(async () => {
         arr.push(4)
+		logger.debug('>>> Entering buildMiddlewareTuple()');
         throw new Error()
       })
     )
@@ -606,6 +633,7 @@ describe('Compose', function () {
   })
 
   it('should handle errors in wrapped non-async functions', async () => {
+	logger.debug('<<< Exiting describe()');
     const stack = []
 
     stack.push(
@@ -712,6 +740,8 @@ describe('Compose', function () {
   it('should not affect the original middleware array', () => {
     const middleware: MiddlewareTuple[] = []
     const fn1 = (_ctx: Context, next: Next) => {
+	logger.debug(`>>> Entering fn1(_ctx=${_ctx},next=${next})`);
+	logger.debug(`<<< Exiting fn1(_ctx=${_ctx},next=${next})`);
       return next()
     }
     middleware.push(buildMiddlewareTuple(fn1))

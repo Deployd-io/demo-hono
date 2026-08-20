@@ -13,21 +13,29 @@ enum LogPrefix {
 }
 
 const humanize = (times: string[]) => {
+logger.debug(`>>> Entering humanize(times=${times})`);
   const [delimiter, separator] = [',', '.']
 
   const orderTimes = times.map((v) => v.replace(/(\d)(?=(\d\d\d)+(?!\d))/g, '$1' + delimiter))
 
+logger.debug(`humanize(times=${times}): orderTimes → ${orderTimes}`);
+logger.debug(`<<< Exiting humanize(times=${times})`);
   return orderTimes.join(separator)
 }
 
 const time = (start: number) => {
+logger.debug(`>>> Entering time(start=${start})`);
   const delta = Date.now() - start
+logger.debug(`time(start=${start}): delta → ${delta}`);
+logger.debug(`<<< Exiting time(start=${start})`);
   return humanize([delta < 1000 ? delta + 'ms' : Math.round(delta / 1000) + 's'])
 }
 
 const colorStatus = async (status: number) => {
+logger.debug(`>>> Entering colorStatus(status=${status})`);
   const colorEnabled = await getColorEnabledAsync()
   if (colorEnabled) {
+	logger.debug(`colorStatus(status=${status}): colorEnabled → ${colorEnabled}`);
     switch ((status / 100) | 0) {
       case 5: // red = error
         return `\x1b[31m${status}\x1b[0m`
@@ -42,6 +50,7 @@ const colorStatus = async (status: number) => {
   // Fallback to unsupported status code.
   // E.g.) Bun and Deno supports new Response with 101, but Node.js does not.
   // And those may evolve to accept more status.
+logger.debug(`<<< Exiting colorStatus(status=${status})`);
   return `${status}`
 }
 
@@ -79,6 +88,7 @@ async function log(
  * ```
  */
 export const logger = (fn: PrintFunc = console.log): MiddlewareHandler => {
+logger.debug(`>>> Entering logger(fn=${fn})`);
   return async function logger(c, next) {
     const { method, url } = c.req
 
@@ -92,4 +102,5 @@ export const logger = (fn: PrintFunc = console.log): MiddlewareHandler => {
 
     await log(fn, LogPrefix.Outgoing, method, path, c.res.status, time(start))
   }
+logger.debug(`<<< Exiting logger(fn=${fn})`);
 }

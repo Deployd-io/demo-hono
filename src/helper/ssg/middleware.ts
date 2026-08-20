@@ -1,5 +1,6 @@
 import type { Context } from '../../context'
 import type { Env, MiddlewareHandler } from '../../types'
+const logger = console;
 import { isDynamicRoute } from './utils'
 
 export const SSG_CONTEXT = 'HONO_SSG_CONTEXT'
@@ -41,6 +42,7 @@ export type AddedSSGDataRequest = Request & {
  * Define SSG Route
  */
 export const ssgParams: SSGParamsMiddleware = (params) => async (c, next) => {
+logger.debug(`>>> Entering ssgParams(params=${params})`);
   if (isDynamicRoute(c.req.path)) {
     ;(c.req.raw as AddedSSGDataRequest).ssgParams = Array.isArray(params) ? params : await params(c)
     return c.notFound() // Prevent subsequent handler execution after ssgParams

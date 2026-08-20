@@ -1,6 +1,7 @@
 import { Hono } from '../..'
 import { parseAccept } from '../../utils/accept'
 import type { Accept, acceptsConfig, acceptsOptions } from './accepts'
+const logger = console;
 import { accepts, defaultMatch } from './accepts'
 
 describe('parseAccept', () => {
@@ -99,6 +100,7 @@ describe('accepts', () => {
       const accept = accepts
         .sort((a, b) => a.q - b.q)
         .find((accept) => supports.includes(accept.type))
+	logger.debug(`<<< Exiting match(accepts=${accepts},config=${config})`);
       return accept ? accept.type : defaultSupport
     }
     const options: acceptsOptions = {
@@ -124,8 +126,10 @@ describe('Usage', () => {
       const COMPRESS_DATA = 'COMPRESS_DATA'
       const readable = new ReadableStream({
         start(controller) {
+		logger.debug(`>>> Entering start(controller=${controller})`);
           controller.enqueue(new TextEncoder().encode(COMPRESS_DATA))
           controller.close()
+		logger.debug(`<<< Exiting start(controller=${controller})`);
         },
       })
 

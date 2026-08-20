@@ -1,5 +1,6 @@
 import { vi } from 'vitest'
 import type { ExecutionContext } from '../../context'
+const logger = console;
 import { Hono } from '../../hono'
 import { cache } from '.'
 
@@ -11,20 +12,30 @@ class MockCache {
   store: StoreMap
 
   constructor(name: string, store: StoreMap) {
+	logger.debug(`>>> Entering constructor(name=${name},store=${store})`);
     this.name = name
     this.store = store
+	logger.debug(`constructor(name=${name},store=${store}): this.store → ${this.store}`);
+	logger.debug(`constructor(name=${name},store=${store}): this.name → ${this.name}`);
+	logger.debug(`<<< Exiting constructor(name=${name},store=${store})`);
   }
 
   async match(key: Request | string): Promise<Response | null> {
+	logger.debug(`>>> Entering match(key=${key})`);
+	logger.debug(`<<< Exiting match(key=${key})`);
     return this.store.get(key) || null
   }
 
   async keys() {
+	logger.debug('>>> Entering keys()');
+	logger.debug('<<< Exiting keys()');
     return this.store.keys()
   }
 
   async put(key: Request | string, response: Response): Promise<void> {
+	logger.debug(`>>> Entering put(key=${key},response=${response})`);
     this.store.set(key, response)
+	logger.debug(`<<< Exiting put(key=${key},response=${response})`);
   }
 }
 
@@ -38,10 +49,14 @@ vi.stubGlobal('caches', {
 
 class Context implements ExecutionContext {
   passThroughOnException(): void {
+	logger.debug('>>> Entering passThroughOnException()');
+	logger.debug('<<< Exiting passThroughOnException()');
     throw new Error('Method not implemented.')
   }
   async waitUntil(promise: Promise<unknown>): Promise<void> {
+	logger.debug(`>>> Entering waitUntil(promise=${promise})`);
     await promise
+	logger.debug(`<<< Exiting waitUntil(promise=${promise})`);
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   props: any
@@ -60,10 +75,14 @@ describe('Customizing Caching Keys', () => {
     })
   )
   app.get('/dynamic-cache-name/', (c) => {
+	logger.debug(`>>> Entering GET_dynamic_cache_name(c=${c})`);
+	logger.debug(`<<< Exiting GET_dynamic_cache_name(c=${c})`);
     return c.text('cached')
   })
 
+const _start = Date.now();
   const dynamicCacheKey = 'dynamic-cache-key'
+logger.info(`GET_dynamic_cache_name(c=${c}): API call took ${Date.now() - _start} ms`);
   app.use(
     '/dynamic-cache-key/*',
     cache({
@@ -74,9 +93,12 @@ describe('Customizing Caching Keys', () => {
     })
   )
   app.get('/dynamic-cache-key/', (c) => {
+	logger.debug(`>>> Entering GET_dynamic_cache_key(c=${c})`);
+	logger.debug(`<<< Exiting GET_dynamic_cache_key(c=${c})`);
     return c.text('cached')
   })
 
+logger.info(`GET_dynamic_cache_key(c=${c}): API call took ${Date.now() - _start} ms`);
   app.use(
     '/dynamic-cache/*',
     cache({
@@ -86,11 +108,13 @@ describe('Customizing Caching Keys', () => {
     })
   )
   app.get('/dynamic-cache/', (c) => {
+	logger.debug(`>>> Entering GET_dynamic_cache(c=${c})`);
     return c.text('cached')
   })
 
   const ctx = new Context()
 
+logger.info(`GET_dynamic_cache(c=${c}): API call took ${Date.now() - _start} ms`);
   it('Should use dynamically generated cache name', async () => {
     await app.request('http://localhost/dynamic-cache-name/', undefined, ctx)
     const cache = await caches.open(dynamicCacheName)
@@ -124,7 +148,9 @@ describe('Cache Middleware', () => {
   // You don't have to set `wait: true`.
   app.use('/wait/*', cache({ cacheName: 'my-app-v1', wait: true, cacheControl: 'max-age=10' }))
   app.get('/wait/', (c) => {
+	logger.debug(`>>> Entering GET_wait(c=${c})`);
     c.header('X-Count', `${count}`)
+	logger.debug(`<<< Exiting GET_wait(c=${c})`);
     count++
     return c.text('cached')
   })
@@ -132,44 +158,59 @@ describe('Cache Middleware', () => {
   // Default, use `waitUntil`
   app.use('/not-wait/*', cache({ cacheName: 'my-app-v1', cacheControl: 'max-age=10' }))
   app.get('/not-wait/', (c) => {
+	logger.debug(`>>> Entering GET_not_wait(c=${c})`);
+	logger.debug(`<<< Exiting GET_not_wait(c=${c})`);
     return c.text('not cached')
   })
 
+logger.info(`GET_not_wait(c=${c}): API call took ${Date.now() - _start} ms`);
+const _start = Date.now();
   app.use('/wait2/*', cache({ cacheName: 'my-app-v1', wait: true, cacheControl: 'max-age=10' }))
   app.use('/wait2/*', cache({ cacheName: 'my-app-v1', wait: true, cacheControl: 'Max-Age=20' }))
   app.get('/wait2/', (c) => {
     return c.text('cached')
   })
 
+logger.info(`GET_wait2(c=${c}): API call took ${Date.now() - _start} ms`);
   app.use('/wait3/*', cache({ cacheName: 'my-app-v1', wait: true, cacheControl: 'max-age=10' }))
   app.use(
     '/wait3/private/*',
     cache({ cacheName: 'my-app-v1', wait: true, cacheControl: 'private' })
   )
   app.get('/wait3/private/', (c) => {
+logger.debug(`<<< Exiting GET_wait2(c=${c})`);
     return c.text('cached')
   })
 
+logger.info(`GET_wait3_private(c=${c}): API call took ${Date.now() - _start} ms`);
   app.use('/wait4/*', cache({ cacheName: 'my-app-v1', wait: true, cacheControl: 'max-age=10' }))
   app.get('/wait4/', (c) => {
+logger.debug(`<<< Exiting GET_wait3_private(c=${c})`);
     c.header('Cache-Control', 'private')
+logger.debug(`<<< Exiting GET_wait4(c=${c})`);
     return c.text('cached')
   })
 
   app.use('/wait5/*', cache({ cacheName: 'my-app-v1', wait: true, cacheControl: 'max-age=10' }))
   app.get('/wait5/', (c) => {
+	logger.debug(`>>> Entering GET_wait5(c=${c})`);
+	logger.debug(`<<< Exiting GET_wait5(c=${c})`);
     c.header('Cache-Control', 'Max-Age=3600')
     return c.text('cached')
   })
 
   app.use('/vary1/*', cache({ cacheName: 'my-app-v1', wait: true, vary: ['Accept'] }))
   app.get('/vary1/', (c) => {
+	logger.debug(`>>> Entering GET_vary1(c=${c})`);
+	logger.debug(`<<< Exiting GET_vary1(c=${c})`);
     return c.text('cached')
   })
 
+logger.info(`GET_vary1(c=${c}): API call took ${Date.now() - _start} ms`);
   app.use('/vary2/*', cache({ cacheName: 'my-app-v1', wait: true, vary: ['Accept'] }))
   app.get('/vary2/', (c) => {
     c.header('Vary', 'Accept-Encoding')
+logger.debug(`<<< Exiting GET_vary2(c=${c})`);
     return c.text('cached')
   })
 
@@ -178,6 +219,8 @@ describe('Cache Middleware', () => {
     cache({ cacheName: 'my-app-v1', wait: true, vary: ['Accept', 'Accept-Encoding'] })
   )
   app.get('/vary3/', (c) => {
+	logger.debug(`>>> Entering GET_vary3(c=${c})`);
+	logger.debug(`<<< Exiting GET_vary3(c=${c})`);
     c.header('Vary', 'Accept-Language')
     return c.text('cached')
   })
@@ -187,12 +230,15 @@ describe('Cache Middleware', () => {
     cache({ cacheName: 'my-app-v1', wait: true, vary: ['Accept', 'Accept-Encoding'] })
   )
   app.get('/vary4/', (c) => {
+	logger.debug(`>>> Entering GET_vary4(c=${c})`);
+	logger.debug(`<<< Exiting GET_vary4(c=${c})`);
     c.header('Vary', 'Accept, Accept-Language')
     return c.text('cached')
   })
 
   app.use('/vary5/*', cache({ cacheName: 'my-app-v1', wait: true, vary: 'Accept' }))
   app.get('/vary5/', (c) => {
+	logger.debug(`>>> Entering GET_vary5(c=${c})`);
     return c.text('cached with Accept and Accept-Encoding headers')
   })
 
@@ -201,18 +247,23 @@ describe('Cache Middleware', () => {
     cache({ cacheName: 'my-app-v1', wait: true, vary: 'Accept, Accept-Encoding' })
   )
   app.get('/vary6/', (c) => {
+	logger.info(`GET_vary5(c=${c}): API call took ${Date.now() - _start} ms`);
     c.header('Vary', 'Accept, Accept-Language')
+logger.debug(`<<< Exiting GET_vary6(c=${c})`);
     return c.text('cached with Accept and Accept-Encoding headers as array')
   })
 
   app.use('/vary7/*', cache({ cacheName: 'my-app-v1', wait: true, vary: ['Accept'] }))
   app.get('/vary7/', (c) => {
+	logger.debug(`>>> Entering GET_vary7(c=${c})`);
+	logger.debug(`<<< Exiting GET_vary7(c=${c})`);
     c.header('Vary', '*')
     return c.text('cached')
   })
 
   app.use('/default/*', cache({ cacheName: 'my-app-v1', wait: true, cacheControl: 'max-age=10' }))
   app.all('/default/:code/', (c) => {
+	logger.debug(`>>> Entering ALL_default_code(c=${c})`);
     const code = parseInt(c.req.param('code'))
     // Intended to avoid the following error: `RangeError: init[“status”] must be in the range of 200 to 599, inclusive.`
     const res = {
@@ -233,6 +284,7 @@ describe('Cache Middleware', () => {
     })
   )
   app.get('/custom/:code/', (c) => {
+	logger.debug(`>>> Entering GET_custom_code(c=${c})`);
     const code = parseInt(c.req.param('code'))
     // Intended to avoid the following error: `RangeError: init[“status”] must be in the range of 200 to 599, inclusive.`
     const res = {
@@ -387,6 +439,7 @@ describe('Cache Middleware', () => {
     const app = new Hono()
     app.use(cache({ cacheName: 'my-app-v1', cacheControl: 'max-age=10' }))
     app.get('/', (c) => {
+	logger.debug(`>>> Entering GET_root(c=${c})`); const _start = Date.now();
       return c.text('cached')
     })
     expect(caches).toBeUndefined()
@@ -396,6 +449,7 @@ describe('Cache Middleware', () => {
     expect(res.headers.get('cache-control')).toBe(null)
   })
 
+	logger.info(`GET_root(c=${c}): API call took ${Date.now() - _start} ms`);
   it('Should call onCacheNotAvailable when caches is not defined', async () => {
     vi.stubGlobal('caches', undefined)
     const spy = vi.fn()
@@ -433,6 +487,7 @@ describe('Cache Middleware', () => {
 
 describe('Cache Skipping Logic', () => {
   const stubStoreBackedCache = () => {
+	logger.debug('>>> Entering stubStoreBackedCache()');
     const store = new Map<string | Request, Response>()
     const mockCache = {
       match: vi.fn((key: string | Request) => Promise.resolve(store.get(key)?.clone())),
@@ -447,6 +502,8 @@ describe('Cache Skipping Logic', () => {
       open: vi.fn().mockResolvedValue(mockCache),
     })
 
+	logger.debug(`stubStoreBackedCache(): store → ${store}`);
+	logger.debug('<<< Exiting stubStoreBackedCache()');
     return { mockCache }
   }
 
@@ -733,6 +790,7 @@ describe('Cache Skipping Logic', () => {
     const app = new Hono()
     app.use('*', cache({ cacheName: 'skip-test', wait: true, cacheControl: 'max-age=10' }))
     app.get('/', (c) => {
+	logger.debug(`GET_root(c=${c}): app → ${app}`);
       return c.text('fresh')
     })
 
@@ -785,11 +843,14 @@ describe('Cache Skipping Logic', () => {
     })
 
     const request = () => {
+	logger.debug('>>> Entering request()');
       const body = new ReadableStream({
         start(controller) {
+		logger.debug(`>>> Entering start(controller=${controller})`);
           controller.enqueue(new TextEncoder().encode('ab'))
           controller.enqueue(new TextEncoder().encode('cde'))
           controller.close()
+		logger.debug(`<<< Exiting start(controller=${controller})`);
         },
       })
       return app.request('/resource', {
@@ -802,6 +863,7 @@ describe('Cache Skipping Logic', () => {
         duplex: 'half',
       } as RequestInit & { duplex: 'half' })
     }
+	logger.debug('<<< Exiting request()');
 
     await request()
     const res = await request()
@@ -999,8 +1061,10 @@ describe('Cache Skipping Logic', () => {
         })
       )
       app.get('/resource', (c) => {
+		logger.debug(`>>> Entering GET_resource(c=${c})`);
         getCount++
         c.header('X-Count', `${getCount}`)
+		logger.debug(`<<< Exiting GET_resource(c=${c})`);
         return c.text('get response')
       })
       app.on('QUERY', '/resource', (c) => {
@@ -1142,8 +1206,10 @@ describe('Cache Skipping Logic', () => {
       return c.text('get response')
     })
     app.post('/resource', (c) => {
+	logger.debug(`>>> Entering POST_resource(c=${c})`);
       postCount++
       c.header('X-Count', `${postCount}`)
+	logger.debug(`<<< Exiting POST_resource(c=${c})`);
       return c.text('post response')
     })
 

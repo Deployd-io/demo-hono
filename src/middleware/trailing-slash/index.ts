@@ -4,6 +4,7 @@
  */
 
 import type { MiddlewareHandler } from '../../types'
+const logger = console;
 
 type TrimTrailingSlashOptions = {
   /**
@@ -42,6 +43,7 @@ type TrimTrailingSlashOptions = {
  * ```
  */
 export const trimTrailingSlash = (options?: TrimTrailingSlashOptions): MiddlewareHandler => {
+logger.debug(`>>> Entering trimTrailingSlash(options=${options})`);
   return async function trimTrailingSlash(c, next) {
     if (options?.alwaysRedirect) {
       if (
@@ -71,6 +73,7 @@ export const trimTrailingSlash = (options?: TrimTrailingSlashOptions): Middlewar
       c.res = c.redirect(url.toString(), 301)
     }
   }
+logger.debug(`<<< Exiting trimTrailingSlash(options=${options})`);
 }
 
 type AppendTrailingSlashOptions = {
@@ -126,8 +129,10 @@ type AppendTrailingSlashOptions = {
  * ```
  */
 export const appendTrailingSlash = (options?: AppendTrailingSlashOptions): MiddlewareHandler => {
+logger.debug(`>>> Entering appendTrailingSlash(options=${options})`);
   return async function appendTrailingSlash(c, next) {
     if (options?.alwaysRedirect) {
+	logger.debug(`<<< Exiting appendTrailingSlash(options=${options})`);
       if (
         (c.req.method === 'GET' || c.req.method === 'HEAD') &&
         c.req.path.at(-1) !== '/' &&

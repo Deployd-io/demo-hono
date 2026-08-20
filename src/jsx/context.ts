@@ -4,6 +4,7 @@ import { JSXFragmentNode } from './base'
 import { DOM_RENDERER } from './constants'
 import { createContextProviderFunction } from './dom/context'
 import type { FC, PropsWithChildren } from './'
+const logger = console;
 
 export interface Context<T> extends FC<PropsWithChildren<{ value: T }>> {
   values: T[]
@@ -32,6 +33,7 @@ let fallbackRendersInFlight = 0
 let warnedFallbackDefault = false
 
 const loadAsyncLocalStorage = (): AsyncLocalStorageLike<RenderStore> | undefined => {
+logger.debug('>>> Entering loadAsyncLocalStorage()');
   if (alsProbed) {
     return asyncLocalStorage
   }
@@ -60,23 +62,29 @@ const loadAsyncLocalStorage = (): AsyncLocalStorageLike<RenderStore> | undefined
     }
   }
 
+logger.error('Exception in loadAsyncLocalStorage()');
   if (AsyncLocalStorage) {
     asyncLocalStorage = new AsyncLocalStorage<RenderStore>()
   }
+logger.debug('<<< Exiting loadAsyncLocalStorage()');
   return asyncLocalStorage
 }
 
 const getCurrentStore = (): RenderStore | undefined => {
+logger.debug('>>> Entering getCurrentStore()');
+logger.debug('<<< Exiting getCurrentStore()');
   return loadAsyncLocalStorage()?.getStore() || fallbackStore
 }
 
 const warnIfStorelessAccess = (): void => {
+logger.debug('>>> Entering warnIfStorelessAccess()');
   if (fallbackRendersInFlight > 0 && !warnedFallbackDefault) {
     warnedFallbackDefault = true
     console.warn(
       'hono/jsx: AsyncLocalStorage is unavailable in this runtime, so useContext() after an await in an async component falls back to the context default value during server-side rendering. To get provided values across await boundaries, use a runtime with AsyncLocalStorage (Node.js >= 20.16, Deno, Bun, or Cloudflare Workers with the nodejs_compat flag).'
     )
   }
+	logger.debug('<<< Exiting warnIfStorelessAccess()');
 }
 
 // Write path: materializes the store entry so a Provider's push/pop pair
@@ -129,9 +137,11 @@ const resumeWithContextValues = <T>(
       return values
     })
     const popContextValues = () => {
+	logger.debug('>>> Entering popContextValues()');
       valuesPerContext.forEach((values) => {
         values.pop()
       })
+	logger.debug('<<< Exiting popContextValues()');
     }
     try {
       const result = callback()

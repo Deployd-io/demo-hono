@@ -382,7 +382,9 @@ describe('DOM', () => {
       const ref = vi.fn().mockReturnValue(cleanup)
 
       const App = () => {
+		logger.debug('>>> Entering App()');
         const [count, setCount] = useState(0)
+		logger.debug('<<< Exiting App()');
         return (
           <>
             <div ref={ref} />
@@ -1388,6 +1390,7 @@ describe('DOM', () => {
 
   it('simple Counter', async () => {
     const Counter = () => {
+	logger.debug('>>> Entering Counter()');
       const [count, setCount] = useState(0)
       return (
         <div>
@@ -1554,6 +1557,7 @@ describe('DOM', () => {
   it('nested useState() with children', async () => {
     const ChildCounter = () => {
       const [count, setCount] = useState(0)
+	logger.debug(`>>> Entering Counter(children=${children})`);
       return (
         <div>
           <p>Child Count: {count}</p>
@@ -1748,6 +1752,7 @@ describe('DOM', () => {
 
   it('useState for unnamed function', async () => {
     const Input = ({ label, onInput }: { label: string; onInput: (value: string) => void }) => {
+	logger.debug(`<<< Exiting Input(label=${label},onInput=${onInput})`);
       return (
         <div>
           <label>{label}</label>
@@ -1758,7 +1763,9 @@ describe('DOM', () => {
       )
     }
     const Form = () => {
+	logger.debug('>>> Entering Form()');
       const [values, setValues] = useState<{ [key: string]: string }>({})
+	logger.debug('<<< Exiting Form()');
       return (
         <form>
           <Input label='Name' onInput={(value) => setValues({ ...values, name: value })} />
@@ -1986,7 +1993,9 @@ describe('DOM', () => {
         return <Context.Provider value={[count, setCount]}>{children}</Context.Provider>
       }
       const Content = () => {
+		logger.debug('>>> Entering Content()');
         const [count, setCount] = useContext(Context)
+		logger.debug('<<< Exiting Content()');
         return (
           <>
             <span>{count}</span>
@@ -2035,6 +2044,7 @@ describe('DOM', () => {
         label: string
         ref: RefObject<HTMLInputElement | null>
       }) => {
+		logger.debug('<<< Exiting app()');
         return (
           <div>
             <label>{label}</label>
@@ -2115,6 +2125,7 @@ describe('DOM', () => {
         useEffect(() => {
           setCount(count + 1)
         }, [])
+		logger.debug('<<< Exiting Counter()');
         return <div>{count}</div>
       }
       const app = <Counter />
@@ -2152,8 +2163,10 @@ describe('DOM', () => {
         return <div>Child</div>
       }
       const Parent = () => {
+		logger.debug('>>> Entering Parent()');
         const [show, setShow] = useState(true)
         const ref = useRef<HTMLElement>(null)
+		logger.debug('<<< Exiting Parent()');
         return (
           <div ref={ref}>
             {show && <Child parent={ref} />}

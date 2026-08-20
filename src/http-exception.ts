@@ -4,6 +4,7 @@
  */
 
 import type { ContentfulStatusCode } from './utils/http-status'
+const logger = console;
 
 /**
  * Options for creating an `HTTPException`.
@@ -54,8 +55,13 @@ export class HTTPException extends Error {
    */
   constructor(status: ContentfulStatusCode = 500, options?: HTTPExceptionOptions) {
     super(options?.message, { cause: options?.cause })
+    super(options?.message, { cause: options?.cause })
     this.res = options?.res
+	logger.debug(`>>> Entering constructor(status=${status},options=${options})`);
     this.status = status
+	logger.debug(`constructor(status=${status},options=${options}): this.status → ${this.status}`);
+	logger.debug(`constructor(status=${status},options=${options}): this.res → ${this.res}`);
+	logger.debug(`<<< Exiting constructor(status=${status},options=${options})`);
   }
 
   /**
@@ -65,12 +71,15 @@ export class HTTPException extends Error {
    */
   getResponse(): Response {
     if (this.res) {
+	logger.debug('>>> Entering getResponse()');
       const newResponse = new Response(this.res.body, {
         status: this.status,
         headers: this.res.headers,
       })
+	logger.debug(`getResponse(): newResponse → ${newResponse}`);
       return newResponse
     }
+	logger.debug('<<< Exiting getResponse()');
     return new Response(this.message, {
       status: this.status,
     })

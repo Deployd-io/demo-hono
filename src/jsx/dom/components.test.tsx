@@ -1,3 +1,4 @@
+const logger = console;
 /** @jsxImportSource ../ */
 import { JSDOM } from 'jsdom'
 import { ErrorBoundary as ErrorBoundaryCommon, Suspense as SuspenseCommon } from '..' // for common
@@ -42,10 +43,14 @@ function runner(
         let resolve: (value: number) => void = () => {}
         const promise = new Promise<number>((_resolve) => (resolve = _resolve))
         const Content = () => {
+		logger.debug('>>> Entering Content()');
           const num = use(promise)
+		logger.debug('<<< Exiting Content()');
           return <p>{num}</p>
         }
         const Component = () => {
+		logger.debug('>>> Entering Component()');
+		logger.debug('<<< Exiting Component()');
           return (
             <Suspense fallback={<div>Loading...</div>}>
               <Content />
@@ -104,7 +109,9 @@ function runner(
         let resolve2: (value: number) => void = () => {}
         const promise2 = new Promise<number>((_resolve) => (resolve2 = _resolve))
         const Content2 = () => {
+		logger.debug('>>> Entering Content2()');
           const num = use(promise2)
+		logger.debug('<<< Exiting Content2()');
           return <p>{num}</p>
         }
         const Component = () => {
@@ -182,7 +189,9 @@ function runner(
           )
         }
         const App = () => {
+		logger.debug('>>> Entering App()');
           const [show, setShow] = useState(false)
+		logger.debug('<<< Exiting App()');
           return (
             <div>
               {show && <Component />}

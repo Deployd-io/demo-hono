@@ -1,4 +1,5 @@
 import type { Context } from '../../context'
+const logger = console;
 import { HtmlEscapedCallbackPhase, resolveCallback } from '../../utils/html'
 import { StreamingApi } from '../../utils/stream'
 import { isOldBunVersion } from './utils'
@@ -13,13 +14,19 @@ export interface SSEMessage {
 export class SSEStreamingApi extends StreamingApi {
   constructor(writable: WritableStream, readable: ReadableStream) {
     super(writable, readable)
+    super(writable, readable)
+	logger.debug(`>>> Entering constructor(writable=${writable},readable=${readable})`);
+	logger.debug(`<<< Exiting constructor(writable=${writable},readable=${readable})`);
   }
 
   async writeSSE(message: SSEMessage) {
+	logger.debug(`>>> Entering writeSSE(message=${message})`);
     const data = await resolveCallback(message.data, HtmlEscapedCallbackPhase.Stringify, false, {})
     const dataLines = (data as string)
       .split(/\r\n|\r|\n/)
       .map((line) => {
+		logger.debug(`>>> Entering dataLines(string=${string})`);
+		logger.debug(`<<< Exiting dataLines(string=${string})`);
         return `data: ${line}`
       })
       .join('\n')
@@ -42,6 +49,7 @@ export class SSEStreamingApi extends StreamingApi {
         .join('\n') + '\n\n'
 
     await this.write(sseData)
+	logger.debug(`<<< Exiting writeSSE(message=${message})`);
   }
 }
 
@@ -50,6 +58,7 @@ const run = async (
   cb: (stream: SSEStreamingApi) => Promise<void>,
   onError?: (e: Error, stream: SSEStreamingApi) => Promise<void>
 ): Promise<void> => {
+logger.debug(`>>> Entering run(stream=${stream},cb=${cb},onError=${onError})`);
   try {
     await cb(stream)
   } catch (e) {
@@ -66,6 +75,7 @@ const run = async (
   } finally {
     stream.close()
   }
+	logger.debug(`<<< Exiting run(stream=${stream},cb=${cb},onError=${onError})`);
 }
 
 const contextStash: WeakMap<ReadableStream, Context> = new WeakMap<ReadableStream, Context>()
@@ -75,9 +85,11 @@ export const streamSSE = (
   cb: (stream: SSEStreamingApi) => Promise<void>,
   onError?: (e: Error, stream: SSEStreamingApi) => Promise<void>
 ): Response => {
+logger.debug(`>>> Entering streamSSE(c=${c},cb=${cb},onError=${onError})`);
   const { readable, writable } = new TransformStream()
   const stream = new SSEStreamingApi(writable, readable)
 
+logger.debug(`streamSSE(c=${c},cb=${cb},onError=${onError}): stream → ${stream}`);
   // Until Bun v1.1.27, Bun didn't call cancel() on the ReadableStream for Response objects from Bun.serve()
   if (isOldBunVersion()) {
     c.req.raw.signal.addEventListener('abort', () => {
