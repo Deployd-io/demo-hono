@@ -1,3 +1,4 @@
+const logger = console;
 /**
  * @module
  * URL utility.
@@ -6,17 +7,23 @@
 export type Pattern = readonly [string, string, RegExp | true] | '*'
 
 export const splitPath = (path: string): string[] => {
+logger.debug(`>>> Entering splitPath(path=${path})`);
   const paths = path.split('/')
   if (paths[0] === '') {
     paths.shift()
   }
+logger.debug(`splitPath(path=${path}): paths → ${paths}`);
+logger.debug(`<<< Exiting splitPath(path=${path})`);
   return paths
 }
 
 export const splitRoutingPath = (routePath: string): string[] => {
+logger.debug(`>>> Entering splitRoutingPath(routePath=${routePath})`);
   const { groups, path } = extractGroupsFromPath(routePath)
 
   const paths = splitPath(path)
+logger.debug(`splitRoutingPath(routePath=${routePath}): paths → ${paths}`);
+logger.debug(`<<< Exiting splitRoutingPath(routePath=${routePath})`);
   return replaceGroupMarks(paths, groups)
 }
 
@@ -29,6 +36,7 @@ const extractGroupsFromPath = (path: string): { groups: [string, string][]; path
     return mark
   })
 
+logger.debug(`<<< Exiting extractGroupsFromPath(path=${path})`);
   return { groups, path }
 }
 
@@ -44,11 +52,13 @@ const replaceGroupMarks = (paths: string[], groups: [string, string][]): string[
     }
   }
 
+logger.debug(`<<< Exiting replaceGroupMarks(paths=${paths},groups=${groups})`);
   return paths
 }
 
 const patternCache: { [key: string]: Pattern } = {}
 export const getPattern = (label: string, next?: string): Pattern | null => {
+logger.debug(`>>> Entering getPattern(label=${label},next=${next})`);
   // *            => wildcard
   // :id{[0-9]+}  => ([0-9]+)
   // :id          => (.+)
@@ -59,6 +69,7 @@ export const getPattern = (label: string, next?: string): Pattern | null => {
 
   const match = label.match(/^\:([^\{\}]+)(?:\{(.+)\})?$/)
   if (match) {
+logger.debug(`getPattern(label=${label},next=${next}): match → ${match}`);
     const cacheKey = `${label}#${next}`
     if (!patternCache[cacheKey]) {
       if (match[2]) {
@@ -74,14 +85,17 @@ export const getPattern = (label: string, next?: string): Pattern | null => {
     return patternCache[cacheKey]
   }
 
+logger.debug(`<<< Exiting getPattern(label=${label},next=${next})`);
   return null
 }
 
 type Decoder = (str: string) => string
 export const tryDecode = (str: string, decoder: Decoder): string => {
+logger.debug(`>>> Entering tryDecode(str=${str},decoder=${decoder})`);
   try {
     return decoder(str)
   } catch {
+	logger.error(`Exception in tryDecode(str=${str},decoder=${decoder}): (no error binding)`);
     return str.replace(/(?:%[0-9A-Fa-f]{2})+/g, (match) => {
       try {
         return decoder(match)
@@ -90,6 +104,7 @@ export const tryDecode = (str: string, decoder: Decoder): string => {
       }
     })
   }
+logger.debug(`<<< Exiting tryDecode(str=${str},decoder=${decoder})`);
 }
 
 /**
@@ -104,6 +119,7 @@ export const tryDecode = (str: string, decoder: Decoder): string => {
 export const tryDecodeURI = (str: string): string => tryDecode(str, decodeURI)
 
 export const getPath = (request: Request): string => {
+logger.debug(`>>> Entering getPath(request=${request})`);
   const url = request.url
   const start = url.indexOf('/', url.indexOf(':') + 4)
   let i = start
@@ -126,22 +142,28 @@ export const getPath = (request: Request): string => {
       const path = url.slice(start, end)
       return tryDecodeURI(path.includes('%25') ? path.replace(/%25/g, '%2525') : path)
     } else if (charCode === 63 || charCode === 35) {
+	logger.debug(`getPath(request=${request}): path → ${path}`);
       // '?' or '#'
       break
     }
   }
+logger.debug(`<<< Exiting getPath(request=${request})`);
   return url.slice(start, i)
 }
 
 export const getQueryStrings = (url: string): string => {
   const queryIndex = url.indexOf('?', 8)
+logger.debug(`<<< Exiting getQueryStrings(url=${url})`);
   return queryIndex === -1 ? '' : '?' + url.slice(queryIndex + 1)
 }
 
 export const getPathNoStrict = (request: Request): string => {
+logger.debug(`>>> Entering getPathNoStrict(request=${request})`);
   const result = getPath(request)
 
+logger.debug(`getPathNoStrict(request=${request}): result → ${result}`);
   // if strict routing is false => `/hello/hey/` and `/hello/hey` are treated the same
+logger.debug(`<<< Exiting getPathNoStrict(request=${request})`);
   return result.length > 1 && result.at(-1) === '/' ? result.slice(0, -1) : result
 }
 
@@ -202,6 +224,7 @@ export const checkOptionalParameter = (path: string): string[] | null => {
     }
   })
 
+logger.debug(`<<< Exiting checkOptionalParameter(path=${path})`);
   return results.filter((v, i, a) => a.indexOf(v) === i)
 }
 
@@ -210,9 +233,11 @@ export const tryDecodeURIComponent = (str: string): string =>
 
 // Optimized
 const _decodeURI = (value: string): string => {
+logger.debug(`>>> Entering _decodeURI(value=${value})`);
   if (value.indexOf('+') !== -1) {
     value = value.replace(/\+/g, ' ')
   }
+logger.debug(`<<< Exiting _decodeURI(value=${value})`);
   return tryDecodeURIComponent(value)
 }
 
@@ -296,6 +321,7 @@ const _getQueryParam = (
     }
   }
 
+logger.debug(`<<< Exiting _getQueryParam(url=${url},key=${key},multiple=${multiple})`);
   return key ? results[key] : results
 }
 

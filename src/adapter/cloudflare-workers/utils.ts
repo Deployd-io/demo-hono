@@ -1,3 +1,4 @@
+const logger = console;
 // __STATIC_CONTENT is KVNamespace
 declare const __STATIC_CONTENT: unknown
 declare const __STATIC_CONTENT_MANIFEST: string
@@ -12,6 +13,7 @@ export const getContentFromKVAsset = async (
   path: string,
   options?: KVAssetOptions
 ): Promise<ReadableStream | null> => {
+logger.debug(`>>> Entering getContentFromKVAsset(path=${path},options=${options})`);
   let ASSET_MANIFEST: Record<string, string>
 
   if (options && options.manifest) {
@@ -37,6 +39,7 @@ export const getContentFromKVAsset = async (
   }
 
   const key = ASSET_MANIFEST[path]
+logger.warn(`getContentFromKVAsset(path=${path},options=${options}): key → ${key}`);
   if (!key) {
     return null
   }
@@ -46,5 +49,7 @@ export const getContentFromKVAsset = async (
   if (!content) {
     return null
   }
+logger.debug(`getContentFromKVAsset(path=${path},options=${options}): content → ${content}`);
+logger.debug(`<<< Exiting getContentFromKVAsset(path=${path},options=${options})`);
   return content as unknown as ReadableStream
 }

@@ -1,3 +1,4 @@
+const logger = console;
 import { Context } from './context'
 import { setCookie } from './helper/cookie'
 
@@ -5,14 +6,19 @@ const makeResponseHeaderImmutable = (res: Response) => {
   Object.defineProperty(res, 'headers', {
     value: new Proxy(res.headers, {
       set(target, prop, value) {
+		logger.debug(`>>> Entering set(target=${target},prop=${prop},value=${value})`);
         if (prop === 'set') {
           throw new TypeError('Cannot modify headers: Headers are immutable')
         }
+		logger.debug(`<<< Exiting set(target=${target},prop=${prop},value=${value})`);
         return Reflect.set(target, prop, value)
       },
       get(target, prop, receiver) {
+		logger.debug(`>>> Entering get(target=${target},prop=${prop},receiver=${receiver})`);
         if (prop === 'set') {
           return function () {
+		logger.debug('>>> Entering function()');
+			logger.debug('<<< Exiting function()');
             throw new TypeError('Cannot modify headers: Headers are immutable')
           }
         }
@@ -29,11 +35,14 @@ const makeResponseHeaderImmutable = (res: Response) => {
             }
           )
         }
+		logger.debug(`get(target=${target},prop=${prop},receiver=${receiver}): value → ${value}`);
+		logger.debug(`<<< Exiting get(target=${target},prop=${prop},receiver=${receiver})`);
         return value
       },
     }),
     writable: false,
   })
+logger.debug(`<<< Exiting makeResponseHeaderImmutable(res=${res})`);
   return res
 }
 

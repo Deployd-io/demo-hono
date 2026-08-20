@@ -1,3 +1,4 @@
+const logger = console;
 import { Hono } from '../../hono'
 import { endTime, setMetric, startTime, timing, wrapTime } from '.'
 
@@ -17,29 +18,38 @@ describe('Server-Timing API', () => {
   )
   app.get('/', (c) => c.text('/'))
   app.get('/api', async (c) => {
+	logger.debug(`>>> Entering GET_api(c=${c})`);
     startTime(c, name)
     await new Promise((r) => setTimeout(r, 30))
     endTime(c, name)
 
+	logger.debug(`<<< Exiting GET_api(c=${c})`);
     return c.text('api!')
   })
   app.get('/api-wrap', async (c) => {
+	logger.debug(`>>> Entering GET_api_wrap(c=${c})`);
     await wrapTime(c, name, new Promise((r) => setTimeout(r, 30)))
 
+	logger.debug(`<<< Exiting GET_api_wrap(c=${c})`);
     return c.text('api!')
   })
   app.get('/api-wrap-throw', async (c) => {
+	logger.debug(`>>> Entering GET_api_wrap_throw(c=${c})`);
     try {
       await wrapTime(c, name, new Promise((_, r) => setTimeout(r, 30)))
     } catch (e) {
+	logger.error(`Exception in GET_api_wrap_throw(c=${c}): ${(e as Error).message}`, e);
+	logger.debug(`<<< Exiting GET_api_wrap_throw(c=${c})`);
       return c.text(`error :( ${e}`, 500)
     }
 
     return c.text('api!')
   })
   app.get('/cache', async (c) => {
+	logger.debug(`>>> Entering GET_cache(c=${c})`);
     setMetric(c, region, regionDesc)
 
+	logger.debug(`<<< Exiting GET_cache(c=${c})`);
     return c.text('cache!')
   })
 
@@ -109,7 +119,9 @@ describe('Server-Timing API', () => {
 
       autoEndApp.use('*', timing())
       autoEndApp.get('/', (c) => {
+		logger.debug(`>>> Entering GET_root(c=${c})`);
         startTime(c, 'test')
+		logger.debug(`<<< Exiting GET_root(c=${c})`);
         return c.text('/')
       })
 

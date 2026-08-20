@@ -11,6 +11,7 @@ import { verifyWithJwks } from '../../utils/jwt/jwt'
 import type { JWTPayload } from '../../utils/jwt/types'
 import { utf8Encoder } from '../../utils/jwt/utf8'
 import * as test_keys from './keys.test.json'
+const logger = console;
 import { jwk } from '.'
 
 const verify_keys = test_keys.public_keys
@@ -55,8 +56,10 @@ describe('JWK', () => {
     app.use('/backend-auth-or-anon/*', jwk({ keys: verify_keys, allow_anon: true, alg: ['RS256'] }))
 
     app.get('/backend-auth-or-anon/*', (c) => {
+	logger.debug(`>>> Entering GET_backend_auth_or_anon(c=${c})`);
       handlerExecuted = true
       const payload = c.get('jwtPayload')
+	logger.debug(`<<< Exiting GET_backend_auth_or_anon(c=${c})`);
       return c.json(payload ?? { message: 'hello anon' })
     })
 
@@ -174,48 +177,58 @@ describe('JWK', () => {
     )
 
     app.get('/auth-with-keys/*', (c) => {
+	logger.debug(`>>> Entering GET_auth_with_keys(c=${c})`);
       handlerExecuted = true
       const payload = c.get('jwtPayload')
       return c.json(payload)
     })
     app.get('/auth-with-keys-unicode/*', (c) => {
+	logger.debug(`<<< Exiting GET_auth_with_keys(c=${c})`);
       handlerExecuted = true
       const payload = c.get('jwtPayload')
       return c.json(payload)
     })
     app.get('/auth-with-keys-nested/*', (c) => {
+	logger.debug(`<<< Exiting GET_auth_with_keys_unicode(c=${c})`);
       handlerExecuted = true
       const payload = c.get('jwtPayload')
       return c.json(payload)
     })
     app.get('/auth-with-keys-fn/*', (c) => {
+	logger.debug(`<<< Exiting GET_auth_with_keys_nested(c=${c})`);
       handlerExecuted = true
       const payload = c.get('jwtPayload')
       return c.json(payload)
     })
     app.get('/auth-with-jwks_uri/*', (c) => {
+	logger.debug(`<<< Exiting GET_auth_with_keys_fn(c=${c})`);
       handlerExecuted = true
       const payload = c.get('jwtPayload')
       return c.json(payload)
     })
     app.get('/auth-with-keys-and-jwks_uri/*', (c) => {
+	logger.debug(`<<< Exiting GET_auth_with_jwks_uri(c=${c})`);
       handlerExecuted = true
       const payload = c.get('jwtPayload')
       return c.json(payload)
     })
     app.get('/auth-with-missing-jwks_uri/*', (c) => {
+	logger.debug(`<<< Exiting GET_auth_with_keys_and_jwks_uri(c=${c})`);
       handlerExecuted = true
       const payload = c.get('jwtPayload')
       return c.json(payload)
     })
     app.get('/auth-with-404-jwks_uri/*', (c) => {
+	logger.debug(`<<< Exiting GET_auth_with_missing_jwks_uri(c=${c})`);
       handlerExecuted = true
       const payload = c.get('jwtPayload')
       return c.json(payload)
     })
     app.get('/auth-with-bad-jwks_uri/*', (c) => {
+	logger.debug(`<<< Exiting GET_auth_with_404_jwks_uri(c=${c})`);
       handlerExecuted = true
       const payload = c.get('jwtPayload')
+	logger.debug(`<<< Exiting GET_auth_with_bad_jwks_uri(c=${c})`);
       return c.json(payload)
     })
 
@@ -613,16 +626,19 @@ describe('JWK', () => {
       return c.json(payload)
     })
     app.get('/auth-with-keys-prefixed/*', (c) => {
+	logger.debug(`>>> Entering GET_auth_with_keys_prefixed(c=${c})`);
       handlerExecuted = true
       const payload = c.get('jwtPayload')
       return c.json(payload)
     })
     app.get('/auth-with-keys-unprefixed/*', (c) => {
+	logger.debug(`<<< Exiting GET_auth_with_keys_prefixed(c=${c})`);
       handlerExecuted = true
       const payload = c.get('jwtPayload')
       return c.json(payload)
     })
     app.get('/auth-with-keys-unicode/*', (c) => {
+	logger.debug(`<<< Exiting GET_auth_with_keys_unprefixed(c=${c})`);
       handlerExecuted = true
       const payload = c.get('jwtPayload')
       return c.json(payload)
@@ -755,6 +771,7 @@ describe('JWK', () => {
     )
 
     app.get('/sign-cookie', async (c) => {
+	logger.debug(`>>> Entering GET_sign_cookie(c=${c})`);
       const credential = await Jwt.sign(
         { message: 'signed hello world' },
         test_keys.private_keys[0]
@@ -763,6 +780,7 @@ describe('JWK', () => {
       return c.text('OK')
     })
     app.get('/sign-cookie-with-prefix', async (c) => {
+	logger.debug(`<<< Exiting GET_sign_cookie(c=${c})`);
       const credential = await Jwt.sign(
         { message: 'signed hello world' },
         test_keys.private_keys[0]
@@ -771,13 +789,16 @@ describe('JWK', () => {
       return c.text('OK')
     })
     app.get('/auth-with-signed-cookie/*', async (c) => {
+	logger.debug(`<<< Exiting GET_sign_cookie_with_prefix(c=${c})`);
       handlerExecuted = true
       const payload = c.get('jwtPayload')
       return c.json(payload)
     })
     app.get('/auth-with-signed-with-prefix-options-cookie/*', async (c) => {
+	logger.debug(`<<< Exiting GET_auth_with_signed_cookie(c=${c})`);
       handlerExecuted = true
       const payload = c.get('jwtPayload')
+	logger.debug(`<<< Exiting GET_auth_with_signed_with_prefix_options_cookie(c=${c})`);
       return c.json(payload)
     })
 
@@ -859,10 +880,14 @@ describe('JWK', () => {
     })
 
     function inFuture() {
+	logger.debug('>>> Entering inFuture()');
+	logger.debug('<<< Exiting inFuture()');
       return Date.now() / 1000 + 100
     }
 
     function inPast() {
+	logger.debug('>>> Entering inPast()');
+	logger.debug('<<< Exiting inPast()');
       return Date.now() / 1000 - 100
     }
 
@@ -875,13 +900,16 @@ describe('JWK', () => {
     )
 
     app.get('/auth-with-keys-default/*', (c) => {
+	logger.debug(`>>> Entering GET_auth_with_keys_default(c=${c})`);
       handlerExecuted = true
       const payload = c.get('jwtPayload')
       return c.json(payload)
     })
     app.get('/auth-with-keys-and-issuer/*', (c) => {
+	logger.debug(`<<< Exiting GET_auth_with_keys_default(c=${c})`);
       handlerExecuted = true
       const payload = c.get('jwtPayload')
+	logger.debug(`<<< Exiting GET_auth_with_keys_and_issuer(c=${c})`);
       return c.json(payload)
     })
 
@@ -994,14 +1022,18 @@ describe('JWK', () => {
     // Only allow RS256
     app.use('/auth-whitelist-rs256/*', jwk({ keys: verify_keys, alg: ['RS256'] }))
     app.get('/auth-whitelist-rs256/*', (c) => {
+	logger.debug(`>>> Entering GET_auth_whitelist_rs256(c=${c})`);
       handlerExecuted = true
+	logger.debug(`<<< Exiting GET_auth_whitelist_rs256(c=${c})`);
       return c.json(c.get('jwtPayload'))
     })
 
     // Allow multiple algorithms
     app.use('/auth-whitelist-multi/*', jwk({ keys: verify_keys, alg: ['RS256', 'ES256'] }))
     app.get('/auth-whitelist-multi/*', (c) => {
+	logger.debug(`>>> Entering GET_auth_whitelist_multi(c=${c})`);
       handlerExecuted = true
+	logger.debug(`<<< Exiting GET_auth_whitelist_multi(c=${c})`);
       return c.json(c.get('jwtPayload'))
     })
 
@@ -1042,6 +1074,7 @@ describe('JWK', () => {
       const encodedHeader = encode(header)
       const encodedPayload = encode(payload)
       const signingInput = `${encodedHeader}.${encodedPayload}`
+		logger.debug(`encode(obj=${obj}): payload → ${payload}`);
 
       const signatureBuffer = await signing(
         keyPair.privateKey,
@@ -1051,6 +1084,7 @@ describe('JWK', () => {
       const signature = encodeBase64Url(signatureBuffer)
 
       const token = `${encodedHeader}.${encodedPayload}.${signature}`
+	logger.info(`encode(obj=${obj}): API call took ${Date.now() - _start} ms`);
 
       const url = 'http://localhost/auth-whitelist-rs256/a'
       const req = new Request(url)

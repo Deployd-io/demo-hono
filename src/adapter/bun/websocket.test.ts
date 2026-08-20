@@ -1,5 +1,6 @@
 import { Context } from '../../context'
 import type { BunWebSocketData, BunServerWebSocket } from './websocket'
+const logger = console;
 import { createWSContext, websocket, upgradeWebSocket, createBunWebSocket } from './websocket'
 
 describe('createWSContext()', () => {
@@ -8,10 +9,14 @@ describe('createWSContext()', () => {
     const close = vi.fn()
     const ws = createWSContext({
       send(data) {
+		logger.debug(`>>> Entering send(data=${data})`);
         send(data)
+		logger.debug(`<<< Exiting send(data=${data})`);
       },
       close(code, reason) {
+		logger.debug(`>>> Entering close(code=${code},reason=${reason})`);
         close(code, reason)
+		logger.debug(`<<< Exiting close(code=${code},reason=${reason})`);
       },
       data: {},
     } as BunServerWebSocket<BunWebSocketData>)
@@ -75,7 +80,9 @@ describe('upgradeWebSocket()', () => {
         {
           env: {
             upgrade(_req: Request, options: { data: BunWebSocketData }) {
+			logger.debug(`>>> Entering upgrade(_req=${_req},options=${options})`);
               data = options.data
+			logger.debug(`<<< Exiting upgrade(_req=${_req},options=${options})`);
               return true
             },
           },
@@ -94,6 +101,7 @@ describe('upgradeWebSocket()', () => {
         env: {
           upgrade(_req: Request, options: { data: BunWebSocketData }) {
             data = options.data
+			logger.debug('>>> Entering upgrade()');
             return true
           },
         },
@@ -114,18 +122,24 @@ describe('upgradeWebSocket()', () => {
         events: {
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           onOpen(evt, ws) {
+			logger.debug(`>>> Entering onOpen(evt=${evt},ws=${ws})`);
             open()
+			logger.debug(`<<< Exiting onOpen(evt=${evt},ws=${ws})`);
           },
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           onMessage(evt, ws) {
+			logger.debug(`>>> Entering onMessage(evt=${evt},ws=${ws})`);
             message()
             if (evt.data instanceof ArrayBuffer) {
               receivedArrayBuffer = evt.data
+			logger.debug(`<<< Exiting onMessage(evt=${evt},ws=${ws})`);
             }
           },
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           onClose(evt, ws) {
+			logger.debug(`>>> Entering onClose(evt=${evt},ws=${ws})`);
             close()
+			logger.debug(`<<< Exiting onClose(evt=${evt},ws=${ws})`);
           },
         },
       },

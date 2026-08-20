@@ -6,6 +6,7 @@
 import type { Context } from '../../context'
 import { parse, parseSigned, serialize, serializeSigned } from '../../utils/cookie'
 import type { Cookie, CookieOptions, CookiePrefixOptions, SignedCookie } from '../../utils/cookie'
+const logger = console;
 
 interface GetCookie {
   (c: Context, key: string): string | undefined
@@ -25,6 +26,7 @@ interface GetSignedCookie {
 }
 
 export const getCookie: GetCookie = (c, key?, prefix?: CookiePrefixOptions) => {
+logger.debug(`>>> Entering getCookie(c=${c},key=${key},prefix=${prefix})`);
   const cookie = c.req.raw.headers.get('Cookie')
   if (typeof key === 'string') {
     if (!cookie) {
@@ -44,6 +46,8 @@ export const getCookie: GetCookie = (c, key?, prefix?: CookiePrefixOptions) => {
   }
   const obj = parse(cookie)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+logger.debug(`getCookie(c=${c},key=${key},prefix=${prefix}): obj → ${obj}`);
+logger.debug(`<<< Exiting getCookie(c=${c},key=${key},prefix=${prefix})`);
   return obj as any
 }
 
@@ -76,6 +80,7 @@ export const getSignedCookie: GetSignedCookie = async (
 }
 
 export const generateCookie = (name: string, value: string, opt?: CookieOptions): string => {
+logger.debug(`>>> Entering generateCookie(name=${name},value=${value},opt=${opt})`);
   // Cookie names prefixed with __Secure- can be used only if they are set with the secure attribute.
   // Cookie names prefixed with __Host- can be used only if they are set with the secure attribute, must have a path of / (meaning any path at the host)
   // and must not have a Domain attribute.
@@ -93,12 +98,15 @@ export const generateCookie = (name: string, value: string, opt?: CookieOptions)
   } else {
     cookie = serialize(name, value, { path: '/', ...opt })
   }
+logger.debug(`<<< Exiting generateCookie(name=${name},value=${value},opt=${opt})`);
   return cookie
 }
 
 export const setCookie = (c: Context, name: string, value: string, opt?: CookieOptions): void => {
+logger.debug(`>>> Entering setCookie(c=${c},name=${name},value=${value},opt=${opt})`);
   const cookie = generateCookie(name, value, opt)
   c.header('Set-Cookie', cookie, { append: true })
+logger.debug(`<<< Exiting setCookie(c=${c},name=${name},value=${value},opt=${opt})`);
 }
 
 export const generateSignedCookie = async (
@@ -139,7 +147,9 @@ export const setSignedCookie = async (
 }
 
 export const deleteCookie = (c: Context, name: string, opt?: CookieOptions): string | undefined => {
+logger.debug(`>>> Entering deleteCookie(c=${c},name=${name},opt=${opt})`);
   const deletedCookie = getCookie(c, name, opt?.prefix)
   setCookie(c, name, '', { ...opt, maxAge: 0 })
+logger.debug(`<<< Exiting deleteCookie(c=${c},name=${name},opt=${opt})`);
   return deletedCookie
 }

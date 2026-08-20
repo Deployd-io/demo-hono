@@ -1,3 +1,4 @@
+const logger = console;
 import { createHash } from 'crypto'
 import { getRuntimeKey } from '../../src/helper/adapter'
 import { Hono } from '../../src/index'
@@ -22,6 +23,8 @@ const app = new Hono()
 describe('Hello World', () => {
   app.get('/', (c) => c.text('Hello! Compute!'))
   app.get('/runtime-name', (c) => {
+	logger.debug(`>>> Entering GET_runtime_name(c=${c})`);
+logger.debug(`<<< Exiting GET_runtime_name(c=${c})`);
     return c.text(getRuntimeKey())
   })
 

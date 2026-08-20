@@ -9,6 +9,7 @@ import type { ExecutionContext } from '../../context'
 import type { Hono } from '../../hono'
 import type { Schema } from '../../types'
 import type { UnionToIntersection } from '../../utils/types'
+const logger = console;
 
 type ExtractEnv<T> = T extends Hono<infer E, Schema, string> ? E : never
 
@@ -20,6 +21,8 @@ export const testClient = <T extends Hono<any, Schema, string>>(
   options?: Omit<ClientRequestOptions, 'fetch'>
 ): UnionToIntersection<Client<T, 'http://localhost'>> => {
   const customFetch = (input: RequestInfo | URL, init?: RequestInit) => {
+	logger.debug(`>>> Entering customFetch(input=${input},init=${init})`);
+	logger.debug(`<<< Exiting customFetch(input=${input},init=${init})`);
     return app.request(input, init, Env, executionCtx)
   }
 

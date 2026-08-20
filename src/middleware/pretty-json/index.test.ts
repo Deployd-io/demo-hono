@@ -1,3 +1,4 @@
+const logger = console;
 import { Hono } from '../../hono'
 import { prettyJSON } from '.'
 
@@ -6,6 +7,8 @@ describe('JSON pretty by Middleware', () => {
     const app = new Hono()
     app.use('*', prettyJSON())
     app.get('/', (c) => {
+	logger.debug(`>>> Entering GET_root(c=${c})`);
+	logger.debug(`<<< Exiting GET_root(c=${c})`);
       return c.json({ message: 'Hono!' })
     })
 
@@ -78,11 +81,14 @@ describe('JSON pretty by Middleware', () => {
     const app = new Hono()
     app.use('*', prettyJSON({ force: true }))
     app.get('/problem', (c) => {
+	logger.debug(`>>> Entering GET_problem(c=${c})`);
       return c.newResponse(JSON.stringify({ type: 'about:blank', title: 'Bad Request' }), 400, {
         'Content-Type': 'application/problem+json',
       })
     })
     app.get('/jsonapi', (c) => {
+	logger.debug(`<<< Exiting GET_problem(c=${c})`);
+	logger.debug(`<<< Exiting GET_jsonapi(c=${c})`);
       return c.newResponse(JSON.stringify({ data: { id: '1', type: 'articles' } }), 200, {
         'Content-Type': 'application/vnd.api+json',
       })
@@ -108,6 +114,8 @@ describe('JSON pretty by Middleware', () => {
     app.use('*', prettyJSON({ force: true }))
     app.get('/text', (c) => c.text('{"message":"Hono!"}'))
     app.get('/json-seq', (c) => {
+	logger.debug(`>>> Entering GET_json_seq(c=${c})`);
+	logger.debug(`<<< Exiting GET_json_seq(c=${c})`);
       return c.body('{"message":"Hono!"}', 200, {
         'Content-Type': 'application/json-seq',
       })

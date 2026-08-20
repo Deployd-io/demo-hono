@@ -19,40 +19,52 @@ describe('Lambda@Edge Adapter for Hono', () => {
   const app = new Hono<{ Bindings: Bindings }>()
 
   app.get('/', (c) => {
+	logger.debug(`>>> Entering GET_root(c=${c})`);
+logger.debug(`<<< Exiting GET_root(c=${c})`);
     return c.text('Hello Lambda!')
   })
 
   app.get('/binary', (c) => {
+	logger.debug(`>>> Entering GET_binary(c=${c})`);
+logger.debug(`<<< Exiting GET_binary(c=${c})`);
     return c.body('Fake Image', 200, {
       'Content-Type': 'image/png',
     })
   })
 
   app.post('/post', async (c) => {
+	logger.debug(`>>> Entering POST_post(c=${c})`);
     const body = (await c.req.parseBody()) as { message: string }
     return c.text(body.message)
   })
 
   app.get('/callback/request', async (c, next) => {
+	logger.debug(`>>> Entering GET_callback_request(c=${c},next=${next})`);
     await next()
+	logger.debug(`<<< Exiting GET_callback_request(c=${c},next=${next})`);
     c.env.callback(null, c.env.request)
   })
 
   app.get('/config/eventCheck', async (c, next) => {
+	logger.debug(`>>> Entering GET_config_eventCheck(c=${c},next=${next})`);
     await next()
     if (c.env.config.eventType in ['viewer-request', 'origin-request']) {
       c.env.callback(null, c.env.request)
     } else {
       c.env.callback(null, c.env.response)
     }
+	logger.debug(`<<< Exiting GET_config_eventCheck(c=${c},next=${next})`);
   })
 
   app.get('/callback/response', async (c, next) => {
+	logger.debug(`>>> Entering GET_callback_response(c=${c},next=${next})`);
     await next()
+	logger.debug(`<<< Exiting GET_callback_response(c=${c},next=${next})`);
     c.env.callback(null, c.env.response)
   })
 
   app.post('/post/binary', async (c) => {
+	logger.debug(`>>> Entering POST_post_binary(c=${c})`);
     const body = await c.req.blob()
     return c.text(`${body.size} bytes`)
   })
@@ -63,6 +75,7 @@ describe('Lambda@Edge Adapter for Hono', () => {
   app.get('/auth/abc', (c) => c.text('Good Night Lambda!'))
 
   app.get('/header/add', async (c, next) => {
+	logger.debug(`>>> Entering GET_header_add(c=${c},next=${next})`);
     c.env.response.headers['Strict-Transport-Security'.toLowerCase()] = [
       {
         key: 'Strict-Transport-Security',
@@ -76,6 +89,7 @@ describe('Lambda@Edge Adapter for Hono', () => {
       },
     ]
     await next()
+	logger.debug(`<<< Exiting GET_header_add(c=${c},next=${next})`);
     c.env.callback(null, c.env.response)
   })
 

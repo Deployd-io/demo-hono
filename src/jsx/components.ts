@@ -8,10 +8,12 @@ import { ErrorBoundary as ErrorBoundaryDomRenderer } from './dom/components'
 import type { HasRenderToDom } from './dom/render'
 import { StreamingContext } from './streaming'
 import type { Child, FC, PropsWithChildren } from './'
+const logger = console;
 
 let errorBoundaryCounter = 0
 
 export const childrenToString = async (children: Child[]): Promise<HtmlEscapedString[]> => {
+logger.debug(`>>> Entering childrenToString(children=${children})`);
   try {
     return children
       .flat()
@@ -22,14 +24,17 @@ export const childrenToString = async (children: Child[]): Promise<HtmlEscapedSt
       // only observable during this synchronous window.
       const resume = captureRenderContext()
       await e
+	logger.debug(`childrenToString(children=${children}): resume → ${resume}`);
       return resume(() => childrenToString(children))
     } else {
       throw e
     }
   }
+logger.debug(`<<< Exiting childrenToString(children=${children})`);
 }
 
 const resolveChildEarly = (c: Child): HtmlEscapedString | Promise<HtmlEscapedString> => {
+logger.debug(`>>> Entering resolveChildEarly(c=${c})`);
   if (c == null || typeof c === 'boolean') {
     return '' as HtmlEscapedString
   } else if (typeof c === 'string') {
@@ -42,6 +47,7 @@ const resolveChildEarly = (c: Child): HtmlEscapedString | Promise<HtmlEscapedStr
       return str as Promise<HtmlEscapedString>
     }
   }
+logger.debug(`<<< Exiting resolveChildEarly(c=${c})`);
 }
 
 export type ErrorHandler = (error: Error) => void
@@ -92,7 +98,9 @@ export const ErrorBoundary: FC<
       }
     })())
   const renderFallback = async (error: Error): Promise<HtmlEscapedString> => {
+	logger.debug(`>>> Entering renderFallback(error=${error})`);
     const fallbackStr = await resolveFallbackStr()
+	logger.debug(`<<< Exiting renderFallback(error=${error})`);
     return getResume()(async () => {
       onError?.(error)
       const fallbackRes = (

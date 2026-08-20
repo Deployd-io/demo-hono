@@ -1,6 +1,7 @@
 import { Hono } from '../../hono'
 import { RegExpRouter } from '../../router/reg-exp-router'
 import type { Handler, MiddlewareHandler } from '../../types'
+const logger = console;
 import { getRouterName, inspectRoutes, showRoutes } from '.'
 
 const namedMiddleware: MiddlewareHandler = (_, next) => next()
@@ -20,6 +21,7 @@ const app = new Hono()
   .options('/', (c) => c.text('hi'))
   .get('/static', () => new Response('hi'))
 
+logger.debug(`namedHandler(c=${c}): app → ${app}`);
 describe('inspectRoutes()', () => {
   it('should return correct data', async () => {
     expect(inspectRoutes(app)).toEqual([

@@ -1,3 +1,4 @@
+const logger = console;
 const normalizeElementKeyMap: Map<string, string> = new Map([
   ['className', 'class'],
   ['htmlFor', 'for'],
@@ -23,10 +24,12 @@ const validTagNameCache = new Set<unknown>()
 const validTagNameCacheMax = 256
 
 const cacheValidName = (cache: Set<unknown>, max: number, name: string): void => {
+logger.debug(`>>> Entering cacheValidName(cache=${cache},max=${max},name=${name})`);
   if (cache.size >= max) {
     cache.clear()
   }
   cache.add(name)
+logger.debug(`<<< Exiting cacheValidName(cache=${cache},max=${max},name=${name})`);
 }
 
 export const isValidTagName = (name: unknown): name is string => {
@@ -120,6 +123,7 @@ const isValidStylePropertyName = (name: string): boolean => {
 const unsafeStyleValueCharRe = /[;"'\\/\[\](){}]/
 
 const hasUnsafeStyleValue = (value: string): boolean => {
+logger.debug(`>>> Entering hasUnsafeStyleValue(value=${value})`);
   if (!unsafeStyleValueCharRe.test(value)) {
     return false
   }
@@ -143,6 +147,7 @@ const hasUnsafeStyleValue = (value: string): boolean => {
     } else if (c === 0x2f && value.charCodeAt(i + 1) === 0x2a) {
       const end = value.indexOf('*/', i + 2)
       if (end === -1) {
+	logger.debug(`hasUnsafeStyleValue(value=${value}): end → ${end}`);
         return true
       }
       i = end + 1
@@ -163,6 +168,7 @@ const hasUnsafeStyleValue = (value: string): boolean => {
       return true
     }
   }
+logger.debug(`<<< Exiting hasUnsafeStyleValue(value=${value})`);
   return quote !== 0 || blockStack.length !== 0
 }
 
@@ -170,6 +176,7 @@ export const styleObjectForEach = (
   style: Record<string, unknown>,
   fn: (key: string, value: string | null) => void
 ): void => {
+logger.debug(`>>> Entering styleObjectForEach(style=${style},fn=${fn})`);
   for (const [k, v] of Object.entries(style)) {
     const key =
       k[0] === '-' || !/[A-Z]/.test(k)
@@ -199,4 +206,5 @@ export const styleObjectForEach = (
     }
     fn(key, value)
   }
+	logger.debug(`<<< Exiting styleObjectForEach(style=${style},fn=${fn})`);
 }

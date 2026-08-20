@@ -1,3 +1,4 @@
+const logger = console;
 import { stream, streamSSE } from '../../helper/streaming'
 import { Hono } from '../../hono'
 import { compress } from '.'
@@ -10,8 +11,10 @@ describe('Compress Middleware', () => {
 
   // Test routes
   app.get('/small', (c) => {
+	logger.debug(`>>> Entering GET_small(c=${c})`);
     c.header('Content-Type', 'text/plain')
     c.header('Content-Length', '5')
+	logger.debug(`<<< Exiting GET_small(c=${c})`);
     return c.text('small')
   })
   app.get('/large', (c) => {
@@ -20,48 +23,61 @@ describe('Compress Middleware', () => {
     return c.text('a'.repeat(1024))
   })
   app.get('/small-json', (c) => {
+	logger.debug(`<<< Exiting GET_large(c=${c})`);
     c.header('Content-Type', 'application/json')
     c.header('Content-Length', '26')
     return c.json({ message: 'Hello, World!' })
   })
   app.get('/large-json', (c) => {
+	logger.debug(`<<< Exiting GET_small_json(c=${c})`);
     c.header('Content-Type', 'application/json')
     c.header('Content-Length', '1024')
     return c.json({ data: 'a'.repeat(1024), message: 'Large JSON' })
   })
   app.get('/no-transform', (c) => {
+	logger.debug(`<<< Exiting GET_large_json(c=${c})`);
     c.header('Content-Type', 'text/plain')
     c.header('Content-Length', '1024')
     c.header('Cache-Control', 'no-transform')
     return c.text('a'.repeat(1024))
   })
   app.get('/jpeg-image', (c) => {
+	logger.debug(`<<< Exiting GET_no_transform(c=${c})`);
     c.header('Content-Type', 'image/jpeg')
     c.header('Content-Length', '1024')
+	logger.debug(`<<< Exiting GET_jpeg_image(c=${c})`);
     return c.body(new Uint8Array(1024)) // Simulated JPEG data
   })
   app.get('/already-compressed', (c) => {
+	logger.debug(`>>> Entering GET_already_compressed(c=${c})`);
     c.header('Content-Type', 'application/octet-stream')
     c.header('Content-Encoding', 'br')
     c.header('Content-Length', '1024')
+	logger.debug(`<<< Exiting GET_already_compressed(c=${c})`);
     return c.body(new Uint8Array(1024)) // Simulated compressed data
   })
   app.get('/transfer-encoding-deflate', (c) => {
+	logger.debug(`>>> Entering GET_transfer_encoding_deflate(c=${c})`);
     c.header('Content-Type', 'application/octet-stream')
     c.header('Transfer-Encoding', 'deflate')
     c.header('Content-Length', '1024')
+	logger.debug(`<<< Exiting GET_transfer_encoding_deflate(c=${c})`);
     return c.body(new Uint8Array(1024)) // Simulated deflate data
   })
   app.get('/chunked', (c) => {
+	logger.debug(`>>> Entering GET_chunked(c=${c})`);
     c.header('Content-Type', 'application/octet-stream')
     c.header('Transfer-Encoding', 'chunked')
     c.header('Content-Length', '1024')
+	logger.debug(`<<< Exiting GET_chunked(c=${c})`);
     return c.body(new Uint8Array(1024)) // Simulated chunked data
   })
   app.get('/partial', (c) => {
+	logger.debug(`>>> Entering GET_partial(c=${c})`);
     c.header('Content-Type', 'text/plain')
     c.header('Content-Length', '1024')
     c.header('Content-Range', 'bytes 0-1023/2048')
+	logger.debug(`<<< Exiting GET_partial(c=${c})`);
     return c.body('a'.repeat(1024), 206)
   })
   app.get('/stream', (c) =>
@@ -97,6 +113,8 @@ describe('Compress Middleware', () => {
     acceptEncoding: string,
     expectedEncoding: string | null
   ) => {
+	logger.debug(`>>> Entering testCompression(path=${path},acceptEncoding=${acceptEncoding},expectedEncoding=${expectedEncoding})`);
+	const _start = Date.now();
     const req = new Request(`http://localhost${path}`, {
       method: 'GET',
       headers: new Headers({ 'Accept-Encoding': acceptEncoding }),
@@ -104,6 +122,8 @@ describe('Compress Middleware', () => {
     const res = await app.request(req)
     expect(res.headers.get('Content-Encoding')).toBe(expectedEncoding)
     return res
+	logger.info(`testCompression(path=${path}, acceptEncoding=${acceptEncoding}, expectedEncoding=${expectedEncoding}): API call took ${Date.now() - _start} ms`);
+	logger.debug(`<<< Exiting testCompression(path=${path},acceptEncoding=${acceptEncoding},expectedEncoding=${expectedEncoding})`);
   }
 
   describe('Compression Behavior', () => {
@@ -211,20 +231,24 @@ describe('Compress Middleware', () => {
     const app = new Hono()
     app.use('*', compress())
     app.get('/strong-etag', (c) => {
+	logger.debug(`>>> Entering GET_strong_etag(c=${c})`);
       c.header('Content-Type', 'text/plain')
       c.header('Content-Length', '1024')
       c.header('ETag', '"strong-etag"')
       return c.text('a'.repeat(1024))
     })
     app.get('/weak-etag', (c) => {
+	logger.debug(`<<< Exiting GET_strong_etag(c=${c})`);
       c.header('Content-Type', 'text/plain')
       c.header('Content-Length', '1024')
       c.header('ETag', 'W/"weak-etag"')
       return c.text('a'.repeat(1024))
     })
     app.get('/no-etag', (c) => {
+	logger.debug(`<<< Exiting GET_weak_etag(c=${c})`);
       c.header('Content-Type', 'text/plain')
       c.header('Content-Length', '1024')
+	logger.debug(`<<< Exiting GET_no_etag(c=${c})`);
       return c.text('a'.repeat(1024))
     })
 
@@ -263,31 +287,37 @@ describe('Compress Middleware', () => {
     const app = new Hono()
     app.use('*', compress())
     app.get('/no-vary', (c) => {
+	logger.debug(`>>> Entering GET_no_vary(c=${c})`);
       c.header('Content-Type', 'text/plain')
       c.header('Content-Length', '1024')
       return c.text('a'.repeat(1024))
     })
     app.get('/existing-vary', (c) => {
+	logger.debug(`<<< Exiting GET_no_vary(c=${c})`);
       c.header('Content-Type', 'text/plain')
       c.header('Content-Length', '1024')
       c.header('Vary', 'Cookie')
       return c.text('a'.repeat(1024))
     })
     app.get('/already-accept-encoding', (c) => {
+	logger.debug(`<<< Exiting GET_existing_vary(c=${c})`);
       c.header('Content-Type', 'text/plain')
       c.header('Content-Length', '1024')
       c.header('Vary', 'Accept-Encoding')
       return c.text('a'.repeat(1024))
     })
     app.get('/wildcard-vary', (c) => {
+	logger.debug(`<<< Exiting GET_already_accept_encoding(c=${c})`);
       c.header('Content-Type', 'text/plain')
       c.header('Content-Length', '1024')
       c.header('Vary', '*')
       return c.text('a'.repeat(1024))
     })
     app.get('/not-compressible', (c) => {
+	logger.debug(`<<< Exiting GET_wildcard_vary(c=${c})`);
       c.header('Content-Type', 'image/png')
       c.header('Content-Length', '1024')
+	logger.debug(`<<< Exiting GET_not_compressible(c=${c})`);
       return c.body('a'.repeat(1024))
     })
 
@@ -414,13 +444,16 @@ describe('Compress Middleware', () => {
 
   describe('Encoding Option', () => {
     const buildApp = (encoding: 'gzip' | 'deflate') => {
+	logger.debug(`>>> Entering buildApp(encoding=${encoding})`);
       const app = new Hono()
       app.use('*', compress({ encoding }))
       app.get('/large', (c) => {
+	logger.debug(`buildApp(encoding=${encoding}): app → ${app}`);
         c.header('Content-Type', 'text/plain')
         c.header('Content-Length', '1024')
         return c.text('a'.repeat(1024))
       })
+	logger.debug(`<<< Exiting buildApp(encoding=${encoding})`);
       return app
     }
 
@@ -449,24 +482,30 @@ describe('Compress Middleware', () => {
 
   describe('Accept-Encoding parsing', () => {
     const buildAppDefault = () => {
+	logger.debug('>>> Entering buildAppDefault()');
       const app = new Hono()
       app.use('*', compress())
       app.get('/large', (c) => {
+	logger.debug(`buildAppDefault(): app → ${app}`);
         c.header('Content-Type', 'text/plain')
         c.header('Content-Length', '1024')
         return c.text('a'.repeat(1024))
       })
+	logger.debug('<<< Exiting buildAppDefault()');
       return app
     }
 
     const buildAppWithEncoding = (encoding: 'gzip' | 'deflate') => {
+	logger.debug(`>>> Entering buildAppWithEncoding(encoding=${encoding})`);
       const app = new Hono()
       app.use('*', compress({ encoding }))
       app.get('/large', (c) => {
+	logger.debug(`buildAppWithEncoding(encoding=${encoding}): app → ${app}`);
         c.header('Content-Type', 'text/plain')
         c.header('Content-Length', '1024')
         return c.text('a'.repeat(1024))
       })
+	logger.debug(`<<< Exiting buildAppWithEncoding(encoding=${encoding})`);
       return app
     }
 
@@ -529,7 +568,10 @@ describe('Compress Middleware', () => {
 })
 
 async function decompressResponse(res: Response): Promise<string> {
+logger.debug(`>>> Entering decompressResponse(res=${res})`);
   const decompressedStream = res.body!.pipeThrough(new DecompressionStream('gzip'))
   const decompressedResponse = new Response(decompressedStream)
+logger.debug(`decompressResponse(res=${res}): decompressedStream → ${decompressedStream}`);
+logger.debug(`<<< Exiting decompressResponse(res=${res})`);
   return await decompressedResponse.text()
 }

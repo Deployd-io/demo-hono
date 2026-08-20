@@ -2,11 +2,15 @@ import * as esbuild from 'esbuild'
 import * as fs from 'node:fs'
 import * as os from 'os'
 import * as path from 'path'
+const logger = console;
 
 async function main() {
+logger.debug('>>> Entering main()');
   const tempDir = os.tmpdir()
   const tempFilePath = path.join(tempDir, 'bundle.tmp.js')
 
+logger.debug(`main(): tempDir → ${tempDir}`);
+logger.debug(`main(): tempFilePath → ${tempFilePath}`);
   try {
     await esbuild.build({
       entryPoints: ['dist/index.js'],
@@ -18,6 +22,7 @@ async function main() {
     })
 
     const bundleSize = fs.statSync(tempFilePath).size
+	logger.debug(`main(): bundleSize → ${bundleSize}`);
     const metrics = []
 
     metrics.push({
@@ -46,6 +51,7 @@ async function main() {
     if (fs.existsSync(tempFilePath)) {
       fs.unlinkSync(tempFilePath)
     }
+	logger.debug('<<< Exiting main()');
   }
 }
 

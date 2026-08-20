@@ -15,6 +15,7 @@ import { parseBody } from './utils/body'
 import type { BodyData, ParseBodyOptions } from './utils/body'
 import type { CustomHeader, RequestHeader } from './utils/headers'
 import type { Simplify, UnionToIntersection } from './utils/types'
+const logger = console;
 import { getQueryParam, getQueryParams, tryDecodeURIComponent } from './utils/url'
 
 type Body = {
@@ -97,12 +98,16 @@ export class HonoRequest<P extends string = '/', I extends Input['out'] = {}> {
   param(key: string): string | undefined
   param<P2 extends string = P>(): Simplify<UnionToIntersection<ParamKeyToRecord<ParamKeys<P2>>>>
   param(key?: string): unknown {
+	logger.debug(`>>> Entering param(key=${key})`);
+	logger.debug(`<<< Exiting param(key=${key})`);
     return key ? this.#getDecodedParam(key) : this.#getAllDecodedParams()
   }
 
   #getDecodedParam(key: string): string | undefined {
+	logger.debug(`>>> Entering getDecodedParam(key=${key})`);
     const paramKey = this.#matchResult[0][this.routeIndex]?.[1][key]
     const param = this.#getParamValue(paramKey)
+	logger.debug(`<<< Exiting getDecodedParam(key=${key})`);
     return param && tryDecodeURIComponent(param)
   }
 
@@ -111,16 +116,20 @@ export class HonoRequest<P extends string = '/', I extends Input['out'] = {}> {
 
     const keys = Object.keys(this.#matchResult[0][this.routeIndex]?.[1] ?? {})
     for (const key of keys) {
+	logger.debug('>>> Entering getAllDecodedParams()');
       const value = this.#getParamValue(this.#matchResult[0][this.routeIndex][1][key])
       if (value !== undefined) {
         decoded[key] = tryDecodeURIComponent(value)
       }
+	logger.debug('<<< Exiting getAllDecodedParams()');
     }
 
     return decoded
   }
 
   #getParamValue(paramKey: any): string | undefined {
+	logger.debug(`>>> Entering getParamValue(paramKey=${paramKey})`);
+	logger.debug(`<<< Exiting getParamValue(paramKey=${paramKey})`);
     return this.#matchResult[1] ? this.#matchResult[1][paramKey as any] : paramKey
   }
 
@@ -145,6 +154,8 @@ export class HonoRequest<P extends string = '/', I extends Input['out'] = {}> {
   query(key: string): string | undefined
   query(): Record<string, string>
   query(key?: string) {
+	logger.debug(`>>> Entering query(key=${key})`);
+	logger.debug(`<<< Exiting query(key=${key})`);
     return getQueryParam(this.url, key)
   }
 
@@ -164,6 +175,8 @@ export class HonoRequest<P extends string = '/', I extends Input['out'] = {}> {
   queries(key: string): string[] | undefined
   queries(): Record<string, string[]>
   queries(key?: string) {
+	logger.debug(`>>> Entering queries(key=${key})`);
+	logger.debug(`<<< Exiting queries(key=${key})`);
     return getQueryParams(this.url, key)
   }
 
@@ -183,6 +196,7 @@ export class HonoRequest<P extends string = '/', I extends Input['out'] = {}> {
   header(name: string): string | undefined
   header(): Record<RequestHeader | (string & CustomHeader), string>
   header(name?: string) {
+	logger.debug(`>>> Entering header(name=${name})`);
     if (name) {
       return this.raw.headers.get(name) ?? undefined
     }
@@ -191,6 +205,7 @@ export class HonoRequest<P extends string = '/', I extends Input['out'] = {}> {
     this.raw.headers.forEach((value, key) => {
       headerData[key] = value
     })
+	logger.debug(`<<< Exiting header(name=${name})`);
     return headerData
   }
 
@@ -211,6 +226,8 @@ export class HonoRequest<P extends string = '/', I extends Input['out'] = {}> {
   ): Promise<T>
   async parseBody<T extends BodyData>(options?: Partial<ParseBodyOptions>): Promise<T>
   async parseBody(options?: Partial<ParseBodyOptions>) {
+	logger.debug(`>>> Entering parseBody(options=${options})`);
+	logger.debug(`<<< Exiting parseBody(options=${options})`);
     return parseBody(this, options)
   }
 
@@ -247,6 +264,8 @@ export class HonoRequest<P extends string = '/', I extends Input['out'] = {}> {
    * ```
    */
   json<T = any>(): Promise<T> {
+	logger.debug('>>> Entering json()');
+	logger.debug('<<< Exiting json()');
     return this.#cachedBody('text').then((text: string) => JSON.parse(text))
   }
 
@@ -263,6 +282,8 @@ export class HonoRequest<P extends string = '/', I extends Input['out'] = {}> {
    * ```
    */
   text(): Promise<string> {
+	logger.debug('>>> Entering text()');
+	logger.debug('<<< Exiting text()');
     return this.#cachedBody('text')
   }
 
@@ -279,6 +300,8 @@ export class HonoRequest<P extends string = '/', I extends Input['out'] = {}> {
    * ```
    */
   arrayBuffer(): Promise<ArrayBuffer> {
+	logger.debug('>>> Entering arrayBuffer()');
+	logger.debug('<<< Exiting arrayBuffer()');
     return this.#cachedBody('arrayBuffer')
   }
 
@@ -295,6 +318,8 @@ export class HonoRequest<P extends string = '/', I extends Input['out'] = {}> {
    * ```
    */
   bytes(): Promise<Uint8Array> {
+	logger.debug('>>> Entering bytes()');
+	logger.debug('<<< Exiting bytes()');
     return this.#cachedBody('arrayBuffer').then((buffer: ArrayBuffer) => new Uint8Array(buffer))
   }
 
@@ -309,6 +334,8 @@ export class HonoRequest<P extends string = '/', I extends Input['out'] = {}> {
    * @see https://hono.dev/docs/api/request#blob
    */
   blob(): Promise<Blob> {
+	logger.debug('>>> Entering blob()');
+	logger.debug('<<< Exiting blob()');
     return this.#cachedBody('blob')
   }
 
@@ -323,6 +350,8 @@ export class HonoRequest<P extends string = '/', I extends Input['out'] = {}> {
    * @see https://hono.dev/docs/api/request#formdata
    */
   formData(): Promise<FormData> {
+	logger.debug('>>> Entering formData()');
+	logger.debug('<<< Exiting formData()');
     return this.#cachedBody('formData')
   }
 
@@ -333,7 +362,9 @@ export class HonoRequest<P extends string = '/', I extends Input['out'] = {}> {
    * @param data - The validated data to add.
    */
   addValidatedData(target: keyof ValidationTargets, data: {}) {
+	logger.debug(`>>> Entering addValidatedData(target=${target},data=${data})`);
     ;(this.#validatedData ??= {})[target] = data
+	logger.debug(`<<< Exiting addValidatedData(target=${target},data=${data})`);
   }
 
   /**
@@ -346,6 +377,8 @@ export class HonoRequest<P extends string = '/', I extends Input['out'] = {}> {
    */
   valid<T extends keyof I & keyof ValidationTargets>(target: T): InputToDataByTarget<I, T>
   valid(target: keyof ValidationTargets) {
+	logger.debug(`>>> Entering valid(target=${target})`);
+	logger.debug(`<<< Exiting valid(target=${target})`);
     return this.#validatedData?.[target] as unknown
   }
 
@@ -470,11 +503,13 @@ export class HonoRequest<P extends string = '/', I extends Input['out'] = {}> {
  * ```
  */
 export const cloneRawRequest = async (req: HonoRequest): Promise<Request> => {
+logger.debug(`>>> Entering cloneRawRequest(req=${req})`);
   if (!req.raw.bodyUsed) {
     return req.raw.clone()
   }
 
   const cacheKey = (Object.keys(req.bodyCache) as Array<keyof Body>)[0]
+logger.debug(`cloneRawRequest(req=${req}): cacheKey → ${cacheKey}`);
   if (!cacheKey) {
     throw new HTTPException(500, {
       message:
@@ -485,6 +520,8 @@ export const cloneRawRequest = async (req: HonoRequest): Promise<Request> => {
   const body = await req[cacheKey]()
   const headers = req.header()
   if (body instanceof FormData) {
+logger.debug(`cloneRawRequest(req=${req}): body → ${body}`);
+logger.debug(`cloneRawRequest(req=${req}): headers → ${headers}`);
     // The FormData is re-serialized with a fresh multipart boundary, so the original
     // Content-Type header no longer matches. Let the Request constructor generate it.
     delete headers['content-type']
@@ -505,5 +542,6 @@ export const cloneRawRequest = async (req: HonoRequest): Promise<Request> => {
     signal: req.raw.signal,
   }
 
+logger.debug(`<<< Exiting cloneRawRequest(req=${req})`);
   return new Request(req.url, requestInit)
 }

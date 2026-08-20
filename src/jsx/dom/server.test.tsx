@@ -1,3 +1,4 @@
+const logger = console;
 /** @jsxImportSource ../ */
 import { renderToReadableStream, renderToString } from './server'
 
@@ -35,6 +36,7 @@ describe('renderToString', () => {
 describe('renderToReadableStream', () => {
   const textDecoder = new TextDecoder()
   const getStringFromStream = async (stream: ReadableStream<Uint8Array>): Promise<string> => {
+	logger.debug('>>> Entering getStringFromStream()');
     const reader = stream.getReader()
     let str = ''
     for (;;) {
@@ -44,6 +46,7 @@ describe('renderToReadableStream', () => {
       }
       str += textDecoder.decode(value)
     }
+	logger.debug('<<< Exiting getStringFromStream()');
     return str
   }
 
@@ -101,11 +104,14 @@ describe('renderToReadableStream', () => {
 
   it('Should be able to render async component', async () => {
     const ChildAsyncComponent = async () => {
+	logger.debug('>>> Entering ChildAsyncComponent()');
       await new Promise((resolve) => setTimeout(resolve, 10))
+	logger.debug('<<< Exiting ChildAsyncComponent()');
       return <span>child async component</span>
     }
 
     const AsyncComponent = async () => {
+	logger.debug('>>> Entering AsyncComponent()');
       await new Promise((resolve) => setTimeout(resolve, 10))
       return (
         <h1>

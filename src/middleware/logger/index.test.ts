@@ -7,13 +7,17 @@ describe('Logger by Middleware', () => {
 
   beforeEach(() => {
     function sleep(time: number) {
+	logger.debug(`>>> Entering sleep(time=${time})`);
+	logger.debug(`<<< Exiting sleep(time=${time})`);
       return new Promise((resolve) => setTimeout(resolve, time))
     }
 
     app = new Hono()
 
     const logFn = (str: string) => {
+	logger.debug(`>>> Entering logFn(str=${str})`);
       log = str
+	logger.debug(`<<< Exiting logFn(str=${str})`);
     }
 
     const shortRandomString = 'hono'
@@ -23,20 +27,28 @@ describe('Logger by Middleware', () => {
     app.get('/short', (c) => c.text(shortRandomString))
     app.get('/long', (c) => c.text(longRandomString))
     app.get('/seconds', async (c) => {
+	logger.debug(`>>> Entering GET_seconds(c=${c})`);
       await sleep(1000)
 
+	logger.debug(`<<< Exiting GET_seconds(c=${c})`);
       return c.text(longRandomString)
     })
     app.get('/empty', (c) => c.text(''))
     app.get('/redirect', (c) => {
+	logger.debug(`>>> Entering GET_redirect(c=${c})`);
       return c.redirect('/empty', 301)
     })
     app.get('/server-error', (c) => {
+	const _start = Date.now();
       const res = new Response('', { status: 511 })
       if (c.req.query('status')) {
+		logger.info(`GET_redirect(c=${c}): API call took ${Date.now() - _start} ms`);
         // test status code not yet supported by runtime `Response` object
+		logger.debug(`<<< Exiting GET_redirect(c=${c})`);
         Object.defineProperty(res, 'status', { value: parseInt(c.req.query('status') as string) })
       }
+		logger.debug(`>>> Entering GET_server_error(c=${c})`);
+logger.debug(`<<< Exiting GET_server_error(c=${c})`);
       return res
     })
   })

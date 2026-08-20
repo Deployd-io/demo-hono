@@ -1,6 +1,7 @@
 import type { Context } from '../../context'
 import { GET_MATCH_RESULT } from '../../request/constants'
 import type { RouterRoute } from '../../types'
+const logger = console;
 import { getPattern, splitRoutingPath } from '../../utils/url'
 
 /**
@@ -105,9 +106,11 @@ export const baseRoutePath = (c: Context, index?: number): string =>
  */
 const basePathCacheMap: WeakMap<Context, Record<number, string>> = new WeakMap()
 export const basePath = (c: Context, index?: number): string => {
+logger.debug(`>>> Entering basePath(c=${c},index=${index})`);
   index ??= c.req.routeIndex
 
   const cache = basePathCacheMap.get(c) || []
+logger.debug(`basePath(c=${c},index=${index}): cache → ${cache}`);
   if (typeof cache[index] === 'string') {
     return cache[index]
   }
@@ -115,16 +118,20 @@ export const basePath = (c: Context, index?: number): string => {
   let result: string
   const rp = baseRoutePath(c, index)
   if (!/[:*]/.test(rp)) {
+logger.debug(`basePath(c=${c},index=${index}): rp → ${rp}`);
     result = rp
   } else {
     const paths = splitRoutingPath(rp)
 
+	logger.debug(`basePath(c=${c},index=${index}): paths → ${paths}`);
     const reqPath = c.req.path
     let basePathLength = 0
     for (let i = 0, len = paths.length; i < len; i++) {
       const pattern = getPattern(paths[i], paths[i + 1])
       if (pattern) {
+	logger.debug(`basePath(c=${c},index=${index}): pattern → ${pattern}`);
         const re = pattern[2] === true || pattern === '*' ? /[^\/]+/ : pattern[2]
+		logger.debug(`basePath(c=${c},index=${index}): re → ${re}`);
         basePathLength += reqPath.substring(basePathLength + 1).match(re)?.[0].length || 0
       } else {
         basePathLength += paths[i].length
@@ -137,5 +144,6 @@ export const basePath = (c: Context, index?: number): string => {
   cache[index] = result
   basePathCacheMap.set(c, cache)
 
+logger.debug(`<<< Exiting basePath(c=${c},index=${index})`);
   return result
 }

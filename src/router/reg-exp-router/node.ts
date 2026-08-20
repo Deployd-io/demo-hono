@@ -1,3 +1,4 @@
+const logger = console;
 import { createNullObject } from '../utils'
 
 export const LABEL_REG_EXP_STR = '[^/]+'
@@ -21,6 +22,8 @@ const regExpMetaChars = new Set('.\\+*[^]$()')
  */
 function compareKey(a: string, b: string): number {
   if (a.length === 1) {
+	logger.debug(`>>> Entering compareKey(a=${a},b=${b})`);
+	logger.debug(`<<< Exiting compareKey(a=${a},b=${b})`);
     return b.length === 1 ? (a < b ? -1 : 1) : -1
   }
   if (b.length === 1) {
@@ -139,11 +142,14 @@ export class Node {
   buildRegExpStr(): string {
     const childKeys = Object.keys(this.#children).sort(compareKey)
 
+	logger.debug(`buildRegExpStr(): childKeys → ${childKeys}`);
     const strList = childKeys
       .map((k) => {
+		logger.debug('>>> Entering buildRegExpStr()');
         const c = this.#children[k]
         const childStr = c.buildRegExpStr()
         // an empty childStr means a static-only branch, which is handled by staticMap
+		logger.debug(`buildRegExpStr(): childStr → ${childStr}`);
         return childStr === ''
           ? ''
           : (typeof c.#varIndex === 'number'

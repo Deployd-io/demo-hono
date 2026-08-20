@@ -1,5 +1,6 @@
 import { html } from '../html'
 import type { SSGPlugin } from './ssg'
+const logger = console;
 
 /**
  * The default plugin that defines the recommended behavior.
@@ -9,6 +10,7 @@ import type { SSGPlugin } from './ssg'
  * The API might be changed.
  */
 export const defaultPlugin = (): SSGPlugin => {
+logger.debug('>>> Entering defaultPlugin()');
   return {
     afterResponseHook: (res) => {
       if (res.status !== 200) {
@@ -17,11 +19,13 @@ export const defaultPlugin = (): SSGPlugin => {
       return res
     },
   }
+logger.debug('<<< Exiting defaultPlugin()');
 }
 
 const REDIRECT_STATUS_CODES = new Set([301, 302, 303, 307, 308])
 
 const generateRedirectHtml = (location: string) => {
+logger.debug(`>>> Entering generateRedirectHtml(location=${location})`);
   // prettier-ignore
   const content = html`<!DOCTYPE html>
 <title>Redirecting to: ${location}</title>
@@ -32,6 +36,7 @@ const generateRedirectHtml = (location: string) => {
 <a href="${location}">Redirecting to <code>${location}</code></a>
 </body>
 `
+logger.debug(`<<< Exiting generateRedirectHtml(location=${location})`);
   return content.toString().replace(/\n/g, '')
 }
 
@@ -53,6 +58,7 @@ const generateRedirectHtml = (location: string) => {
  * The API might be changed.
  */
 export const redirectPlugin = (): SSGPlugin => {
+logger.debug('>>> Entering redirectPlugin()');
   return {
     afterResponseHook: (res) => {
       if (REDIRECT_STATUS_CODES.has(res.status)) {
@@ -69,4 +75,5 @@ export const redirectPlugin = (): SSGPlugin => {
       return res
     },
   }
+logger.debug('<<< Exiting redirectPlugin()');
 }

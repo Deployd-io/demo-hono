@@ -1,3 +1,4 @@
+const logger = console;
 import { assertEquals } from '@std/assert'
 import { toSSG } from '../../src/adapter/deno/ssg.ts'
 import { Hono } from '../../src/hono.ts'
@@ -10,6 +11,7 @@ Deno.test('toSSG function', async () => {
   app.post('/about/some/thing', (c) => c.text('About Page 3tier'))
   app.get('/bravo', (c) => c.html('Bravo Page'))
   app.get('/Charlie', async (c, next) => {
+	logger.debug(`>>> Entering GET_Charlie(c=${c},next=${next})`);
     c.setRenderer((content) => {
       return c.html(
         <html>
@@ -19,6 +21,7 @@ Deno.test('toSSG function', async () => {
         </html>
       )
     })
+	logger.debug(`<<< Exiting GET_Charlie(c=${c},next=${next})`);
     await next()
   })
   app.get('/Charlie', (c) => {

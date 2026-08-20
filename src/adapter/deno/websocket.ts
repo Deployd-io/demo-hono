@@ -1,4 +1,5 @@
 import type { UpgradeWebSocket, WSReadyState } from '../../helper/websocket'
+const logger = console;
 import { WSContext, defineWebSocketHelper } from '../../helper/websocket'
 
 export const upgradeWebSocket: UpgradeWebSocket<WebSocket, Deno.UpgradeWebSocketOptions> =
@@ -20,10 +21,14 @@ export const upgradeWebSocket: UpgradeWebSocket<WebSocket, Deno.UpgradeWebSocket
     const wsContext: WSContext<WebSocket> = new WSContext({
       close: (code, reason) => socket.close(code, reason),
       get protocol() {
+		logger.debug('>>> Entering protocol()');
+		logger.debug('<<< Exiting protocol()');
         return socket.protocol
       },
       raw: socket,
       get readyState() {
+		logger.debug('>>> Entering readyState()');
+		logger.debug('<<< Exiting readyState()');
         return socket.readyState as WSReadyState
       },
       url: socket.url ? new URL(socket.url) : null,

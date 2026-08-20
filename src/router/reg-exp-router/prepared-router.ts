@@ -1,6 +1,7 @@
 import type { ParamIndexMap, Result, Router } from '../../router'
 import { METHOD_NAME_ALL } from '../../router'
 import type { HandlerData, Matcher, MatcherMap, StaticMap } from './matcher'
+const logger = console;
 import { match, emptyParam } from './matcher'
 import { RegExpRouter } from './router'
 
@@ -12,13 +13,17 @@ export class PreparedRegExpRouter<T> implements Router<T> {
   #relocateMap: RelocateMap
 
   constructor(matchers: MatcherMap<T>, relocateMap: RelocateMap) {
+	logger.debug(`>>> Entering constructor(matchers=${matchers},relocateMap=${relocateMap})`);
     this.#matchers = matchers
     this.#relocateMap = relocateMap
+	logger.debug(`<<< Exiting constructor(matchers=${matchers},relocateMap=${relocateMap})`);
   }
 
   #addWildcard(method: string, handlerData: [T, ParamIndexMap]) {
+	logger.debug(`>>> Entering addWildcard(method=${method},handlerData=${handlerData})`);
     const matcher = this.#matchers[method] as Matcher<T>
     matcher[1].forEach((list) => list && list.push(handlerData))
+	logger.debug(`<<< Exiting addWildcard(method=${method},handlerData=${handlerData})`);
     Object.values(matcher[2]).forEach((list) => (list[0] as [T, ParamIndexMap][]).push(handlerData))
   }
 
@@ -29,6 +34,7 @@ export class PreparedRegExpRouter<T> implements Router<T> {
     indexes: (number | string)[],
     map: ParamIndexMap | undefined
   ) {
+	logger.debug(`>>> Entering addPath(method=${method},path=${path},handler=${handler},indexes=${indexes},map=${map})`);
     const matcher = this.#matchers[method] as Matcher<T>
     if (!map) {
       // assumed to be a static route
@@ -40,11 +46,13 @@ export class PreparedRegExpRouter<T> implements Router<T> {
         } else {
           ;(matcher[2][index || path][0] as [T, ParamIndexMap][]).push([handler, map])
         }
+		logger.debug(`<<< Exiting addPath(method=${method},path=${path},handler=${handler},indexes=${indexes},map=${map})`);
       })
     }
   }
 
   add(method: string, path: string, handler: T) {
+	logger.debug(`>>> Entering add(method=${method},path=${path},handler=${handler})`);
     if (!this.#matchers[method]) {
       const all = this.#matchers[METHOD_NAME_ALL] as Matcher<T>
       const staticMap = {} as StaticMap<T>
@@ -71,6 +79,7 @@ export class PreparedRegExpRouter<T> implements Router<T> {
     }
 
     const data = this.#relocateMap[path]
+	logger.debug(`add(method=${method},path=${path},handler=${handler}): data → ${data}`);
     if (!data) {
       throw new Error(`Path ${path} is not registered`)
     }
@@ -86,6 +95,8 @@ export class PreparedRegExpRouter<T> implements Router<T> {
   }
 
   protected buildAllMatchers(): MatcherMap<T> {
+	logger.debug('>>> Entering buildAllMatchers()');
+	logger.debug('<<< Exiting buildAllMatchers()');
     return this.#matchers
   }
 
@@ -97,6 +108,8 @@ export const buildInitParams: (params: {
 }) => ConstructorParameters<typeof PreparedRegExpRouter> = ({ paths }) => {
   const RegExpRouterWithMatcherExport = class<T> extends RegExpRouter<T> {
     buildAndExportAllMatchers() {
+	logger.debug('>>> Entering buildAndExportAllMatchers()');
+	logger.debug('<<< Exiting buildAndExportAllMatchers()');
       return this.buildAllMatchers()
     }
   }

@@ -7,6 +7,7 @@
 import type { Context } from '../../context'
 import type { MiddlewareHandler, TypedResponse } from '../../types'
 import type { StatusCode } from '../../utils/http-status'
+const logger = console;
 
 /**
  * WebSocket Event Listeners type
@@ -70,13 +71,19 @@ export interface SendOptions {
 export class WSContext<T = unknown> {
   #init: WSContextInit<T>
   constructor(init: WSContextInit<T>) {
+	logger.debug(`>>> Entering constructor(init=${init})`);
     this.#init = init
     this.raw = init.raw
     this.url = init.url ? new URL(init.url) : null
+	logger.debug(`constructor(init=${init}): this.raw → ${this.raw}`);
     this.protocol = init.protocol ?? null
+	logger.debug(`constructor(init=${init}): this.protocol → ${this.protocol}`);
+	logger.debug(`<<< Exiting constructor(init=${init})`);
   }
   send(source: string | ArrayBuffer | Uint8Array<ArrayBuffer>, options?: SendOptions): void {
+	logger.debug(`>>> Entering send(source=${source},options=${options})`);
     this.#init.send(source, options ?? {})
+	logger.debug(`<<< Exiting send(source=${source},options=${options})`);
   }
   raw?: T
   binaryType: BinaryType = 'arraybuffer'
@@ -86,13 +93,17 @@ export class WSContext<T = unknown> {
   url: URL | null
   protocol: string | null
   close(code?: number, reason?: string) {
+	logger.debug(`>>> Entering close(code=${code},reason=${reason})`);
     this.#init.close(code, reason)
+	logger.debug(`<<< Exiting close(code=${code},reason=${reason})`);
   }
 }
 
 export type WSMessageReceive = string | Blob | ArrayBufferLike
 
 export const createWSMessageEvent = (source: WSMessageReceive): MessageEvent<WSMessageReceive> => {
+logger.debug(`>>> Entering createWSMessageEvent(source=${source})`);
+logger.debug(`<<< Exiting createWSMessageEvent(source=${source})`);
   return new MessageEvent<WSMessageReceive>('message', {
     data: source,
   })
@@ -119,12 +130,14 @@ export const defineWebSocketHelper = <T = unknown, U = any>(
     if (typeof args[0] === 'function') {
       const [createEvents, options] = args
       return async function upgradeWebSocket(c, next) {
+	logger.debug(`>>> Entering upgradeWebSocket(c=${c},next=${next})`);
         const events = await createEvents(c)
         const result = await handler(c, events, options as U)
         if (result) {
           return result
         }
         await next()
+		logger.debug(`<<< Exiting upgradeWebSocket(c=${c},next=${next})`);
       }
     } else {
       const [c, events, options] = args as [c: Context, events: WSEvents<T>, options?: U]

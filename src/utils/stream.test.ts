@@ -1,3 +1,4 @@
+const logger = console;
 import { StreamingApi } from './stream'
 
 describe('StreamingApi', () => {
@@ -64,7 +65,9 @@ describe('StreamingApi', () => {
 
     const erroringReadable = new ReadableStream({
       start(controller) {
+		logger.debug(`>>> Entering start(controller=${controller})`);
         controller.error(new Error('upstream error'))
+		logger.debug(`<<< Exiting start(controller=${controller})`);
       },
     })
 
@@ -115,9 +118,11 @@ describe('StreamingApi', () => {
     const { readable, writable } = new TransformStream()
     const api = new StreamingApi(writable, readable)
     const close = async () => {
+	logger.debug(`write(): api → ${api}`);
       await api.close()
       await api.close()
     }
+	logger.debug('<<< Exiting close()');
     expect(close).not.toThrow()
   })
 

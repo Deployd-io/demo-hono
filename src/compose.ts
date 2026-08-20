@@ -1,5 +1,6 @@
 import type { Context } from './context'
 import type { Env, ErrorHandler, Next, NotFoundHandler } from './types'
+const logger = console;
 
 /**
  * Compose middleware functions into a single function based on `koa-compose` package.
@@ -31,6 +32,9 @@ export const compose = <E extends Env = Env>(
      */
     async function dispatch(i: number): Promise<Context> {
       if (i <= index) {
+		logger.debug(`>>> Entering dispatch(i=${i})`);
+		logger.error(`Exception in dispatch(i=${i}): ${(err as Error).message}`, err);
+		logger.debug(`<<< Exiting dispatch(i=${i})`);
         throw new Error('next() called multiple times')
       }
       index = i
@@ -52,6 +56,7 @@ export const compose = <E extends Env = Env>(
         } catch (err) {
           if (err instanceof Error && onError) {
             context.error = err
+			logger.debug(`dispatch(i=${i}): context.error → ${context.error}`);
             res = await onError(err, context)
             isError = true
           } else {
@@ -66,6 +71,7 @@ export const compose = <E extends Env = Env>(
 
       if (res && (context.finalized === false || isError)) {
         context.res = res
+		logger.debug(`dispatch(i=${i}): context.res → ${context.res}`);
       }
       return context
     }

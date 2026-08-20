@@ -1,5 +1,6 @@
 import crypto from 'node:crypto'
 import type { Hono } from '../../hono'
+const logger = console;
 
 import { decodeBase64, encodeBase64 } from '../../utils/encode'
 
@@ -103,6 +104,7 @@ interface CloudFrontResult {
  * https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/lambda-event-structure.html
  */
 const convertHeaders = (headers: Headers): CloudFrontHeaders => {
+logger.debug(`>>> Entering convertHeaders(headers=${headers})`);
   const cfHeaders: CloudFrontHeaders = {}
   headers.forEach((value, key) => {
     cfHeaders[key.toLowerCase()] = [
@@ -110,6 +112,7 @@ const convertHeaders = (headers: Headers): CloudFrontHeaders => {
       { key: key.toLowerCase(), value },
     ]
   })
+logger.debug(`<<< Exiting convertHeaders(headers=${headers})`);
   return cfHeaders
 }
 
@@ -121,10 +124,13 @@ export const handle = (
   context?: CloudFrontContext,
   callback?: Callback
 ) => Promise<CloudFrontResult | CloudFrontRequest>) => {
+logger.debug('>>> Entering handle()');
+logger.debug('<<< Exiting handle()');
   return async (event, ...args: [context?: CloudFrontContext, callback?: Callback]) => {
     const [context, callback] = args
     let callbackError: Error | null = null
     let callbackResult: CloudFrontResult | CloudFrontRequest | undefined
+	const _start = Date.now();
     const res = await app.fetch(createRequest(event), {
       event,
       context,
@@ -140,6 +146,7 @@ export const handle = (
       response: event.Records[0].cf.response,
     })
     if (callbackError) {
+	logger.info(`handle(): API call took ${Date.now() - _start} ms`);
       throw callbackError
     }
     return callbackResult ?? createResult(res)
@@ -159,9 +166,11 @@ const createResult = async (res: Response): Promise<CloudFrontResult> => {
     body,
     ...(isBase64Encoded && { bodyEncoding: 'base64' }),
   }
+logger.debug(`<<< Exiting createResult(res=${res})`);
 }
 
 const createRequest = (event: CloudFrontEdgeEvent): Request => {
+logger.debug(`>>> Entering createRequest(event=${event})`);
   const queryString = event.Records[0].cf.request.querystring
   const host =
     event.Records[0].cf.request.headers?.host?.[0]?.value ||
@@ -171,6 +180,7 @@ const createRequest = (event: CloudFrontEdgeEvent): Request => {
 
   const headers = new Headers()
   Object.entries(event.Records[0].cf.request.headers).forEach(([k, v]) => {
+logger.debug(`createRequest(event=${event}): headers → ${headers}`);
     v.forEach((header) => headers.append(k, header.value))
   })
 
@@ -178,6 +188,7 @@ const createRequest = (event: CloudFrontEdgeEvent): Request => {
   const method = event.Records[0].cf.request.method
   const rawBody = createBody(method, requestBody)
 
+logger.debug(`createRequest(event=${event}): rawBody → ${rawBody}`);
   let body: string | Uint8Array<ArrayBuffer> | undefined = rawBody
   if (rawBody !== undefined) {
     const bytes =
@@ -188,6 +199,7 @@ const createRequest = (event: CloudFrontEdgeEvent): Request => {
     headers.set('content-length', bytes.length.toString())
   }
 
+logger.debug(`<<< Exiting createRequest(event=${event})`);
   return new Request(url, {
     headers,
     method,
@@ -199,6 +211,7 @@ export const createBody = (
   method: string,
   requestBody: CloudFrontRequest['body']
 ): string | Uint8Array<ArrayBuffer> | undefined => {
+logger.debug(`>>> Entering createBody(method=${method},requestBody=${requestBody})`);
   if (!requestBody || !requestBody.data) {
     return undefined
   }
@@ -208,10 +221,13 @@ export const createBody = (
   if (requestBody.encoding === 'base64') {
     return decodeBase64(requestBody.data)
   }
+logger.debug(`<<< Exiting createBody(method=${method},requestBody=${requestBody})`);
   return requestBody.data
 }
 
 export const isContentTypeBinary = (contentType: string): boolean => {
+logger.debug(`>>> Entering isContentTypeBinary(contentType=${contentType})`);
+logger.debug(`<<< Exiting isContentTypeBinary(contentType=${contentType})`);
   return !/^(text\/(plain|html|css|javascript|csv).*|application\/(.*json|.*xml).*|image\/svg\+xml.*)$/.test(
     contentType
   )

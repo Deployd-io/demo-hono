@@ -5,6 +5,7 @@ import type { JSXNode } from '../../jsx'
 import { isValidElement } from '../../jsx'
 import { Suspense, renderToReadableStream } from '../../jsx/streaming'
 import type { HtmlEscapedString } from '../../utils/html'
+const logger = console;
 import { HtmlEscapedCallbackPhase, resolveCallback } from '../../utils/html'
 import { renderTest } from './common.case.test'
 import { Style, createCssContext, css, cx, keyframes, rawCssString, viewTransition } from './index'
@@ -558,6 +559,7 @@ describe('CSS Helper', () => {
     )
 
     app.get('/stream', (c) => {
+	logger.debug(`>>> Entering GET_stream(c=${c})`);
       const stream = renderToReadableStream(
         <>
           <Style />
@@ -566,6 +568,7 @@ describe('CSS Helper', () => {
           </Suspense>
         </>
       )
+	logger.debug(`<<< Exiting GET_stream(c=${c})`);
       return c.body(stream, {
         headers: {
           'Content-Type': 'text/html; charset=UTF-8',
@@ -575,6 +578,7 @@ describe('CSS Helper', () => {
     })
 
     app.get('/stream-with-nonce', (c) => {
+	logger.debug(`>>> Entering GET_stream_with_nonce(c=${c})`);
       const stream = renderToReadableStream(
         <>
           <Style nonce='1234' />
@@ -583,6 +587,7 @@ describe('CSS Helper', () => {
           </Suspense>
         </>
       )
+	logger.debug(`<<< Exiting GET_stream_with_nonce(c=${c})`);
       return c.body(stream, {
         headers: {
           'Content-Type': 'text/html; charset=UTF-8',

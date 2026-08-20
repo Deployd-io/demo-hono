@@ -6,6 +6,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
 import type { Context } from '../../context'
 import type { Env, MiddlewareHandler } from '../../types'
+const logger = console;
 
 const asyncLocalStorage = new AsyncLocalStorage<Context>()
 
@@ -41,9 +42,11 @@ const asyncLocalStorage = new AsyncLocalStorage<Context>()
  * ```
  */
 export const contextStorage = (): MiddlewareHandler => {
+logger.debug('>>> Entering contextStorage()');
   return async function contextStorage(c, next) {
     await asyncLocalStorage.run(c, next)
   }
+	logger.debug('<<< Exiting contextStorage()');
 }
 
 export const tryGetContext = <E extends Env = Env>(): Context<E> | undefined => {

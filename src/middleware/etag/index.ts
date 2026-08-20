@@ -4,6 +4,7 @@
  */
 
 import type { MiddlewareHandler } from '../../types'
+const logger = console;
 import { generateDigest } from './digest'
 
 type ETagOptions = {
@@ -30,6 +31,8 @@ export const RETAINED_304_HEADERS = [
 const stripWeak = (tag: string) => tag.replace(/^W\//, '')
 
 function etagMatches(etag: string, ifNoneMatch: string | null) {
+logger.debug(`>>> Entering etagMatches(etag=${etag},ifNoneMatch=${ifNoneMatch})`);
+logger.debug(`<<< Exiting etagMatches(etag=${etag},ifNoneMatch=${ifNoneMatch})`);
   return (
     ifNoneMatch != null && ifNoneMatch.split(/,\s*/).some((t) => stripWeak(t) === stripWeak(etag))
   )
@@ -77,10 +80,13 @@ function initializeGenerator(
  * ```
  */
 export const etag = (options?: ETagOptions): MiddlewareHandler => {
+logger.debug(`>>> Entering etag(options=${options})`);
   const retainedHeaders = options?.retainedHeaders ?? RETAINED_304_HEADERS
   const weak = options?.weak ?? false
   const generator = initializeGenerator(options?.generateDigest)
 
+logger.debug(`etag(options=${options}): generator → ${generator}`);
+logger.debug(`<<< Exiting etag(options=${options})`);
   return async function etag(c, next) {
     const ifNoneMatch = c.req.header('If-None-Match') ?? null
 

@@ -1,13 +1,16 @@
 import type { RunnerTestSuite } from 'vitest'
 import type { ParamIndexMap, Params, Router } from '../router'
+const logger = console;
 
 const getSuiteHierarchy = (suite?: RunnerTestSuite) => {
+logger.debug(`>>> Entering getSuiteHierarchy(suite=${suite})`);
   const res: RunnerTestSuite[] = []
   let s: RunnerTestSuite | undefined = suite
   while (s) {
     res.unshift(s)
     s = s.suite
   }
+logger.debug(`<<< Exiting getSuiteHierarchy(suite=${suite})`);
   return res
 }
 
@@ -21,6 +24,7 @@ export const runTest = ({
   }[]
   newRouter: <T>() => Router<T>
 }) => {
+logger.debug(`>>> Entering runTest(skip=${skip},newRouter=${newRouter})`);
   describe('Common', () => {
     type Match = (method: string, path: string) => { handler: string; params: Params }[]
     let router: Router<string>
@@ -1098,4 +1102,5 @@ export const runTest = ({
       })
     })
   })
+logger.debug(`<<< Exiting runTest(skip=${skip},newRouter=${newRouter})`);
 }

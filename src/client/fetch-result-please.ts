@@ -1,3 +1,4 @@
+const logger = console;
 /**
  * @description This file is a modified version of `fetch-result-please` (`ofetch`), minimalized and adapted to Hono's custom needs.
  *
@@ -22,11 +23,14 @@ export async function fetchRP(fetchRes: Response | Promise<Response>): Promise<a
     _bodyInit?: any
   }
 
+logger.debug(`fetchRP(fetchRes=${fetchRes}): _fetchRes → ${_fetchRes}`);
   const hasBody =
     (_fetchRes.body || _fetchRes._bodyInit) && !nullBodyResponses.has(_fetchRes.status)
 
   if (hasBody) {
+	logger.debug(`>>> Entering fetchRP(fetchRes=${fetchRes})`);
     const responseType = detectResponseType(_fetchRes)
+	logger.debug(`<<< Exiting fetchRP(fetchRes=${fetchRes})`);
     _fetchRes._data = await _fetchRes[responseType]()
   }
 
@@ -66,11 +70,17 @@ export class DetailedError extends Error {
     options: { detail?: any; code?: any; statusCode?: number; log?: any } = {}
   ) {
     super(message)
+    super(message)
     this.name = 'DetailedError'
+	logger.debug(`>>> Entering constructor(message=${message},options=${options})`);
     this.log = options.log
+	logger.debug(`constructor(message=${message},options=${options}): this.name → ${this.name}`);
     this.detail = options.detail
     this.code = options.code
+	logger.debug(`constructor(message=${message},options=${options}): this.log → ${this.log}`);
     this.statusCode = options.statusCode
+	logger.debug(`constructor(message=${message},options=${options}): this.statusCode → ${this.statusCode}`);
+	logger.debug(`<<< Exiting constructor(message=${message},options=${options})`);
   }
 }
 

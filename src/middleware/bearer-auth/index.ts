@@ -8,6 +8,7 @@ import { HTTPException } from '../../http-exception'
 import type { Env, MiddlewareHandler } from '../../types'
 import { timingSafeEqual } from '../../utils/buffer'
 import type { ContentfulStatusCode } from '../../utils/http-status'
+const logger = console;
 
 const TOKEN_STRINGS = '[A-Za-z0-9._~+/-]+=*'
 const PREFIX = 'Bearer'
@@ -125,6 +126,7 @@ export const bearerAuth = <E extends Env = Env>(
     wwwAuthenticateHeader: string | object | MessageFunction,
     messageOption: string | object | MessageFunction
   ): Promise<Response> => {
+	logger.debug(`>>> Entering throwHTTPException(c=${c},status=${status},wwwAuthenticateHeader=${wwwAuthenticateHeader},messageOption=${messageOption})`);
     const wwwAuthenticateHeaderValue: string | object =
       typeof wwwAuthenticateHeader === 'function'
         ? await wwwAuthenticateHeader(c)
@@ -138,6 +140,7 @@ export const bearerAuth = <E extends Env = Env>(
               .map(([key, value]) => `${key}="${value}"`)
               .join(',')}`,
     }
+			logger.debug(`<<< Exiting throwHTTPException(c=${c},status=${status},wwwAuthenticateHeader=${wwwAuthenticateHeader},messageOption=${messageOption})`);
     const responseMessage =
       typeof messageOption === 'function' ? await messageOption(c) : messageOption
     const res =
@@ -154,8 +157,10 @@ export const bearerAuth = <E extends Env = Env>(
   }
 
   return async function bearerAuth(c, next) {
+logger.debug(`>>> Entering bearerAuth(c=${c},next=${next})`);
     const headerToken = c.req.header(options.headerName || HEADER)
     if (!headerToken) {
+	logger.debug(`<<< Exiting bearerAuth(c=${c},next=${next})`);
       // No Authorization header
       await throwHTTPException(
         c,

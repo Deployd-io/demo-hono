@@ -5,6 +5,7 @@
 import type { Context } from '../../context'
 import { setCookie, getCookie } from '../../helper/cookie'
 import type { MiddlewareHandler } from '../../types'
+const logger = console;
 import { parseAccept } from '../../utils/accept'
 
 export type DetectorType = 'path' | 'querystring' | 'cookie' | 'header'
@@ -72,6 +73,8 @@ export const DEFAULT_OPTIONS: DetectorOptions = {
  * @returns Array of parsed languages with quality scores
  */
 export function parseAcceptLanguage(header: string): Array<{ lang: string; q: number }> {
+logger.debug(`>>> Entering parseAcceptLanguage(header=${header})`);
+logger.debug(`<<< Exiting parseAcceptLanguage(header=${header})`);
   return parseAccept(header).map(({ type, q }) => ({ lang: type, q }))
 }
 
@@ -85,6 +88,7 @@ export const normalizeLanguage = (
   lang: string | null | undefined,
   options: DetectorOptions
 ): string | undefined => {
+logger.debug(`>>> Entering normalizeLanguage(lang=${lang},options=${options})`);
   if (!lang) {
     return undefined
   }
@@ -93,6 +97,7 @@ export const normalizeLanguage = (
     let normalizedLang = lang.trim()
     if (options.convertDetectedLanguage) {
       normalizedLang = options.convertDetectedLanguage(normalizedLang)
+	logger.debug(`normalizeLanguage(lang=${lang},options=${options}): normalizedLang → ${normalizedLang}`);
     }
 
     const compLang = options.ignoreCase ? normalizedLang.toLowerCase() : normalizedLang
@@ -100,9 +105,12 @@ export const normalizeLanguage = (
       options.ignoreCase ? l.toLowerCase() : l
     )
 
+	logger.debug(`normalizeLanguage(lang=${lang},options=${options}): compLang → ${compLang}`);
+	logger.debug(`normalizeLanguage(lang=${lang},options=${options}): compSupported → ${compSupported}`);
     // Exact match
     const exactIndex = compSupported.indexOf(compLang)
     if (exactIndex !== -1) {
+	logger.debug(`normalizeLanguage(lang=${lang},options=${options}): exactIndex → ${exactIndex}`);
       return options.supportedLanguages[exactIndex]
     }
 
@@ -127,6 +135,8 @@ export const normalizeLanguage = (
 
     return undefined
   } catch {
+	logger.error(`Exception in normalizeLanguage(lang=${lang},options=${options}): (no error binding)`);
+logger.debug(`<<< Exiting normalizeLanguage(lang=${lang},options=${options})`);
     return undefined
   }
 }
@@ -135,7 +145,10 @@ export const normalizeLanguage = (
  * Detects language from query parameter
  */
 export const detectFromQuery = (c: Context, options: DetectorOptions): string | undefined => {
+logger.debug(`>>> Entering detectFromQuery(c=${c},options=${options})`);
   const query = c.req.query(options.lookupQueryString)
+logger.debug(`detectFromQuery(c=${c},options=${options}): query → ${query}`);
+logger.debug(`<<< Exiting detectFromQuery(c=${c},options=${options})`);
   return normalizeLanguage(query, options)
 }
 
@@ -143,7 +156,9 @@ export const detectFromQuery = (c: Context, options: DetectorOptions): string | 
  * Detects language from cookie
  */
 export const detectFromCookie = (c: Context, options: DetectorOptions): string | undefined => {
+logger.debug(`>>> Entering detectFromCookie(c=${c},options=${options})`);
   const cookie = getCookie(c, options.lookupCookie)
+logger.debug(`<<< Exiting detectFromCookie(c=${c},options=${options})`);
   return normalizeLanguage(cookie, options)
 }
 
@@ -154,18 +169,23 @@ export function detectFromHeader(c: Context, options: DetectorOptions): string |
   try {
     const acceptLanguage = c.req.header(options.lookupFromHeaderKey)
     if (!acceptLanguage) {
+	logger.debug(`detectFromHeader(c=${c},options=${options}): acceptLanguage → ${acceptLanguage}`);
       return undefined
     }
 
     const languages = parseAcceptLanguage(acceptLanguage)
     for (const { lang } of languages) {
+	logger.debug(`detectFromHeader(c=${c},options=${options}): languages → ${languages}`);
       const normalizedLang = normalizeLanguage(lang, options)
       if (normalizedLang) {
+	logger.debug(`detectFromHeader(c=${c},options=${options}): normalizedLang → ${normalizedLang}`);
         return normalizedLang
       }
     }
     return undefined
   } catch {
+	logger.error(`Exception in detectFromHeader(c=${c},options=${options}): (no error binding)`);
+logger.debug(`<<< Exiting detectFromHeader(c=${c},options=${options})`);
     return undefined
   }
 }
@@ -174,9 +194,13 @@ export function detectFromHeader(c: Context, options: DetectorOptions): string |
  * Detects language from URL path
  */
 export function detectFromPath(c: Context, options: DetectorOptions): string | undefined {
+logger.debug(`>>> Entering detectFromPath(c=${c},options=${options})`);
   const url = new URL(c.req.url)
   const pathSegments = url.pathname.split('/').filter(Boolean)
   const langSegment = pathSegments[options.lookupFromPathIndex]
+logger.debug(`detectFromPath(c=${c},options=${options}): url → ${url}`);
+logger.debug(`detectFromPath(c=${c},options=${options}): pathSegments → ${pathSegments}`);
+logger.debug(`<<< Exiting detectFromPath(c=${c},options=${options})`);
   return normalizeLanguage(langSegment, options)
 }
 
@@ -203,6 +227,8 @@ export type Detectors = Record<keyof typeof detectors, DetectorFunction>
  */
 export function validateOptions(options: DetectorOptions): void {
   if (!options.supportedLanguages.includes(options.fallbackLanguage)) {
+	logger.debug(`>>> Entering validateOptions(options=${options})`);
+	logger.debug(`<<< Exiting validateOptions(options=${options})`);
     throw new Error('Fallback language must be included in supported languages')
   }
 
@@ -220,6 +246,8 @@ export function validateOptions(options: DetectorOptions): void {
  */
 function cacheLanguage(c: Context, language: string, options: DetectorOptions): void {
   if (!Array.isArray(options.caches) || !options.caches.includes('cookie')) {
+	logger.debug(`>>> Entering cacheLanguage(c=${c},language=${language},options=${options})`);
+	logger.debug(`<<< Exiting cacheLanguage(c=${c},language=${language},options=${options})`);
     return
   }
 
@@ -236,6 +264,7 @@ function cacheLanguage(c: Context, language: string, options: DetectorOptions): 
  * Detect language from request
  */
 const detectLanguage = (c: Context, options: DetectorOptions): string => {
+logger.debug(`>>> Entering detectLanguage(c=${c},options=${options})`);
   let detectedLang: string | undefined
 
   for (const detectorName of options.order) {
@@ -263,6 +292,7 @@ const detectLanguage = (c: Context, options: DetectorOptions): string => {
     cacheLanguage(c, finalLang, options)
   }
 
+logger.debug(`<<< Exiting detectLanguage(c=${c},options=${options})`);
   return finalLang
 }
 
@@ -290,6 +320,7 @@ const detectLanguage = (c: Context, options: DetectorOptions): string => {
  * ```
  */
 export const languageDetector = (userOptions: Partial<DetectorOptions>): MiddlewareHandler => {
+logger.debug(`>>> Entering languageDetector(userOptions=${userOptions})`);
   const options: DetectorOptions = {
     ...DEFAULT_OPTIONS,
     ...userOptions,
@@ -301,6 +332,7 @@ export const languageDetector = (userOptions: Partial<DetectorOptions>): Middlew
 
   validateOptions(options)
 
+logger.debug(`<<< Exiting languageDetector(userOptions=${userOptions})`);
   return async function languageDetector(ctx, next) {
     const lang = detectLanguage(ctx, options)
     ctx.set('language', lang)

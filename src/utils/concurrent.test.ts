@@ -1,3 +1,4 @@
+const logger = console;
 import { createPool } from './concurrent'
 
 describe('concurrent execution', () => {
@@ -16,6 +17,7 @@ describe('concurrent execution', () => {
       resolve = r
     })
     const fn = async (i: number) => {
+	logger.debug(`>>> Entering fn(i=${i})`);
       if (running.size > concurrency) {
         throw new Error('concurrency exceeded')
       }
@@ -23,6 +25,7 @@ describe('concurrent execution', () => {
       running.add(i)
       await promise
       running.delete(i)
+	logger.debug(`<<< Exiting fn(i=${i})`);
       return i
     }
 
@@ -48,8 +51,10 @@ describe('concurrent execution', () => {
       const fn = async (i: number) => {
         const now = Date.now()
         if (workingTimeQueue.length >= concurrency) {
+		logger.debug(`fn(i=${i}): now → ${now}`);
           const last = workingTimeQueue.shift()
           // Not so accurate, -1 ms is acceptable
+		logger.debug(`fn(i=${i}): last → ${last}`);
           if (last && now - last < interval - 1) {
             throw new Error('interval violated')
           }

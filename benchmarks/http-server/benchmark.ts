@@ -1,3 +1,4 @@
+const logger = console;
 /**
  * Hono HTTP Performance Benchmark
  *
@@ -54,6 +55,7 @@ export default app`
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 const runCommand = async (command: string, cwd: string) => {
+logger.debug(`>>> Entering runCommand(command=${command},cwd=${cwd})`);
   const parts = command.split(' ')
   const proc = spawn(parts[0], parts.slice(1), { cwd })
 
@@ -79,15 +81,18 @@ const runCommand = async (command: string, cwd: string) => {
     throw new Error(`Command failed: ${command}`)
   }
 
+logger.debug(`<<< Exiting runCommand(command=${command},cwd=${cwd})`);
   return { stdout, stderr }
 }
 
 const setupTemp = () => {
+logger.debug('>>> Entering setupTemp()');
   if (existsSync(TEMP_DIR)) {
     rmSync(TEMP_DIR, { recursive: true })
   }
   mkdirSync(TEMP_DIR, { recursive: true })
   writeFileSync(join(TEMP_DIR, 'body.json'), '{"hello":"world"}')
+logger.debug('<<< Exiting setupTemp()');
 }
 
 const buildVersion = async (version: string, name: string) => {
@@ -174,6 +179,7 @@ const buildVersion = async (version: string, name: string) => {
     await runCommand('git checkout -', HONO_ROOT)
   }
 
+logger.debug(`<<< Exiting buildVersion(version=${version},name=${name})`);
   return appPath
 }
 
@@ -227,11 +233,15 @@ const runBenchmark = async (appPath: string, name: string) => {
   const query = average(allRuns.map((run) => run[1]))
   const body = average(allRuns.map((run) => run[2]))
   const overall = (ping + query + body) / 3
+logger.debug(`average(arr=${arr}): body → ${body}`);
+logger.debug(`average(arr=${arr}): overall → ${overall}`);
 
+logger.debug(`<<< Exiting runBenchmark(appPath=${appPath},name=${name})`);
   return { name, average: overall, ping, query, body, runs: allRuns.map((run) => average(run)) }
 }
 
 const main = async () => {
+logger.debug('>>> Entering main()');
   console.log('🏁 Hono HTTP Benchmark')
   console.log('======================')
   console.log(`Baseline: ${baseline}`)
@@ -249,9 +259,13 @@ const main = async () => {
     const baselinePath = await buildVersion(baseline, 'baseline')
     const targetPath = await buildVersion(target, 'target')
 
+	logger.debug(`main(): baselinePath → ${baselinePath}`);
+	logger.debug(`main(): targetPath → ${targetPath}`);
     const baselineResult = await runBenchmark(baselinePath, 'baseline')
     const targetResult = await runBenchmark(targetPath, 'target')
 
+	logger.debug(`main(): baselineResult → ${baselineResult}`);
+	logger.debug(`main(): targetResult → ${targetResult}`);
     // Calculate changes
     const calculateChange = (target: number, baseline: number) =>
       (((target - baseline) / baseline) * 100).toFixed(2)
@@ -312,6 +326,7 @@ const main = async () => {
     // Markdown output
     const markdownOutput = ['## HTTP Performance Benchmark', '', ...table].join('\n')
 
+	logger.debug(`main(): markdownOutput → ${markdownOutput}`);
     writeFileSync(join(SCRIPT_DIR, 'benchmark-results.md'), markdownOutput)
   } catch (error) {
     console.error('❌ Benchmark failed:', error)
@@ -320,6 +335,7 @@ const main = async () => {
     if (existsSync(TEMP_DIR)) {
       rmSync(TEMP_DIR, { recursive: true })
     }
+	logger.debug('<<< Exiting main()');
   }
 }
 

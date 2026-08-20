@@ -1,3 +1,4 @@
+const logger = console;
 /**
  * @module
  * HTML utility.
@@ -41,7 +42,10 @@ export const raw = (value: unknown, callbacks?: HtmlEscapedCallback[]): HtmlEsca
   const escapedString = new String(value) as HtmlEscapedString
   escapedString.isEscaped = true
   escapedString.callbacks = callbacks
+logger.debug(`raw(value=${value},callbacks=${callbacks}): escapedString.isEscaped → ${escapedString.isEscaped}`);
+logger.debug(`raw(value=${value},callbacks=${callbacks}): escapedString.callbacks → ${escapedString.callbacks}`);
 
+logger.debug(`<<< Exiting raw(value=${value},callbacks=${callbacks})`);
   return escapedString
 }
 
@@ -84,6 +88,7 @@ export const stringBufferToString = async (
     }
   }
 
+logger.debug(`<<< Exiting stringBufferToString(buffer=${buffer},callbacks=${callbacks})`);
   return raw(str, callbacks)
 }
 
@@ -124,11 +129,14 @@ export const escapeToBuffer = (str: string, buffer: StringBuffer): void => {
   }
 
   buffer[0] += str.substring(lastIndex, index)
+logger.debug(`<<< Exiting escapeToBuffer(str=${str},buffer=${buffer})`);
 }
 
 export const resolveCallbackSync = (str: string | HtmlEscapedString): string => {
   const callbacks = (str as HtmlEscapedString).callbacks as HtmlEscapedCallback[]
   if (!callbacks?.length) {
+	logger.debug(`>>> Entering callbacks(HtmlEscapedString=${HtmlEscapedString})`);
+	logger.debug(`<<< Exiting callbacks(HtmlEscapedString=${HtmlEscapedString})`);
     return str
   }
   const buffer: [string] = [str]
@@ -136,6 +144,7 @@ export const resolveCallbackSync = (str: string | HtmlEscapedString): string => 
 
   callbacks.forEach((c) => c({ phase: HtmlEscapedCallbackPhase.Stringify, buffer, context }))
 
+logger.debug(`<<< Exiting resolveCallbackSync(str=${str})`);
   return buffer[0]
 }
 
@@ -146,6 +155,7 @@ export const resolveCallback = async (
   context: object,
   buffer?: [string]
 ): Promise<string> => {
+logger.debug(`>>> Entering resolveCallback(str=${str},phase=${phase},preserveCallbacks=${preserveCallbacks},context=${context},buffer=${buffer})`);
   if (typeof str === 'object' && !(str instanceof String)) {
     if (!((str as unknown) instanceof Promise)) {
       str = (str as unknown as string).toString() // HtmlEscapedString object to string
@@ -177,6 +187,7 @@ export const resolveCallback = async (
   if (preserveCallbacks) {
     return raw(await resStr, callbacks)
   } else {
+	logger.debug(`<<< Exiting resolveCallback(str=${str},phase=${phase},preserveCallbacks=${preserveCallbacks},context=${context},buffer=${buffer})`);
     return resStr
   }
 }

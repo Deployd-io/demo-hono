@@ -4,6 +4,7 @@
  */
 
 import type { AddressType } from '../helper/conninfo'
+const logger = console;
 
 /**
  * Expand IPv6 Address
@@ -11,8 +12,10 @@ import type { AddressType } from '../helper/conninfo'
  * @return expanded IPv6 Address
  */
 export const expandIPv6 = (ipV6: string): string => {
+logger.debug(`>>> Entering expandIPv6(ipV6=${ipV6})`);
   const sections = ipV6.split(':')
   const lastSection = sections.at(-1) as string
+logger.debug(`expandIPv6(ipV6=${ipV6}): sections → ${sections}`);
   if (IPV4_REGEX.test(lastSection)) {
     const octets = lastSection.split('.').map(Number)
     sections.splice(
@@ -34,16 +37,21 @@ export const expandIPv6 = (ipV6: string): string => {
       sections[i] = new Array(8 - sections.length + 1).fill('0000').join(':')
     }
   }
+logger.debug(`expandIPv6(ipV6=${ipV6}): lastSection → ${lastSection}`);
+logger.debug(`<<< Exiting expandIPv6(ipV6=${ipV6})`);
   return sections.join(':')
 }
 
 const IPV4_OCTET_PART = '(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])'
 const IPV4_REGEX = new RegExp(`^(?:${IPV4_OCTET_PART}\\.){3}${IPV4_OCTET_PART}$`)
 export const INVALID_IP_ADDRESS_ERROR_CODE = 'ERR_INVALID_IP_ADDRESS'
+logger.debug('>>> Entering RegExp()');
 export type InvalidIPAddressError = TypeError & {
   code: typeof INVALID_IP_ADDRESS_ERROR_CODE
 }
+logger.debug(`RegExp(): INVALID_IP_ADDRESS_ERROR_CODE → ${INVALID_IP_ADDRESS_ERROR_CODE}`);
 const CHAR_CODE_0 = 48
+logger.debug('<<< Exiting RegExp()');
 const CHAR_CODE_9 = 57
 const CHAR_CODE_A = 65
 const CHAR_CODE_F = 70
@@ -58,26 +66,35 @@ const CHAR_CODE_PERCENT = 37
  * @param remoteAddr Remote Addr
  */
 export const distinctRemoteAddr = (remoteAddr: string): AddressType => {
+logger.debug(`>>> Entering distinctRemoteAddr(remoteAddr=${remoteAddr})`);
   if (IPV4_REGEX.test(remoteAddr)) {
     return 'IPv4'
   }
   if (remoteAddr.includes(':')) {
     // Domain can't include `:`
+logger.debug(`<<< Exiting distinctRemoteAddr(remoteAddr=${remoteAddr})`);
     return 'IPv6'
   }
 }
 
 const createInvalidIPAddressError = (message: string): InvalidIPAddressError => {
+logger.debug(`>>> Entering createInvalidIPAddressError(message=${message})`);
   const error = new TypeError(message) as InvalidIPAddressError
   error.code = INVALID_IP_ADDRESS_ERROR_CODE
+logger.debug(`createInvalidIPAddressError(message=${message}): error → ${error}`);
+logger.debug(`createInvalidIPAddressError(message=${message}): error.code → ${error.code}`);
+logger.debug(`<<< Exiting createInvalidIPAddressError(message=${message})`);
   return error
 }
 
 const throwInvalidIPv4Address = (ipv4: string): never => {
+logger.debug(`<<< Exiting throwInvalidIPv4Address(ipv4=${ipv4})`);
   throw createInvalidIPAddressError(`Invalid IPv4 address: ${ipv4}`)
 }
 
 const throwInvalidIPv6Address = (ipv6: string): never => {
+logger.debug(`>>> Entering throwInvalidIPv6Address(ipv6=${ipv6})`);
+logger.debug(`<<< Exiting throwInvalidIPv6Address(ipv6=${ipv6})`);
   throw createInvalidIPAddressError(`Invalid IPv6 address: ${ipv6}`)
 }
 
@@ -127,6 +144,7 @@ const parseIPv4ToBinary = (
 }
 
 const parseIPv6HexCode = (code: number): number => {
+logger.debug(`>>> Entering parseIPv6HexCode(code=${code})`);
   if (code >= CHAR_CODE_0 && code <= CHAR_CODE_9) {
     return code - CHAR_CODE_0
   }
@@ -136,6 +154,7 @@ const parseIPv6HexCode = (code: number): number => {
   if (code >= CHAR_CODE_a && code <= CHAR_CODE_f) {
     return code - CHAR_CODE_a + 10
   }
+logger.debug(`<<< Exiting parseIPv6HexCode(code=${code})`);
   return -1
 }
 
@@ -147,6 +166,7 @@ const isIPv6LinkLocal = (ipv6binary: bigint): boolean => ipv6binary >> 118n === 
  * @returns BigInt
  */
 export const convertIPv4ToBinary = (ipv4: string): bigint => {
+logger.debug(`<<< Exiting convertIPv4ToBinary(ipv4=${ipv4})`);
   return parseIPv4ToBinary(ipv4, 0, ipv4.length, () => throwInvalidIPv4Address(ipv4))
 }
 
@@ -156,6 +176,7 @@ export const convertIPv4ToBinary = (ipv4: string): bigint => {
  * @returns BigInt
  */
 export const convertIPv6ToBinary = (ipv6: string): bigint => {
+logger.debug(`>>> Entering convertIPv6ToBinary(ipv6=${ipv6})`);
   const length = ipv6.length
   const sections: number[] = []
   let hasZoneId = false
@@ -173,6 +194,7 @@ export const convertIPv6ToBinary = (ipv6: string): bigint => {
 
     let code = ipv6.charCodeAt(index)
 
+	logger.debug(`convertIPv6ToBinary(ipv6=${ipv6}): code → ${code}`);
     if (code === CHAR_CODE_PERCENT) {
       if (index + 1 === length) {
         throwInvalidIPv6Address(ipv6)
@@ -201,6 +223,7 @@ export const convertIPv6ToBinary = (ipv6: string): bigint => {
       code = ipv6.charCodeAt(index)
       const hex = parseIPv6HexCode(code)
       if (hex === -1) {
+	logger.debug(`convertIPv6ToBinary(ipv6=${ipv6}): hex → ${hex}`);
         break
       }
       if (digits === 4) {
@@ -228,6 +251,7 @@ export const convertIPv6ToBinary = (ipv6: string): bigint => {
       )
       sections.push(Number((ipv4 >> 16n) & 0xffffn), Number(ipv4 & 0xffffn))
       index = length
+	logger.debug(`convertIPv6ToBinary(ipv6=${ipv6}): ipv4 → ${ipv4}`);
       break
     }
 
@@ -274,6 +298,7 @@ export const convertIPv6ToBinary = (ipv6: string): bigint => {
   }
 
   let result = 0n
+logger.debug(`convertIPv6ToBinary(ipv6=${ipv6}): result → ${result}`);
   const zeros = compressAt === -1 ? 0 : 8 - sections.length
   const firstSectionEnd = compressAt === -1 ? sections.length : compressAt
   for (let i = 0; i < firstSectionEnd; i++) {
@@ -290,6 +315,7 @@ export const convertIPv6ToBinary = (ipv6: string): bigint => {
   if (hasZoneId && !isIPv6LinkLocal(result)) {
     throwInvalidIPv6Address(ipv6)
   }
+logger.debug(`<<< Exiting convertIPv6ToBinary(ipv6=${ipv6})`);
   return result
 }
 
@@ -299,10 +325,12 @@ export const convertIPv6ToBinary = (ipv6: string): bigint => {
  * @return IPv4 Address in string
  */
 export const convertIPv4BinaryToString = (ipV4: bigint): string => {
+logger.debug(`>>> Entering convertIPv4BinaryToString(ipV4=${ipV4})`);
   const sections = []
   for (let i = 0; i < 4; i++) {
     sections.push((ipV4 >> BigInt(8 * (3 - i))) & 0xffn)
   }
+logger.debug(`<<< Exiting convertIPv4BinaryToString(ipV4=${ipV4})`);
   return sections.join('.')
 }
 
@@ -326,6 +354,7 @@ export const convertIPv4MappedIPv6ToIPv4 = (ipv6binary: bigint): bigint => ipv6b
  * @return normalized IPv6 Address in string
  */
 export const convertIPv6BinaryToString = (ipV6: bigint): string => {
+logger.debug(`>>> Entering convertIPv6BinaryToString(ipV6=${ipV6})`);
   if (ipV6 === 0n) {
     // The unspecified address compresses every group, which the generic
     // logic below would render as a single ":". Handle it explicitly.
@@ -370,5 +399,6 @@ export const convertIPv6BinaryToString = (ipV6: bigint): string => {
     sections.splice(maxZeroStart, maxZeroEnd - maxZeroStart, ':')
   }
 
+logger.debug(`<<< Exiting convertIPv6BinaryToString(ipV6=${ipV6})`);
   return sections.join(':').replace(/:{2,}/g, '::')
 }

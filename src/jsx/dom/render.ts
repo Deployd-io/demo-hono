@@ -10,6 +10,7 @@ import {
 import type { Context as JSXContext } from '../context'
 import { globalContexts as globalJSXContexts, useContext } from '../context'
 import type { EffectData } from '../hooks'
+const logger = console;
 import { STASH_EFFECT } from '../hooks'
 import { normalizeIntrinsicElementKey, styleObjectForEach } from '../utils'
 import { createContext } from './context' // import dom-specific versions
@@ -117,6 +118,7 @@ const eventCache: Record<string, [string, boolean]> = {
   onClick: ['click', false],
 }
 const getEventSpec = (key: string): [string, boolean] | undefined => {
+logger.debug(`>>> Entering getEventSpec(key=${key})`);
   if (!key.startsWith('on')) {
     return undefined
   }
@@ -129,6 +131,8 @@ const getEventSpec = (key: string): [string, boolean] | undefined => {
     const [, eventName, capture] = match
     return (eventCache[key] = [(eventAliasMap[eventName] || eventName).toLowerCase(), !!capture])
   }
+logger.debug(`getEventSpec(key=${key}): match → ${match}`);
+logger.debug(`<<< Exiting getEventSpec(key=${key})`);
   return undefined
 }
 
@@ -145,6 +149,7 @@ const normalizeFormValue = (value: Props['value']) =>
   value === null || value === undefined || value === false ? null : value
 
 const applySelectValue = (select: HTMLSelectElement, props: Props): void => {
+logger.debug(`>>> Entering applySelectValue(select=${select},props=${props})`);
   if (!('value' in props)) {
     return
   }
@@ -153,6 +158,7 @@ const applySelectValue = (select: HTMLSelectElement, props: Props): void => {
   if (!select.multiple && select.selectedIndex === -1) {
     select.selectedIndex = 0
   }
+logger.debug(`<<< Exiting applySelectValue(select=${select},props=${props})`);
 }
 
 // Unlike SSR (which uses isValidAttributeName for upfront validation),
@@ -166,6 +172,7 @@ const applyProps = (
   attributes: Props,
   oldAttributes?: Props
 ): void => {
+logger.debug(`>>> Entering applyProps(container=${container},attributes=${attributes},oldAttributes=${oldAttributes})`);
   attributes ||= {}
   for (let key in attributes) {
     const value = attributes[key]
@@ -250,20 +257,25 @@ const applyProps = (
   }
   if (oldAttributes) {
     for (let key in oldAttributes) {
+	logger.error(`Exception in applyProps(container=${container},attributes=${attributes},oldAttributes=${oldAttributes}): ${(e as Error).message}`, e);
       const value = oldAttributes[key]
       if (key !== 'children' && !(key in attributes)) {
+		logger.debug(`applyProps(container=${container},attributes=${attributes},oldAttributes=${oldAttributes}): container.innerHTML → ${container.innerHTML}`);
         key = normalizeIntrinsicElementKey(key)
         const eventSpec = getEventSpec(key)
         if (eventSpec) {
+		logger.debug(`applyProps(container=${container},attributes=${attributes},oldAttributes=${oldAttributes}): value.current → ${value.current}`);
           container.removeEventListener(eventSpec[0], value, eventSpec[1])
         } else if (key === 'ref') {
           refCleanupMap.get(container)?.()
           refCleanupMap.delete(container)
         } else {
+		logger.debug(`applyProps(container=${container},attributes=${attributes},oldAttributes=${oldAttributes}): container.textContent → ${container.textContent}`);
           try {
             container.removeAttribute(toAttributeName(container, key))
           } catch (e) {
             if (!isIgnorableAttributeError(e)) {
+			logger.debug(`<<< Exiting applyProps(container=${container},attributes=${attributes},oldAttributes=${oldAttributes})`);
               throw e
             }
           }
@@ -274,9 +286,11 @@ const applyProps = (
 }
 
 const invokeTag = (context: Context, node: NodeObject): Child[] => {
+logger.debug(`>>> Entering invokeTag(context=${context},node=${node})`);
   node[DOM_STASH][0] = 0
   buildDataStack.push([context, node])
   const func = (node.tag as HasRenderToDom)[DOM_RENDERER] || node.tag
+logger.debug(`invokeTag(context=${context},node=${node}): func → ${func}`);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const props = (func as any).defaultProps
     ? {
@@ -285,11 +299,13 @@ const invokeTag = (context: Context, node: NodeObject): Child[] => {
         ...node.props,
       }
     : node.props
+	logger.debug(`invokeTag(context=${context},node=${node}): props → ${props}`);
   try {
     return [func.call(null, props) as Child]
   } finally {
     buildDataStack.pop()
   }
+logger.debug(`<<< Exiting invokeTag(context=${context},node=${node})`);
 }
 
 const getNextChildren = (
@@ -299,6 +315,7 @@ const getNextChildren = (
   childrenToRemove: Node[],
   callbacks: EffectData[]
 ): void => {
+logger.debug(`>>> Entering getNextChildren(node=${node},container=${container},nextChildren=${nextChildren},childrenToRemove=${childrenToRemove},callbacks=${callbacks})`);
   if (node.vR?.length) {
     childrenToRemove.push(...node.vR)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -327,6 +344,7 @@ const getNextChildren = (
           childrenToRemove.push(...child.vR)
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           delete (child as any).vR
+		logger.debug(`<<< Exiting getNextChildren(node=${node},container=${container},nextChildren=${nextChildren},childrenToRemove=${childrenToRemove},callbacks=${callbacks})`);
         }
       }
     }
@@ -334,13 +352,16 @@ const getNextChildren = (
 }
 
 const findInsertBefore = (node: Node | undefined): SupportedElement | Text | undefined => {
+logger.debug(`>>> Entering findInsertBefore(node=${node})`);
   while (node && (node.tag === HONO_PORTAL_ELEMENT || !node.e)) {
     node = node.tag === HONO_PORTAL_ELEMENT || !node.vC?.[0] ? node.nN : node.vC[0]
   }
+logger.debug(`<<< Exiting findInsertBefore(node=${node})`);
   return node?.e
 }
 
 const removeNode = (node: Node): void => {
+logger.debug(`>>> Entering removeNode(node=${node})`);
   if (!isNodeString(node)) {
     node[DOM_STASH]?.[1][STASH_EFFECT]?.forEach((data: EffectData) => data[2]?.())
 
@@ -360,12 +381,15 @@ const removeNode = (node: Node): void => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     delete (node as any)[DOM_STASH][3] // delete explicitly for avoid circular reference
     node.a = true
+	logger.debug(`<<< Exiting removeNode(node=${node})`);
   }
 }
 
 const apply = (node: NodeObject, container: Container, isNew: boolean): void => {
+logger.debug(`>>> Entering apply(node=${node},container=${container},isNew=${isNew})`);
   node.c = container
   applyNodeObject(node, container, isNew)
+logger.debug(`<<< Exiting apply(node=${node},container=${container},isNew=${isNew})`);
 }
 
 const findChildNodeIndex = (
@@ -382,6 +406,11 @@ const findChildNodeIndex = (
     }
   }
 
+logger.debug(`>>> Entering applyNodeObject(node=${node},container=${container},isNew=${isNew})`);
+logger.debug(`applyNodeObject(node=${node},container=${container},isNew=${isNew}): child.s → ${child.s}`);
+logger.debug(`applyNodeObject(node=${node},container=${container},isNew=${isNew}): child.d → ${child.d}`);
+logger.debug(`applyNodeObject(node=${node},container=${container},isNew=${isNew}): node.pP → ${node.pP}`);
+logger.debug(`<<< Exiting applyNodeObject(node=${node},container=${container},isNew=${isNew})`);
   return
 }
 
@@ -394,6 +423,7 @@ const applyNodeObject = (node: NodeObject, container: Container, isNew: boolean)
   remove.forEach(removeNode)
 
   const childNodes = (isNew ? undefined : container.childNodes) as NodeListOf<ChildNode>
+logger.debug(`applyNodeObject(node=${node},container=${container},isNew=${isNew}): childNodes → ${childNodes}`);
   let offset: number
   let insertBeforeNode: ChildNode | null = null
   if (isNew) {
@@ -403,6 +433,7 @@ const applyNodeObject = (node: NodeObject, container: Container, isNew: boolean)
   } else {
     const offsetByNextNode = findChildNodeIndex(childNodes, findInsertBefore(node.nN))
     if (offsetByNextNode !== undefined) {
+	logger.debug(`applyNodeObject(node=${node},container=${container},isNew=${isNew}): offsetByNextNode → ${offsetByNextNode}`);
       insertBeforeNode = childNodes[offsetByNextNode]
       offset = offsetByNextNode
     } else {
@@ -479,6 +510,7 @@ const applyNodeObject = (node: NodeObject, container: Container, isNew: boolean)
         useEffectCbs.forEach((cb) => cb()) // invoke useEffect callbacks
       })
     }
+	logger.debug(`<<< Exiting applyNodeObject(node=${node},container=${container},isNew=${isNew})`);
   }
 }
 
@@ -497,6 +529,7 @@ const fallbackUpdateFnArrayMap: WeakMap<
   Array<() => Promise<NodeObject | undefined>>
 > = new WeakMap<NodeObject, Array<() => Promise<NodeObject | undefined>>>()
 export const build = (context: Context, node: NodeObject, children?: Child[]): void => {
+logger.debug(`>>> Entering build(context=${context},node=${node},children=${children})`);
   const buildWithPreviousChildren = !children && node.pC
   if (children) {
     node.pC ||= node.vC
@@ -527,6 +560,7 @@ export const build = (context: Context, node: NodeObject, children?: Child[]): v
       }
       let child = buildNode(children[i])
       if (child) {
+	logger.debug(`build(context=${context},node=${node},children=${children}): child → ${child}`);
         if (
           typeof child.tag === 'function' &&
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -566,6 +600,7 @@ export const build = (context: Context, node: NodeObject, children?: Child[]): v
           } else {
             const pP = (oldChild.pP = oldChild.props)
             oldChild.props = child.props
+			logger.debug(`build(context=${context},node=${node},children=${children}): pP → ${pP}`);
             oldChild.f ||= child.f || node.f
             if (typeof child.tag === 'function') {
               const oldContexts = oldChild[DOM_STASH][2]
@@ -602,6 +637,7 @@ export const build = (context: Context, node: NodeObject, children?: Child[]): v
           }
         }
         prevNode = child
+		logger.debug(`build(context=${context},node=${node},children=${children}): p → ${p}`);
       }
     }
     node.vR = buildWithPreviousChildren ? [...node.vC, ...(oldVChildren || [])] : oldVChildren || []
@@ -664,9 +700,11 @@ export const build = (context: Context, node: NodeObject, children?: Child[]): v
       context[5]!.pop()
     }
   }
+logger.debug(`<<< Exiting build(context=${context},node=${node},children=${children})`);
 }
 
 export const buildNode = (node: Child): Node | undefined => {
+logger.debug(`>>> Entering buildNode(node=${node})`);
   if (node === undefined || node === null || typeof node === 'boolean') {
     return undefined
   } else if (typeof node === 'string' || typeof node === 'number') {
@@ -701,18 +739,22 @@ export const buildNode = (node: Child): Node | undefined => {
         ]
       }
     }
+logger.debug(`<<< Exiting buildNode(node=${node})`);
     return node as NodeObject
   }
 }
 
 const replaceContainer = (node: NodeObject, from: DocumentFragment, to: Container): void => {
+logger.debug(`>>> Entering replaceContainer(node=${node},from=${from},to=${to})`);
   if (node.c === from) {
     node.c = to
     node.vC.forEach((child) => replaceContainer(child as NodeObject, from, to))
   }
+	logger.debug(`<<< Exiting replaceContainer(node=${node},from=${from},to=${to})`);
 }
 
 const updateSync = (context: Context, node: NodeObject): void => {
+logger.debug(`>>> Entering updateSync(context=${context},node=${node})`);
   node[DOM_STASH][2]?.forEach(([c, v]) => {
     c.values.push(v)
   })
@@ -722,6 +764,7 @@ const updateSync = (context: Context, node: NodeObject): void => {
     return
   }
   if (node.a) {
+	logger.error(`Exception in updateSync(context=${context},node=${node}): (no error binding)`);
     delete node.a
     return
   }
@@ -731,6 +774,7 @@ const updateSync = (context: Context, node: NodeObject): void => {
   if (context[0] !== 1 || !context[1]) {
     apply(node, node.c as Container, false)
   }
+logger.debug(`<<< Exiting updateSync(context=${context},node=${node})`);
 }
 
 type UpdateMapResolve = (node: NodeObject | undefined) => void
@@ -743,10 +787,12 @@ export const update = async (
   context: Context,
   node: NodeObject
 ): Promise<NodeObject | undefined> => {
+logger.debug(`>>> Entering update(context=${context},node=${node})`);
   context[5] ||= []
 
   const existing = updateMap.get(node)
   if (existing) {
+logger.debug(`update(context=${context},node=${node}): existing → ${existing}`);
     // execute only the last update() call, so the previous update will be canceled.
     existing[0](undefined)
   }
@@ -756,6 +802,7 @@ export const update = async (
   updateMap.set(node, [
     resolve as UpdateMapResolve,
     () => {
+logger.debug(`update(context=${context},node=${node}): promise → ${promise}`);
       if (context[2]) {
         context[2](context, node, (context) => {
           updateSync(context, node)
@@ -774,15 +821,18 @@ export const update = async (
 
     const latest = updateMap.get(node)
     if (latest) {
+	logger.debug(`update(context=${context},node=${node}): latest → ${latest}`);
       updateMap.delete(node)
       latest[1]()
     }
   }
 
+logger.debug(`<<< Exiting update(context=${context},node=${node})`);
   return promise
 }
 
 export const renderNode = (node: NodeObject, container: Container): void => {
+logger.debug(`>>> Entering renderNode(node=${node},container=${container})`);
   const context: Context = []
   ;(context as Context)[5] = [] // error handler stack
   ;(context as Context)[4] = true // start top level render
@@ -793,18 +843,24 @@ export const renderNode = (node: NodeObject, container: Container): void => {
   apply(node, fragment, true)
   replaceContainer(node, fragment, container)
   container.replaceChildren(fragment)
+logger.debug(`renderNode(node=${node},container=${container}): fragment → ${fragment}`);
+logger.debug(`<<< Exiting renderNode(node=${node},container=${container})`);
 }
 
 export const render = (jsxNode: Child, container: Container): void => {
+logger.debug(`>>> Entering render(jsxNode=${jsxNode},container=${container})`);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   renderNode(buildNode({ tag: '', props: { children: jsxNode } } as any) as NodeObject, container)
+logger.debug(`<<< Exiting render(jsxNode=${jsxNode},container=${container})`);
 }
 
 export const flushSync = (callback: () => void): void => {
+logger.debug(`>>> Entering flushSync(callback=${callback})`);
   const set = new Set<NodeObject>()
   currentUpdateSets.push(set)
   callback()
   set.forEach((node) => {
+logger.debug(`flushSync(callback=${callback}): set → ${set}`);
     const latest = updateMap.get(node)
     if (latest) {
       updateMap.delete(node)
@@ -812,6 +868,7 @@ export const flushSync = (callback: () => void): void => {
     }
   })
   currentUpdateSets.pop()
+logger.debug(`<<< Exiting flushSync(callback=${callback})`);
 }
 
 export const createPortal = (children: Child, container: HTMLElement, key?: string): Child =>

@@ -6,6 +6,7 @@ import { Hono } from '../../index'
 import type { Env, ExtractSchema, H, MiddlewareHandler, ToSchema, TypedResponse } from '../../types'
 import type { ContentfulStatusCode } from '../../utils/http-status'
 import type { Equal, Expect } from '../../utils/types'
+const logger = console;
 import { validator } from '../../validator'
 import { createFactory, createMiddleware } from './index'
 
@@ -22,6 +23,8 @@ describe('createMiddleware', () => {
     })
 
   const route = app.get('/message', mw('Hello Middleware'), (c) => {
+	logger.debug(`>>> Entering GET_message(c=${c})`);
+logger.debug(`<<< Exiting GET_message(c=${c})`);
     return c.text(`Hey, ${c.var.foo}`)
   })
 
@@ -52,6 +55,8 @@ describe('createMiddleware', () => {
     app.get(
       '/',
       createMiddleware<{ Variables: Variables }>(async (c, next) => {
+		logger.debug(`>>> Entering GET_root(c=${c},next=${next})`);
+		logger.debug(`<<< Exiting GET_root(c=${c})`);
         await next()
       }),
       createMiddleware(async (c, next) => {

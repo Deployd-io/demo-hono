@@ -26,6 +26,7 @@ import {
   JwtTokenSignatureMismatched,
 } from './types'
 import type { JWTPayload } from './types'
+const logger = console;
 import { utf8Decoder, utf8Encoder } from './utf8'
 
 const encodeJwtPart = (part: unknown): string =>
@@ -43,6 +44,7 @@ export interface TokenHeader {
 
 export function isTokenHeader(obj: unknown): obj is TokenHeader {
   if (typeof obj === 'object' && obj !== null) {
+	logger.debug(`>>> Entering isTokenHeader(obj=${obj})`);
     const objWithAlg = obj as { [key: string]: unknown }
     return (
       'alg' in objWithAlg &&

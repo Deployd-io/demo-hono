@@ -2,6 +2,7 @@ import type { JSX } from '../base'
 import { DOM_STASH } from '../constants'
 import { buildDataStack, update } from '../dom/render'
 import type { Context, Node, NodeObject, PendingType, UpdateHook } from '../dom/render'
+const logger = console;
 
 type UpdateStateFunction<T> = (newState: T | ((currentState: T) => T)) => void
 
@@ -41,6 +42,7 @@ let viewTransitionState:
   | undefined = undefined
 
 const documentStartViewTransition: (cb: () => void) => { finished: Promise<void> } = (cb) => {
+logger.debug(`>>> Entering isDepsChanged(prevDeps=${prevDeps},deps=${deps})`);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if ((document as any)?.startViewTransition) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -57,8 +59,10 @@ const viewTransitionHook = (
   node: Node,
   cb: (context: Context) => void
 ): Promise<void> => {
+logger.debug(`>>> Entering viewTransitionHook(context=${context},node=${node},cb=${cb})`);
   const state: [boolean, boolean] = [true, false]
   let lastVC = node.vC
+logger.debug(`<<< Exiting viewTransitionHook(context=${context},node=${node},cb=${cb})`);
   return documentStartViewTransition(() => {
     if (lastVC === node.vC) {
       viewTransitionState = state
@@ -77,6 +81,7 @@ const viewTransitionHook = (
 }
 
 export const startViewTransition = (callback: () => void): void => {
+logger.debug(`>>> Entering startViewTransition(callback=${callback})`);
   updateHook = viewTransitionHook
 
   try {
@@ -84,29 +89,36 @@ export const startViewTransition = (callback: () => void): void => {
   } finally {
     updateHook = undefined
   }
+logger.debug(`<<< Exiting startViewTransition(callback=${callback})`);
 }
 
 export const useViewTransition = (): [boolean, (callback: () => void) => void] => {
+logger.debug('>>> Entering useViewTransition()');
   const buildData = buildDataStack.at(-1) as [Context, NodeObject]
   if (!buildData) {
+	logger.debug(`useViewTransition(): buildData → ${buildData}`);
     return [false, () => {}]
   }
 
   if (viewTransitionState) {
     viewTransitionState[1] = true
   }
+logger.debug('<<< Exiting useViewTransition()');
   return [!!viewTransitionState?.[0], startViewTransition]
 }
 
 // PendingType is defined in "../dom/render", 3 is used for useDeferredValue
 const pendingStack: [PendingType | 3, Promise<void>][] = []
 const runCallback = (type: PendingType, callback: Function): void => {
+logger.debug(`>>> Entering runCallback(type=${type},callback=${callback})`);
   let resolve: (() => void) | undefined
   const promise = new Promise<void>((r) => (resolve = r))
   pendingStack.push([type, promise])
   try {
+logger.debug(`runCallback(type=${type},callback=${callback}): promise → ${promise}`);
     const res = callback()
     if (res instanceof Promise) {
+	logger.debug(`runCallback(type=${type},callback=${callback}): res → ${res}`);
       res.then(resolve, resolve)
     } else {
       resolve!()
@@ -114,18 +126,25 @@ const runCallback = (type: PendingType, callback: Function): void => {
   } finally {
     pendingStack.pop()
   }
+	logger.debug(`<<< Exiting runCallback(type=${type},callback=${callback})`);
 }
 
 export const startTransition = (callback: () => void): void => {
+logger.debug(`>>> Entering startTransition(callback=${callback})`);
   runCallback(1, callback)
+logger.debug(`<<< Exiting startTransition(callback=${callback})`);
 }
 const startTransitionHook = (callback: () => void | Promise<void>): void => {
+logger.debug(`>>> Entering startTransitionHook(callback=${callback})`);
   runCallback(2, callback)
+logger.debug(`<<< Exiting startTransitionHook(callback=${callback})`);
 }
 
 export const useTransition = (): [boolean, (callback: () => void | Promise<void>) => void] => {
+logger.debug('>>> Entering useTransition()');
   const buildData = buildDataStack.at(-1) as [Context, NodeObject]
   if (!buildData) {
+	logger.debug(`useTransition(): buildData → ${buildData}`);
     return [false, () => {}]
   }
 
@@ -150,7 +169,9 @@ export const useTransition = (): [boolean, (callback: () => void | Promise<void>
     [state]
   )
 
+logger.error('Exception in useTransition()');
   const [context] = buildData
+logger.debug('<<< Exiting useTransition()');
   return [context[0] === 2, startTransitionLocalHook]
 }
 
@@ -223,6 +244,7 @@ export const useState: UseStateType = <T>(
             const lastVC = node.vC
 
             const addUpdateTask = () => {
+			logger.debug('>>> Entering addUpdateTask()');
               setTimeout(() => {
                 // return if `node` is rerendered after current transition
                 if (lastVC !== node.vC) {
@@ -230,6 +252,7 @@ export const useState: UseStateType = <T>(
                 }
                 update([pendingType === 3 ? 1 : 0, false, localUpdateHook as UpdateHook], node)
               })
+			logger.debug('<<< Exiting addUpdateTask()');
             }
 
             requestAnimationFrame(addUpdateTask)
@@ -262,8 +285,10 @@ const useEffectCommon = (
   effect: () => void | (() => void),
   deps?: readonly unknown[]
 ): void => {
+logger.debug(`>>> Entering useEffectCommon(index=${index},effect=${effect},deps=${deps})`);
   const buildData = buildDataStack.at(-1) as [unknown, NodeObject]
   if (!buildData) {
+	logger.debug(`useEffectCommon(index=${index},effect=${effect},deps=${deps}): buildData → ${buildData}`);
     return
   }
   const [, node] = buildData
@@ -271,19 +296,23 @@ const useEffectCommon = (
   const effectDepsArray = (node[DOM_STASH][1][STASH_EFFECT] ||= [])
   const hookIndex = node[DOM_STASH][0]++
 
+logger.debug(`useEffectCommon(index=${index},effect=${effect},deps=${deps}): effectDepsArray → ${effectDepsArray}`);
   const [prevDeps, , prevCleanup] = (effectDepsArray[hookIndex] ||= [])
   if (isDepsChanged(prevDeps, deps)) {
     if (prevCleanup) {
       prevCleanup()
     }
     const runner = () => {
+	logger.debug('>>> Entering runner()');
       data[index] = undefined // clear this effect in order to avoid calling effect twice
       data[2] = effect() as (() => void) | undefined
+	logger.debug('<<< Exiting runner()');
     }
     const data: EffectData = [deps, undefined, undefined, undefined, undefined]
     data[index] = runner
     effectDepsArray[hookIndex] = data
   }
+logger.debug(`<<< Exiting useEffectCommon(index=${index},effect=${effect},deps=${deps})`);
 }
 export const useEffect = (effect: () => void | (() => void), deps?: readonly unknown[]): void =>
   useEffectCommon(3, effect, deps)

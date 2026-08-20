@@ -7,6 +7,7 @@ import type { Child } from '../base'
 import { useState } from '../hooks'
 import { buildNode, renderNode } from './render'
 import type { NodeObject } from './render'
+const logger = console;
 
 export interface Root {
   render(children: Child): void
@@ -24,6 +25,7 @@ export const createRoot = (
   element: HTMLElement | DocumentFragment,
   options: RootOptions = {}
 ): Root => {
+logger.debug(`>>> Entering createRoot(element=${element},options=${options})`);
   let setJsxNode:
     | undefined // initial state
     | ((jsxNode: unknown) => void) // rendered
@@ -36,6 +38,7 @@ export const createRoot = (
 
   return {
     render(jsxNode: unknown) {
+	logger.debug(`<<< Exiting createRoot(element=${element},options=${options})`);
       if (setJsxNode === null) {
         // unmounted
         throw new Error('Cannot update an unmounted root')
@@ -78,8 +81,11 @@ export const hydrateRoot = (
   reactNode: Child,
   options: RootOptions = {}
 ): Root => {
+logger.debug(`>>> Entering hydrateRoot(element=${element},reactNode=${reactNode},options=${options})`);
   const root = createRoot(element, options)
   root.render(reactNode)
+logger.warn(`hydrateRoot(element=${element},reactNode=${reactNode},options=${options}): root → ${root}`);
+logger.debug(`<<< Exiting hydrateRoot(element=${element},reactNode=${reactNode},options=${options})`);
   return root
 }
 

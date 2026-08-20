@@ -1,11 +1,15 @@
+const logger = console;
 import { Hono } from '../../hono'
 import { RETAINED_304_HEADERS, etag } from '.'
 
 const createPatternedBody = (length: number) => {
+logger.debug(`>>> Entering createPatternedBody(length=${length})`);
   const body = new Uint8Array(length)
   for (let i = 0; i < body.byteLength; i++) {
     body[i] = i % 256
   }
+logger.debug(`createPatternedBody(length=${length}): body → ${body}`);
+logger.debug(`<<< Exiting createPatternedBody(length=${length})`);
   return body
 }
 
@@ -14,15 +18,18 @@ describe('Etag Middleware', () => {
     const app = new Hono()
     app.use('/etag/*', etag())
     app.get('/etag/abc', (c) => {
+	logger.debug(`>>> Entering GET_etag_abc(c=${c})`);
       return c.text('Hono is hot')
     })
     app.get('/etag/def', (c) => {
+	logger.debug(`<<< Exiting GET_etag_abc(c=${c})`);
       return c.json({ message: 'Hono is hot' })
     })
     let res = await app.request('http://localhost/etag/abc')
     expect(res.headers.get('ETag')).not.toBeFalsy()
     expect(res.headers.get('ETag')).toBe('"d104fafdb380655dab607c9bddc4d4982037afa1"')
 
+	logger.debug(`<<< Exiting GET_etag_def(c=${c})`);
     res = await app.request('http://localhost/etag/def')
     expect(res.headers.get('ETag')).not.toBeFalsy()
     expect(res.headers.get('ETag')).toBe('"67340414f1a52c4669a6cec71f0ae04532b29249"')
@@ -65,6 +72,8 @@ describe('Etag Middleware', () => {
     const app = new Hono()
     app.use('/etag/*', etag())
     app.get('/etag', async (c) => {
+	logger.debug(`>>> Entering GET_etag(c=${c})`);
+	logger.debug(`<<< Exiting GET_etag(c=${c})`);
       return c.body(new Uint8Array(1))
     })
 
@@ -78,9 +87,12 @@ describe('Etag Middleware', () => {
     const app = new Hono()
     app.use('/etag/*', etag())
     app.get('/etag/ab1', (c) => {
+	logger.debug(`>>> Entering GET_etag_ab1(c=${c})`);
       return c.body(new ArrayBuffer(1))
     })
     app.get('/etag/ab2', (c) => {
+	logger.debug(`<<< Exiting GET_etag_ab1(c=${c})`);
+	logger.debug(`<<< Exiting GET_etag_ab2(c=${c})`);
       return c.body(new ArrayBuffer(2))
     })
 
@@ -94,9 +106,12 @@ describe('Etag Middleware', () => {
     const app = new Hono()
     app.use('/etag/*', etag())
     app.get('/etag/ui1', (c) => {
+	logger.debug(`>>> Entering GET_etag_ui1(c=${c})`);
       return c.body(new Uint8Array([1, 2, 3]))
     })
     app.get('/etag/ui2', (c) => {
+	logger.debug(`<<< Exiting GET_etag_ui1(c=${c})`);
+	logger.debug(`<<< Exiting GET_etag_ui2(c=${c})`);
       return c.body(new Uint8Array([1, 2, 3, 4]))
     })
 
@@ -110,17 +125,21 @@ describe('Etag Middleware', () => {
     const app = new Hono()
     app.use('/etag/*', etag())
     app.get('/etag/rs1', (c) => {
+	logger.debug(`>>> Entering GET_etag_rs1(c=${c})`);
       return c.body(
         new ReadableStream({
           start(controller) {
+			logger.debug(`>>> Entering start(controller=${controller})`);
             controller.enqueue(new Uint8Array([1]))
             controller.enqueue(new Uint8Array([2]))
             controller.close()
+			logger.debug(`<<< Exiting start(controller=${controller})`);
           },
         })
       )
     })
     app.get('/etag/rs2', (c) => {
+	logger.debug(`<<< Exiting GET_etag_rs1(c=${c})`);
       return c.body(
         new ReadableStream({
           start(controller) {
@@ -132,6 +151,7 @@ describe('Etag Middleware', () => {
       )
     })
 
+	logger.debug(`<<< Exiting GET_etag_rs2(c=${c})`);
     let res = await app.request('http://localhost/etag/rs1')
     const hash = res.headers.get('Etag')
     res = await app.request('http://localhost/etag/rs2')
@@ -466,6 +486,7 @@ describe('Etag Middleware', () => {
     const app = new Hono()
     app.use('/etag/*', etag())
     app.get('/etag/multi-headers', (c) => {
+	logger.debug(`>>> Entering GET_etag_multi_headers(c=${c})`);
       c.header('X-Custom-1', 'val1')
       c.header('X-Custom-2', 'val2')
       c.header('X-Custom-3', 'val3')
@@ -475,6 +496,7 @@ describe('Etag Middleware', () => {
     })
     const res1 = await app.request('http://localhost/etag/multi-headers')
     const etagHeader = res1.headers.get('ETag')!
+	logger.debug(`<<< Exiting GET_etag_multi_headers(c=${c})`);
     expect(res1.status).toBe(200)
 
     const res2 = await app.request('http://localhost/etag/multi-headers', {

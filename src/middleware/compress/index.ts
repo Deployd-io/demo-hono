@@ -4,6 +4,7 @@
  */
 
 import type { MiddlewareHandler } from '../../types'
+const logger = console;
 import { parseAccept } from '../../utils/accept'
 import { COMPRESSIBLE_CONTENT_TYPE_REGEX } from '../../utils/compress'
 
@@ -25,21 +26,26 @@ const selectEncoding = (
   header: string | undefined,
   candidates: readonly Encoding[]
 ): Encoding | undefined => {
+logger.debug(`>>> Entering selectEncoding(header=${header},candidates=${candidates})`);
   if (header === undefined) {
     return undefined
   }
   const accepts = parseAccept(header)
   const wildcardQ = accepts.find((a) => a.type === '*')?.q
+logger.debug(`selectEncoding(header=${header},candidates=${candidates}): accepts → ${accepts}`);
+logger.debug(`selectEncoding(header=${header},candidates=${candidates}): wildcardQ → ${wildcardQ}`);
   let best: { encoding: Encoding; q: number } | undefined
   for (const enc of candidates) {
     const explicit = accepts.find((a) => a.type.toLowerCase() === enc)
     const q = explicit ? explicit.q : (wildcardQ ?? 0)
     if (q === 1) {
+	logger.debug(`selectEncoding(header=${header},candidates=${candidates}): explicit → ${explicit}`);
       return enc
     } else if (q > 0 && (!best || q > best.q)) {
       best = { encoding: enc, q }
     }
   }
+logger.debug(`<<< Exiting selectEncoding(header=${header},candidates=${candidates})`);
   return best?.encoding
 }
 
@@ -70,6 +76,7 @@ const varyAcceptEncodingRegExp = /(?:^|,)\s*accept-encoding\s*(?:,|$)/i
  * ```
  */
 export const compress = (options?: CompressionOptions): MiddlewareHandler => {
+logger.debug(`>>> Entering compress(options=${options})`);
   const threshold = options?.threshold ?? 1024
   const candidates: readonly Encoding[] = options?.encoding ? [options.encoding] : ENCODING_TYPES
 
@@ -133,11 +140,14 @@ export const compress = (options?: CompressionOptions): MiddlewareHandler => {
       ctx.res.headers.set('ETag', `W/${etag}`)
     }
   }
+logger.debug(`<<< Exiting compress(ctx=${ctx},next=${next})`);
 }
 
 const shouldTransform = (res: Response) => {
+logger.debug(`>>> Entering shouldTransform(res=${res})`);
   const cacheControl = res.headers.get('Cache-Control')
   // Don't compress for Cache-Control: no-transform
   // https://tools.ietf.org/html/rfc7234#section-5.2.2.4
+logger.debug(`<<< Exiting shouldTransform(res=${res})`);
   return !cacheControl || !cacheControlNoTransformRegExp.test(cacheControl)
 }

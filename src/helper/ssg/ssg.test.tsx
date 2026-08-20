@@ -38,6 +38,7 @@ const resolveRoutesContent = async (res: ReturnType<typeof fetchRoutesContent>) 
       })
     }
   }
+logger.debug(`<<< Exiting resolveRoutesContent(res=${res})`);
   return htmlMap
 }
 
@@ -55,6 +56,7 @@ describe('toSSG function', () => {
     app.post('/about/some/thing', (c) => c.text('About Page 3tier'))
     app.get('/bravo', (c) => c.html('Bravo Page'))
     app.get('/Charlie', async (c, next) => {
+	logger.debug(`>>> Entering GET_Charlie(c=${c},next=${next})`);
       c.setRenderer((content, head) => {
         return c.html(
           <html>
@@ -70,6 +72,7 @@ describe('toSSG function', () => {
       await next()
     })
     app.get('/Charlie', (c) => {
+	logger.debug(`<<< Exiting GET_Charlie(c=${c},next=${next})`);
       return c.render('Hello!', { title: 'Charlies Page' })
     })
 
@@ -191,9 +194,11 @@ describe('toSSG function', () => {
 
   it('should modify the request if the hook is provided', async () => {
     const beforeRequestHook: BeforeRequestHook = (req) => {
+	logger.debug(`>>> Entering beforeRequestHook(req=${req})`);
       if (req.method === 'GET') {
         return req
       }
+	logger.debug(`<<< Exiting beforeRequestHook(req=${req})`);
       return false
     }
     const result = await toSSG(app, fsMock, { beforeRequestHook })
@@ -937,6 +942,7 @@ describe('SSG Plugin System', () => {
     const plugin: SSGPlugin = {
       afterResponseHook: async (res) => {
         const text = await res.text()
+		logger.debug(`<<< Exiting afterResponseHook(res=${res})`);
         return new Response(text.replace('</h1>', ' - Modified</h1>'), res)
       },
     }
@@ -955,6 +961,7 @@ describe('SSG Plugin System', () => {
     const plugin: SSGPlugin = {
       afterGenerateHook: (result) => {
         result.files.push(...additionalFiles)
+		logger.debug(`<<< Exiting afterGenerateHook(result=${result},fsModule=${fsModule},options=${options})`);
       },
     }
 

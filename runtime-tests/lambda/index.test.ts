@@ -24,6 +24,7 @@ import { streamSSE, streamText } from '../../src/helper/streaming'
 import { Hono } from '../../src/hono'
 import { basicAuth } from '../../src/middleware/basic-auth'
 import './mock'
+const logger = console;
 
 type Bindings = {
   event: LambdaEvent
@@ -78,6 +79,8 @@ describe('AWS Lambda Adapter for Hono', () => {
   const app = new Hono<{ Bindings: Bindings }>()
 
   app.get('/', (c) => {
+	logger.debug(`>>> Entering GET_root(c=${c})`);
+	logger.debug(`<<< Exiting GET_root(c=${c})`);
     return c.text('Hello Lambda!')
   })
 
@@ -88,11 +91,13 @@ describe('AWS Lambda Adapter for Hono', () => {
   })
 
   app.post('/post', async (c) => {
+	logger.debug(`>>> Entering POST_post(c=${c})`);
     const body = (await c.req.parseBody()) as { message: string }
     return c.text(body.message)
   })
 
   app.post('/post/binary', async (c) => {
+	logger.debug(`>>> Entering POST_post_binary(c=${c})`);
     const body = await c.req.blob()
     return c.text(`${body.size} bytes`)
   })
@@ -103,41 +108,55 @@ describe('AWS Lambda Adapter for Hono', () => {
   app.get('/auth/abc', (c) => c.text('Good Night Lambda!'))
 
   app.get('/lambda-event', (c) => {
+	logger.debug(`>>> Entering GET_lambda_event(c=${c})`);
+	logger.debug(`<<< Exiting GET_lambda_event(c=${c})`);
     const event = c.env.event
     return c.json(event)
   })
 
   app.get('/lambda-context', (c) => {
+	logger.debug(`>>> Entering GET_lambda_context(c=${c})`);
+	logger.debug(`<<< Exiting GET_lambda_context(c=${c})`);
     const fnctx = c.env.lambdaContext
     return c.json(fnctx)
   })
 
   app.get('/custom-context/v1/apigw', (c) => {
+	logger.debug(`>>> Entering GET_custom_context_v1_apigw(c=${c})`);
+	logger.debug(`<<< Exiting GET_custom_context_v1_apigw(c=${c})`);
     const lambdaContext = c.env.requestContext
     return c.json(lambdaContext)
   })
 
   app.get('/custom-context/apigw', (c) => {
+	logger.debug(`>>> Entering GET_custom_context_apigw(c=${c})`);
+	logger.debug(`<<< Exiting GET_custom_context_apigw(c=${c})`);
     const lambdaContext = c.env.event.requestContext
     return c.json(lambdaContext)
   })
 
   app.get('/custom-context/v1/lambda', (c) => {
+	logger.debug(`>>> Entering GET_custom_context_v1_lambda(c=${c})`);
+	logger.debug(`<<< Exiting GET_custom_context_v1_lambda(c=${c})`);
     const lambdaContext = c.env.requestContext
     return c.json(lambdaContext)
   })
 
   app.get('/custom-context/lambda', (c) => {
+	logger.debug(`>>> Entering GET_custom_context_lambda(c=${c})`);
+	logger.debug(`<<< Exiting GET_custom_context_lambda(c=${c})`);
     const lambdaContext = c.env.event.requestContext
     return c.json(lambdaContext)
   })
 
   app.get('/query-params', (c) => {
+	logger.debug(`>>> Entering GET_query_params(c=${c})`);
     const queryParams = c.req.query()
     return c.json(queryParams)
   })
 
   app.get('/multi-query-params', (c) => {
+	logger.debug(`>>> Entering GET_multi_query_params(c=${c})`);
     const multiQueryParams = c.req.queries()
     return c.json(multiQueryParams)
   })
@@ -146,6 +165,8 @@ describe('AWS Lambda Adapter for Hono', () => {
     key: 'id',
     value: crypto.randomUUID(),
     get serialized() {
+	logger.debug('>>> Entering serialized()');
+	logger.debug('<<< Exiting serialized()');
       return `${this.key}=${this.value}; Path=/`
     },
   }
@@ -158,23 +179,29 @@ describe('AWS Lambda Adapter for Hono', () => {
   }
 
   app.post('/cookie', (c) => {
+	logger.debug(`>>> Entering POST_cookie(c=${c})`);
     setCookie(c, testCookie1.key, testCookie1.value)
     setCookie(c, testCookie2.key, testCookie2.value)
+	logger.debug(`<<< Exiting POST_cookie(c=${c})`);
     return c.text('Cookies Set')
   })
 
   app.get('/cookie', (c) => {
+	logger.debug(`>>> Entering GET_cookie(c=${c})`);
     const validCookies =
       getCookie(c, testCookie1.key) === testCookie1.value &&
       getCookie(c, testCookie2.key) === testCookie2.value
     if (!validCookies) {
+	logger.debug(`<<< Exiting GET_cookie(c=${c})`);
       return c.text('Invalid Cookies')
     }
     return c.text('Valid Cookies')
   })
 
   app.post('/headers', (c) => {
+	logger.debug(`>>> Entering POST_headers(c=${c})`);
     if (c.req.header('foo')?.includes('bar')) {
+	logger.debug(`<<< Exiting POST_headers(c=${c})`);
       return c.json({ message: 'ok' })
     }
     return c.json({ message: 'fail' }, 400)
@@ -921,15 +948,18 @@ describe('streamHandle function', () => {
   })
 
   app.get('/stream/text', async (c) => {
+	logger.debug(`>>> Entering GET_stream_text(c=${c})`);
     return streamText(c, async (stream) => {
       for (let i = 0; i < 3; i++) {
         await stream.writeln(`${i}`)
         await stream.sleep(1)
       }
+		logger.debug(`<<< Exiting GET_stream_text(c=${c})`);
     })
   })
 
   app.get('/sse', async (c) => {
+	logger.debug(`>>> Entering GET_sse(c=${c})`);
     return streamSSE(c, async (stream) => {
       let id = 0
       const maxIterations = 2
@@ -939,6 +969,7 @@ describe('streamHandle function', () => {
         await stream.writeSSE({ data: message, event: 'time-update', id: String(id++) })
         await stream.sleep(10)
       }
+		logger.debug(`<<< Exiting GET_sse(c=${c})`);
     })
   })
 
@@ -972,7 +1003,9 @@ describe('streamHandle function', () => {
 
     const chunks = []
     for await (const chunk of mockReadableStream) {
+	logger.debug(`>>> Entering await(mockReadableStream=${mockReadableStream})`);
       chunks.push(chunk)
+	logger.debug(`<<< Exiting await(mockReadableStream=${mockReadableStream})`);
     }
     expect(chunks.join('')).toContain('0\n1\n2\n3\n')
   })

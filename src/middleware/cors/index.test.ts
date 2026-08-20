@@ -1,3 +1,4 @@
+const logger = console;
 import { Hono } from '../../hono'
 import { cors } from '../../middleware/cors'
 
@@ -93,10 +94,13 @@ describe('CORS by Middleware', () => {
   )
 
   app.get('/api/abc', (c) => {
+	logger.debug(`>>> Entering GET_api_abc(c=${c})`);
+logger.debug(`<<< Exiting GET_api_abc(c=${c})`);
     return c.json({ success: true })
   })
 
   app.get('/api/vary-header', () => {
+	logger.debug('>>> Entering GET_api_vary_header()');
     return new Response(JSON.stringify({ success: true }), {
       headers: {
         Vary: 'X-Custom-Vary-Value',
@@ -105,14 +109,19 @@ describe('CORS by Middleware', () => {
   })
 
   app.get('/api2/abc', (c) => {
+	logger.debug(`>>> Entering GET_api2_abc(c=${c})`);
+logger.debug(`<<< Exiting GET_api2_abc(c=${c})`);
     return c.json({ success: true })
   })
 
   app.get('/api3/abc', (c) => {
+	logger.debug(`>>> Entering GET_api3_abc(c=${c})`);
+logger.debug(`<<< Exiting GET_api3_abc(c=${c})`);
     return c.json({ success: true })
   })
 
   app.get('/api3/vary-header', () => {
+	logger.debug('>>> Entering GET_api3_vary_header()');
     return new Response(JSON.stringify({ success: true }), {
       headers: {
         Vary: 'X-Custom-Vary-Value',
@@ -121,18 +130,26 @@ describe('CORS by Middleware', () => {
   })
 
   app.get('/api4/abc', (c) => {
+	logger.debug(`>>> Entering GET_api4_abc(c=${c})`);
+logger.debug(`<<< Exiting GET_api4_abc(c=${c})`);
     return c.json({ success: true })
   })
 
   app.get('/api5/abc', () => {
+	logger.debug('>>> Entering GET_api5_abc()');
+logger.debug('<<< Exiting GET_api5_abc()');
     return new Response(JSON.stringify({ success: true }))
   })
 
   app.get('/api7/abc', () => {
+	logger.debug('>>> Entering GET_api7_abc()');
+logger.debug('<<< Exiting GET_api7_abc()');
     return new Response(JSON.stringify({ success: true }))
   })
 
   app.get('/api10/abc', (c) => {
+	logger.debug(`>>> Entering GET_api10_abc(c=${c})`);
+logger.debug(`<<< Exiting GET_api10_abc(c=${c})`);
     return c.json({ success: true })
   })
 

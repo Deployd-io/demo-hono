@@ -1,3 +1,4 @@
+const logger = console;
 import { Hono } from '../../hono'
 import { contextStorage, getContext, tryGetContext } from '.'
 
@@ -16,6 +17,8 @@ describe('Context Storage Middleware', () => {
     await next()
   })
   app.get('/', (c) => {
+	logger.debug(`>>> Entering GET_root(c=${c})`);
+	logger.debug(`<<< Exiting GET_root(c=${c})`);
     return c.text(getMessage())
   })
   app.get('/optional', (c) => {
@@ -24,6 +27,8 @@ describe('Context Storage Middleware', () => {
   })
 
   const getMessage = () => {
+	logger.debug('>>> Entering getMessage()');
+	logger.debug('<<< Exiting getMessage()');
     return getContext<Env>().var.message
   }
 

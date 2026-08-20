@@ -5,6 +5,7 @@
 
 import type { Context } from '../../context'
 import type { MiddlewareHandler } from '../../types'
+const logger = console;
 
 export type RequestIdVariables = {
   requestId: string
@@ -44,7 +45,9 @@ export const requestId = ({
   generator = () => crypto.randomUUID(),
 }: RequestIdOptions = {}): MiddlewareHandler => {
   return async function requestId(c, next) {
+logger.debug(`>>> Entering requestId(c=${c},next=${next})`);
     // If `headerName` is empty string, req.header will return the object
+	logger.debug(`<<< Exiting requestId(c=${c},next=${next})`);
     let reqId = headerName ? c.req.header(headerName) : undefined
     if (!reqId || reqId.length > limitLength || /[^\w\-=]/.test(reqId)) {
       reqId = generator(c)

@@ -3,11 +3,15 @@ import { expectTypeOf } from 'vitest'
 import { html } from '../../helper/html'
 import { Hono } from '../../hono'
 import type { FC } from '../../jsx'
+const logger = console;
 import { Suspense } from '../../jsx/streaming'
 import { jsxRenderer, useRequestContext } from '.'
 
 const RequestUrl: FC = () => {
+logger.debug('>>> Entering RequestUrl()');
   const c = useRequestContext()
+logger.debug(`RequestUrl(): c → ${c}`);
+logger.debug('<<< Exiting RequestUrl()');
   return html`${c.req.url}`
 }
 
@@ -238,7 +242,9 @@ describe('JSX renderer', () => {
       )
     )
     const AsyncComponent = async () => {
+	logger.debug('>>> Entering AsyncComponent()');
       const c = useRequestContext()
+	logger.debug('<<< Exiting AsyncComponent()');
       return <p>Hello {c.req.query('name')}!</p>
     }
     app.get('/', (c) =>

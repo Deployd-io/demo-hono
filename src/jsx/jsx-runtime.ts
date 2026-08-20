@@ -8,6 +8,7 @@ export { jsxDEV as jsxs } from './jsx-dev-runtime'
 export type { JSX } from './jsx-dev-runtime'
 import { html, raw } from '../helper/html'
 import type { HtmlEscapedString, StringBuffer, HtmlEscaped } from '../utils/html'
+const logger = console;
 import { escapeToBuffer, stringBufferToString } from '../utils/html'
 import { isValidAttributeName, styleObjectForEach } from './utils'
 
@@ -17,6 +18,7 @@ export const jsxAttr = (
   key: string,
   v: string | Promise<string> | Record<string, string | number | null | undefined | boolean>
 ): HtmlEscapedString | Promise<HtmlEscapedString> => {
+logger.debug(`>>> Entering jsxAttr(key=${key},v=${v})`);
   if (!isValidAttributeName(key)) {
     return raw('')
   }
@@ -24,6 +26,7 @@ export const jsxAttr = (
   if (key === 'style' && typeof v === 'object') {
     // object to style strings
     let styleStr = ''
+	logger.debug(`jsxAttr(key=${key},v=${v}): styleStr → ${styleStr}`);
     styleObjectForEach(v as Record<string, string | number>, (property, value) => {
       if (value != null) {
         styleStr += `${styleStr ? ';' : ''}${property}:${value}`
@@ -45,6 +48,7 @@ export const jsxAttr = (
     buffer[0] += '"'
   }
 
+logger.debug(`<<< Exiting jsxAttr(key=${key},v=${v})`);
   return buffer.length === 1 ? raw(buffer[0]) : stringBufferToString(buffer, undefined)
 }
 

@@ -1,3 +1,4 @@
+const logger = console;
 import { Hono } from '../..'
 import { Context } from '../../context'
 import { upgradeWebSocket } from '.'
@@ -10,8 +11,10 @@ describe('upgradeWebSocket middleware', () => {
     0: WebSocket // client
     1: WebSocket // server
     constructor() {
+	logger.debug('>>> Entering constructor()');
       this[0] = {} as WebSocket
       this[1] = server as WebSocket
+	logger.debug('<<< Exiting constructor()');
     }
   }
 
@@ -22,7 +25,9 @@ describe('upgradeWebSocket middleware', () => {
       '/ws',
       upgradeWebSocket(() => ({
         onMessage(evt, ws) {
+		logger.debug(`>>> Entering onMessage(evt=${evt},ws=${ws})`);
           resolve([evt.data, ws.readyState || 1])
+		logger.debug(`<<< Exiting onMessage(evt=${evt},ws=${ws})`);
         },
       }))
     )
@@ -62,7 +67,9 @@ describe('upgradeWebSocket middleware', () => {
       '/ws-close',
       upgradeWebSocket(() => ({
         onClose(evt, ws) {
+		logger.debug(`>>> Entering onClose(evt=${evt},ws=${ws})`);
           resolve(true)
+		logger.debug(`<<< Exiting onClose(evt=${evt},ws=${ws})`);
         },
       }))
     )
@@ -85,7 +92,9 @@ describe('upgradeWebSocket middleware', () => {
       '/ws-error',
       upgradeWebSocket(() => ({
         onError(evt, ws) {
+		logger.debug(`>>> Entering onError(evt=${evt},ws=${ws})`);
           resolve(true)
+		logger.debug(`<<< Exiting onError(evt=${evt},ws=${ws})`);
         },
       }))
     )

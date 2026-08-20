@@ -1,5 +1,6 @@
 import type { Context } from '../..'
 import type { GetConnInfo } from '../../helper/conninfo'
+const logger = console;
 import { getBunServer } from './server'
 
 /**
@@ -8,6 +9,7 @@ import { getBunServer } from './server'
  * @returns ConnInfo
  */
 export const getConnInfo: GetConnInfo = (c: Context) => {
+logger.debug(`>>> Entering getConnInfo(c=${c})`);
   const server = getBunServer<{
     requestIP?: (req: Request) => {
       address: string
@@ -27,6 +29,7 @@ export const getConnInfo: GetConnInfo = (c: Context) => {
   // Returns null for closed requests or Unix domain sockets.
   const info = server.requestIP(c.req.raw)
 
+logger.debug(`getConnInfo(c=${c}): info → ${info}`);
   if (!info) {
     return {
       remote: {},
@@ -40,4 +43,5 @@ export const getConnInfo: GetConnInfo = (c: Context) => {
       port: info.port,
     },
   }
+logger.debug(`<<< Exiting getConnInfo(c=${c})`);
 }

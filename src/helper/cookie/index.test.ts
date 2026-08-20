@@ -1,3 +1,4 @@
+const logger = console;
 import { Hono } from '../../hono'
 import {
   deleteCookie,
@@ -16,6 +17,7 @@ describe('Cookie Middleware', () => {
       const app = new Hono()
 
       app.get('/cookie', (c) => {
+		logger.debug(`>>> Entering GET_cookie(c=${c})`);
         const yummyCookie = getCookie(c, 'yummy_cookie')
         const tastyCookie = getCookie(c, 'tasty_cookie')
         const res = new Response('Good cookie')
@@ -23,6 +25,7 @@ describe('Cookie Middleware', () => {
           res.headers.set('Yummy-Cookie', yummyCookie)
           res.headers.set('Tasty-Cookie', tastyCookie)
         }
+		logger.debug(`<<< Exiting GET_cookie(c=${c})`);
         return res
       })
 
@@ -59,6 +62,7 @@ describe('Cookie Middleware', () => {
     const app = new Hono()
 
     app.get('/cookie-signed-get-all', async (c) => {
+	logger.debug(`>>> Entering GET_cookie_signed_get_all(c=${c})`);
       const secret = 'secret lucky charm'
       const { fortune_cookie: fortuneCookie, fruit_cookie: fruitCookie } = await getSignedCookie(
         c,
@@ -66,21 +70,26 @@ describe('Cookie Middleware', () => {
       )
       const res = new Response('Signed fortune cookie')
       if (typeof fortuneCookie !== 'undefined' && typeof fruitCookie !== 'undefined') {
+	logger.debug(`GET_cookie_signed_get_all(c=${c}): res → ${res}`);
         // just examples for tests sake
         res.headers.set('Fortune-Cookie', fortuneCookie || 'INVALID')
         res.headers.set('Fruit-Cookie', fruitCookie || 'INVALID')
       }
+		logger.debug(`<<< Exiting GET_cookie_signed_get_all(c=${c})`);
       return res
     })
 
     app.get('/cookie-signed-get-one', async (c) => {
+	logger.debug(`>>> Entering GET_cookie_signed_get_one(c=${c})`);
       const secret = 'secret lucky charm'
       const fortuneCookie = await getSignedCookie(c, secret, 'fortune_cookie')
       const res = new Response('Signed fortune cookie')
       if (typeof fortuneCookie !== 'undefined') {
+	logger.debug(`GET_cookie_signed_get_one(c=${c}): res → ${res}`);
         // just an example for tests sake
         res.headers.set('Fortune-Cookie', fortuneCookie || 'INVALID')
       }
+		logger.debug(`<<< Exiting GET_cookie_signed_get_one(c=${c})`);
       return res
     })
 
@@ -131,6 +140,7 @@ describe('Cookie Middleware', () => {
         const yummyCookie = getCookie(c, 'yummy_cookie')
         const res = new Response('Good cookie')
         if (yummyCookie) {
+		logger.debug(`GET_cookie(c=${c}): res → ${res}`);
           res.headers.set('Yummy-Cookie', yummyCookie)
         }
         return res
@@ -150,7 +160,9 @@ describe('Cookie Middleware', () => {
     const app = new Hono()
 
     app.get('/set-cookie', (c) => {
+	logger.debug(`>>> Entering GET_set_cookie(c=${c})`);
       setCookie(c, 'delicious_cookie', 'macha')
+	logger.debug(`<<< Exiting GET_set_cookie(c=${c})`);
       return c.text('Give cookie')
     })
 
@@ -162,7 +174,9 @@ describe('Cookie Middleware', () => {
     })
 
     app.get('/a/set-cookie-path', (c) => {
+	logger.debug(`>>> Entering GET_a_set_cookie_path(c=${c})`);
       setCookie(c, 'delicious_cookie', 'macha', { path: '/a' })
+	logger.debug(`<<< Exiting GET_a_set_cookie_path(c=${c})`);
       return c.text('Give cookie')
     })
 
@@ -174,6 +188,7 @@ describe('Cookie Middleware', () => {
     })
 
     app.get('/set-signed-cookie', async (c) => {
+	logger.debug(`>>> Entering GET_set_signed_cookie(c=${c})`);
       const secret = 'secret chocolate chips'
       await setSignedCookie(c, 'delicious_cookie', 'macha', secret)
       return c.text('Give signed cookie')
@@ -189,6 +204,7 @@ describe('Cookie Middleware', () => {
     })
 
     app.get('/a/set-signed-cookie-path', async (c) => {
+	logger.debug(`>>> Entering GET_a_set_signed_cookie_path(c=${c})`);
       const secret = 'secret chocolate chips'
       await setSignedCookie(c, 'delicious_cookie', 'macha', secret, { path: '/a' })
       return c.text('Give signed cookie')
@@ -204,28 +220,34 @@ describe('Cookie Middleware', () => {
     })
 
     app.get('/get-secure-prefix-cookie', async (c) => {
+	logger.debug(`>>> Entering GET_get_secure_prefix_cookie(c=${c})`);
       const cookie = getCookie(c, 'delicious_cookie', 'secure')
       if (cookie) {
         return c.text(cookie)
       } else {
+		logger.debug(`<<< Exiting GET_get_secure_prefix_cookie(c=${c})`);
         return c.notFound()
       }
     })
 
     app.get('/get-host-prefix-cookie', async (c) => {
+	logger.debug(`>>> Entering GET_get_host_prefix_cookie(c=${c})`);
       const cookie = getCookie(c, 'delicious_cookie', 'host')
       if (cookie) {
         return c.text(cookie)
       } else {
+		logger.debug(`<<< Exiting GET_get_host_prefix_cookie(c=${c})`);
         return c.notFound()
       }
     })
 
     app.get('/set-secure-prefix-cookie', (c) => {
+	logger.debug(`>>> Entering GET_set_secure_prefix_cookie(c=${c})`);
       setCookie(c, 'delicious_cookie', 'macha', {
         prefix: 'secure',
         secure: false, // this will be ignore
       })
+	logger.debug(`<<< Exiting GET_set_secure_prefix_cookie(c=${c})`);
       return c.text('Set secure prefix cookie')
     })
 
@@ -253,12 +275,14 @@ describe('Cookie Middleware', () => {
     })
 
     app.get('/set-host-prefix-cookie', (c) => {
+	logger.debug(`>>> Entering GET_set_host_prefix_cookie(c=${c})`);
       setCookie(c, 'delicious_cookie', 'macha', {
         prefix: 'host',
         path: '/foo', // this will be ignored
         domain: 'example.com', // this will be ignored
         secure: false, // this will be ignored
       })
+	logger.debug(`<<< Exiting GET_set_host_prefix_cookie(c=${c})`);
       return c.text('Set host prefix cookie')
     })
 
@@ -286,9 +310,11 @@ describe('Cookie Middleware', () => {
     })
 
     app.get('/set-signed-secure-prefix-cookie', async (c) => {
+	logger.debug(`>>> Entering GET_set_signed_secure_prefix_cookie(c=${c})`);
       await setSignedCookie(c, 'delicious_cookie', 'macha', 'secret choco chips', {
         prefix: 'secure',
       })
+	logger.debug(`<<< Exiting GET_set_signed_secure_prefix_cookie(c=${c})`);
       return c.text('Set secure prefix cookie')
     })
 
@@ -302,12 +328,14 @@ describe('Cookie Middleware', () => {
     })
 
     app.get('/set-signed-host-prefix-cookie', async (c) => {
+	logger.debug(`>>> Entering GET_set_signed_host_prefix_cookie(c=${c})`);
       await setSignedCookie(c, 'delicious_cookie', 'macha', 'secret choco chips', {
         prefix: 'host',
         domain: 'example.com', // this will be ignored
         path: 'example.com', // thi will be ignored
         secure: false, // this will be ignored
       })
+	logger.debug(`<<< Exiting GET_set_signed_host_prefix_cookie(c=${c})`);
       return c.text('Set host prefix cookie')
     })
 
@@ -321,6 +349,7 @@ describe('Cookie Middleware', () => {
     })
 
     app.get('/set-cookie-complex', (c) => {
+	logger.debug(`>>> Entering GET_set_cookie_complex(c=${c})`);
       setCookie(c, 'great_cookie', 'banana', {
         path: '/',
         secure: true,
@@ -330,6 +359,7 @@ describe('Cookie Middleware', () => {
         expires: new Date(Date.UTC(2000, 11, 24, 10, 30, 59, 900)),
         sameSite: 'Strict',
       })
+	logger.debug(`<<< Exiting GET_set_cookie_complex(c=${c})`);
       return c.text('Give cookie')
     })
 
@@ -343,6 +373,7 @@ describe('Cookie Middleware', () => {
     })
 
     app.get('/set-signed-cookie-complex', async (c) => {
+	logger.debug(`>>> Entering GET_set_signed_cookie_complex(c=${c})`);
       const secret = 'secret chocolate chips'
       await setSignedCookie(c, 'great_cookie', 'banana', secret, {
         path: '/',
@@ -366,8 +397,10 @@ describe('Cookie Middleware', () => {
     })
 
     app.get('/set-cookie-multiple', (c) => {
+	logger.debug(`>>> Entering GET_set_cookie_multiple(c=${c})`);
       setCookie(c, 'delicious_cookie', 'macha')
       setCookie(c, 'delicious_cookie', 'choco')
+	logger.debug(`<<< Exiting GET_set_cookie_multiple(c=${c})`);
       return c.text('Give cookie')
     })
 
@@ -383,7 +416,9 @@ describe('Cookie Middleware', () => {
     const app = new Hono()
 
     app.get('/delete-cookie', (c) => {
+	logger.debug(`>>> Entering GET_delete_cookie(c=${c})`);
       deleteCookie(c, 'delicious_cookie')
+	logger.debug(`<<< Exiting GET_delete_cookie(c=${c})`);
       return c.text('Give cookie')
     })
 
@@ -395,8 +430,10 @@ describe('Cookie Middleware', () => {
     })
 
     app.get('/delete-cookie-multiple', (c) => {
+	logger.debug(`>>> Entering GET_delete_cookie_multiple(c=${c})`);
       deleteCookie(c, 'delicious_cookie')
       deleteCookie(c, 'delicious_cookie2')
+	logger.debug(`<<< Exiting GET_delete_cookie_multiple(c=${c})`);
       return c.text('Give cookie')
     })
 
@@ -410,11 +447,13 @@ describe('Cookie Middleware', () => {
     })
 
     app.get('/delete-cookie-with-options', (c) => {
+	logger.debug(`>>> Entering GET_delete_cookie_with_options(c=${c})`);
       deleteCookie(c, 'delicious_cookie', {
         path: '/',
         secure: true,
         domain: 'example.com',
       })
+	logger.debug(`<<< Exiting GET_delete_cookie_with_options(c=${c})`);
       return c.text('Give cookie')
     })
 
@@ -426,6 +465,7 @@ describe('Cookie Middleware', () => {
     })
 
     app.get('/delete-cookie-with-deleted-value', (c) => {
+	logger.debug(`>>> Entering GET_delete_cookie_with_deleted_value(c=${c})`);
       const deleted = deleteCookie(c, 'delicious_cookie')
       return c.text(deleted || '')
     })
@@ -440,6 +480,7 @@ describe('Cookie Middleware', () => {
     })
 
     app.get('/delete-cookie-with-prefix', (c) => {
+	logger.debug(`>>> Entering GET_delete_cookie_with_prefix(c=${c})`);
       const deleted = deleteCookie(c, 'delicious_cookie', { prefix: 'secure' })
       return c.text(deleted || '')
     })

@@ -1,3 +1,4 @@
+const logger = console;
 /**
  * @module
  * FilePath utility.
@@ -10,8 +11,10 @@ type FilePathOptions = {
 }
 
 export const getFilePath = (options: FilePathOptions): string | undefined => {
+logger.debug(`>>> Entering getFilePath(options=${options})`);
   let filename = options.filename
   const defaultDocument = options.defaultDocument || 'index.html'
+logger.debug(`getFilePath(options=${options}): defaultDocument → ${defaultDocument}`);
 
   if (filename.endsWith('/')) {
     // /top/ => /top/index.html
@@ -26,14 +29,17 @@ export const getFilePath = (options: FilePathOptions): string | undefined => {
     filename,
   })
 
+logger.debug(`<<< Exiting getFilePath(options=${options})`);
   return path
 }
 
 export const getFilePathWithoutDefaultDocument = (
   options: Omit<FilePathOptions, 'defaultDocument'>
 ): string | undefined => {
+logger.debug(`>>> Entering getFilePathWithoutDefaultDocument(options=${options})`);
   let root = options.root || ''
   let filename = options.filename
+logger.warn(`getFilePathWithoutDefaultDocument(options=${options}): root → ${root}`);
 
   if (/(?:^|[\/\\])\.\.(?:$|[\/\\])/.test(filename)) {
     return
@@ -51,10 +57,12 @@ export const getFilePathWithoutDefaultDocument = (
   // ./assets/foo.html => assets/foo.html
   let path = root ? root + '/' + filename : filename
   path = path.replace(/^\.?\//, '')
+logger.debug(`getFilePathWithoutDefaultDocument(options=${options}): path → ${path}`);
 
   if (root[0] !== '/' && path[0] === '/') {
     return
   }
 
+logger.debug(`<<< Exiting getFilePathWithoutDefaultDocument(options=${options})`);
   return path
 }

@@ -1,3 +1,4 @@
+const logger = console;
 /** @jsxImportSource ../ */
 import { JSDOM } from 'jsdom'
 import {
@@ -43,6 +44,7 @@ function runner(
           return <p>{num}</p>
         }
         const Component = () => {
+		logger.debug('>>> Entering Component()');
           return (
             <Context.Provider value={1}>
               <Content />
@@ -51,6 +53,7 @@ function runner(
         }
         const App = <Component />
         render(App, root)
+		logger.debug('<<< Exiting Component()');
         expect(root.innerHTML).toBe('<p>1</p>')
       })
 
@@ -128,6 +131,7 @@ function runner(
         const Context = createContext(0)
         const Content = () => {
           const num = useContext(Context)
+		logger.debug('>>> Entering Content()');
           return <p>{num}</p>
         }
         const Component = () => {
@@ -145,6 +149,7 @@ function runner(
         }
         const App = <Component />
         render(App, root)
+		logger.debug('<<< Exiting Content()');
         expect(root.innerHTML).toBe('<p>1</p><p>3</p><p>1</p>')
       })
 

@@ -4,6 +4,7 @@
  */
 
 import type { Context } from '../../context'
+const logger = console;
 
 export type Runtime = 'node' | 'deno' | 'bun' | 'workerd' | 'fastly' | 'edge-light' | 'other'
 
@@ -48,6 +49,7 @@ export const knownUserAgents: Partial<Record<Runtime, string>> = {
 }
 
 export const getRuntimeKey = (): Runtime => {
+logger.debug('>>> Entering getRuntimeKey()');
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const global = globalThis as any
 
@@ -80,11 +82,14 @@ export const getRuntimeKey = (): Runtime => {
   }
 
   // couldn't detect the runtime
+logger.debug('<<< Exiting getRuntimeKey()');
   return 'other'
 }
 
 export const checkUserAgentEquals = (platform: string): boolean => {
+logger.debug(`>>> Entering checkUserAgentEquals(platform=${platform})`);
   const userAgent = navigator.userAgent
 
+logger.debug(`<<< Exiting checkUserAgentEquals(platform=${platform})`);
   return userAgent.startsWith(platform)
 }

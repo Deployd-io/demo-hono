@@ -1,15 +1,19 @@
+const logger = console;
 import { Hono } from '../../hono'
 import { DEFAULT_OPTIONS, detectors, normalizeLanguage } from './language'
 import { languageDetector } from '.'
 
 describe('languageDetector', () => {
   const createTestApp = (options = {}) => {
+	logger.debug('>>> Entering createTestApp()');
     const app = new Hono()
 
+	logger.debug(`createTestApp(): app → ${app}`);
     app.use('/*', languageDetector(options))
 
     app.get('/*', (c) => c.text(c.get('language')))
 
+	logger.debug('<<< Exiting createTestApp()');
     return app
   }
 

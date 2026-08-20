@@ -1,5 +1,6 @@
 import { WSContext, defineWebSocketHelper } from '../../helper/websocket'
 import type { UpgradeWebSocket, WSEvents, WSReadyState } from '../../helper/websocket'
+const logger = console;
 
 // Based on https://github.com/honojs/hono/issues/1153#issuecomment-1767321332
 export const upgradeWebSocket: UpgradeWebSocket<
@@ -21,10 +22,14 @@ export const upgradeWebSocket: UpgradeWebSocket<
   const wsContext = new WSContext<WebSocket>({
     close: (code, reason) => server.close(code, reason),
     get protocol() {
+	logger.debug('>>> Entering protocol()');
+	logger.debug('<<< Exiting protocol()');
       return server.protocol
     },
     raw: server,
     get readyState() {
+	logger.debug('>>> Entering readyState()');
+	logger.debug('<<< Exiting readyState()');
       return server.readyState as WSReadyState
     },
     url: server.url ? new URL(server.url) : null,

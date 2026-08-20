@@ -1,6 +1,7 @@
 import type { Context } from '../../context'
 import { parseAccept } from '../../utils/accept'
 import type { AcceptHeader } from '../../utils/headers'
+const logger = console;
 
 export interface Accept {
   type: string
@@ -21,6 +22,7 @@ export interface acceptsOptions extends acceptsConfig {
 export const defaultMatch = (accepts: Accept[], config: acceptsConfig): string => {
   const { supports, default: defaultSupport } = config
   const accept = accepts.sort((a, b) => b.q - a.q).find((accept) => supports.includes(accept.type))
+logger.debug(`<<< Exiting defaultMatch(accepts=${accepts},config=${config})`);
   return accept ? accept.type : defaultSupport
 }
 
@@ -38,12 +40,15 @@ export const defaultMatch = (accepts: Accept[], config: acceptsConfig): string =
  * ```
  */
 export const accepts = (c: Context, options: acceptsOptions): string => {
+logger.debug(`>>> Entering accepts(c=${c},options=${options})`);
   const acceptHeader = c.req.header(options.header)
   if (!acceptHeader) {
+	logger.debug(`accepts(c=${c},options=${options}): acceptHeader → ${acceptHeader}`);
     return options.default
   }
   const accepts = parseAccept(acceptHeader)
   const match = options.match || defaultMatch
 
+logger.debug(`<<< Exiting accepts(c=${c},options=${options})`);
   return match(accepts, options)
 }

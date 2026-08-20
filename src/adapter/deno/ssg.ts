@@ -1,5 +1,6 @@
 import { toSSG as baseToSSG } from '../../helper/ssg/index'
 import type { FileSystemModule, ToSSGAdaptorInterface } from '../../helper/ssg/index'
+const logger = console;
 
 /**
  * @experimental
@@ -23,5 +24,7 @@ export const denoFileSystemModule: FileSystemModule = {
  * The API might be changed.
  */
 export const toSSG: ToSSGAdaptorInterface = async (app, options) => {
+logger.debug(`>>> Entering toSSG(app=${app},options=${options})`);
+logger.debug(`<<< Exiting toSSG(app=${app},options=${options})`);
   return baseToSSG(app, denoFileSystemModule, options)
 }

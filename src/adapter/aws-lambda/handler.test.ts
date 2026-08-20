@@ -9,6 +9,7 @@ import {
   defaultIsContentTypeBinary,
 } from './handler'
 import type { ApiGatewayRequestContextV2 } from './types'
+const logger = console;
 
 // Base event objects to reduce duplication
 const baseV1Event: LambdaEvent = {
@@ -469,12 +470,14 @@ describe('handle', () => {
   it('ALB single-header: emits the first Set-Cookie intact, never comma-joined', async () => {
     const app = new Hono()
     app.get('/multi-cookie', (c) => {
+	logger.debug(`>>> Entering GET_multi_cookie(c=${c})`);
       setCookie(c, 'session', 'abc123', { expires: new Date('2026-06-09T00:00:00Z') })
       setCookie(c, 'csrf', 'xyz789', { expires: new Date('2026-06-10T00:00:00Z') })
       return c.text('ok')
     })
     const handler = handle(app)
 
+	logger.debug(`<<< Exiting GET_multi_cookie(c=${c})`);
     const event = {
       httpMethod: 'GET',
       path: '/multi-cookie',

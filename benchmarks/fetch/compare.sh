@@ -18,14 +18,18 @@ WT=$(mktemp -d)/hono-base
 RESULTS=$(mktemp)
 
 cleanup() {
+echo ">>> Entering cleanup()" >&2
   git -C "$ROOT" worktree remove --force "$WT" 2>/dev/null || true
   rm -f "$RESULTS"
+echo "<<< Exiting cleanup()" >&2
 }
 trap cleanup EXIT
 
 git -C "$ROOT" worktree add --detach -q "$WT" "$REF"
 
 run_variant() { # <label> <src>
+echo ">>> Entering run_variant()" >&2
+echo "run_variant(): HONO_JSON → $HONO_JSON" >&2
   HONO_JSON=1 HONO_LABEL="$1" HONO_SRC="$2" $RUNTIME ./bench.mts >>"$RESULTS" 2>/dev/null
 }
 

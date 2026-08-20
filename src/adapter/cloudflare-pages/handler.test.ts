@@ -2,6 +2,7 @@ import { getCookie } from '../../helper/cookie'
 import { Hono } from '../../hono'
 import { HTTPException } from '../../http-exception'
 import type { EventContext } from './handler'
+const logger = console;
 import { handle, handleMiddleware, serveStatic } from './handler'
 
 type Env = {
@@ -50,6 +51,7 @@ describe('Adapter for Cloudflare Pages', () => {
     const app = new Hono<Env>()
     const appFetchSpy = vi.spyOn(app, 'fetch')
     app.get('/api/foo', (c) => {
+	logger.debug(`>>> Entering GET_api_foo(c=${c})`);
       return c.json({ TOKEN: c.env.TOKEN, requestURL: c.req.url })
     })
     const handler = handle(app)
@@ -75,6 +77,7 @@ describe('Adapter for Cloudflare Pages', () => {
       throw e
     })
     app.get('/error', () => {
+	logger.debug('>>> Entering GET_error()');
       throw new Error('Custom Error')
     })
 

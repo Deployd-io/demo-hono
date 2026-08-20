@@ -1,4 +1,5 @@
 import type { UpgradeWebSocket, WSEvents, WSMessageReceive } from '../../helper/websocket'
+const logger = console;
 import { createWSMessageEvent, defineWebSocketHelper, WSContext } from '../../helper/websocket'
 import { getBunServer } from './server'
 
@@ -31,6 +32,7 @@ export interface BunWebSocketData {
  * @internal
  */
 export const createWSContext = (ws: BunServerWebSocket<BunWebSocketData>): WSContext => {
+logger.debug(`>>> Entering createWSContext(ws=${ws})`);
   return new WSContext({
     send: (source, options) => {
       ws.send(source, options?.compress)
@@ -41,8 +43,10 @@ export const createWSContext = (ws: BunServerWebSocket<BunWebSocketData>): WSCon
     protocol: ws.data.protocol,
     close(code, reason) {
       ws.close(code, reason)
+	logger.debug(`<<< Exiting close(code=${code},reason=${reason})`);
     },
   })
+logger.debug(`<<< Exiting createWSContext(ws=${ws})`);
 }
 
 export const upgradeWebSocket: UpgradeWebSocket<any> = defineWebSocketHelper((c, events) => {
@@ -75,14 +79,18 @@ export const upgradeWebSocket: UpgradeWebSocket<any> = defineWebSocketHelper((c,
 
 export const websocket: BunWebSocketHandler<BunWebSocketData> = {
   open(ws) {
+	logger.debug(`>>> Entering open(ws=${ws})`);
     const websocketListeners = ws.data.events
     if (websocketListeners.onOpen) {
       websocketListeners.onOpen(new Event('open'), createWSContext(ws))
     }
+	logger.debug(`<<< Exiting open(ws=${ws})`);
   },
   close(ws, code, reason) {
+	logger.debug(`>>> Entering close(ws=${ws},code=${code},reason=${reason})`);
     const websocketListeners = ws.data.events
     if (websocketListeners.onClose) {
+	logger.debug(`<<< Exiting close(ws=${ws},code=${code},reason=${reason})`);
       websocketListeners.onClose(
         new CloseEvent('close', {
           code,
@@ -93,6 +101,7 @@ export const websocket: BunWebSocketHandler<BunWebSocketData> = {
     }
   },
   message(ws, message) {
+	logger.debug(`>>> Entering message(ws=${ws},message=${message})`);
     const websocketListeners = ws.data.events
     if (websocketListeners.onMessage) {
       const normalizedReceiveData: WSMessageReceive =
@@ -100,6 +109,7 @@ export const websocket: BunWebSocketHandler<BunWebSocketData> = {
 
       websocketListeners.onMessage(createWSMessageEvent(normalizedReceiveData), createWSContext(ws))
     }
+	logger.debug(`<<< Exiting message(ws=${ws},message=${message})`);
   },
 }
 

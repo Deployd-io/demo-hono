@@ -1,5 +1,6 @@
 import { Context } from '../../context'
 import type { AddressType } from '../../helper/conninfo'
+const logger = console;
 import { getConnInfo } from './conninfo'
 
 const createRandomBunServer = ({
@@ -16,11 +17,13 @@ const createRandomBunServer = ({
     port,
     server: {
       requestIP() {
+		logger.debug('>>> Entering requestIP()');
         return {
           address,
           family,
           port,
         }
+		logger.debug('<<< Exiting requestIP()');
       },
     },
   }

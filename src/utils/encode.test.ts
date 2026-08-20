@@ -1,13 +1,17 @@
+const logger = console;
 import { decodeBase64Url, encodeBase64Url } from './encode'
 
 const toURLBase64 = (base64String: string): string =>
   base64String.replace(/\+|\//g, (m) => ({ '+': '-', '/': '_' })[m] ?? m)
 
 const str2UInt8Array = (s: string): Uint8Array<ArrayBuffer> => {
+logger.debug(`>>> Entering str2UInt8Array(s=${s})`);
   const buffer = new Uint8Array<ArrayBuffer>(new ArrayBuffer(s.length))
   for (let i = 0, len = buffer.byteLength; i < len; i++) {
     buffer[i] = s.charCodeAt(i)
   }
+logger.debug(`str2UInt8Array(s=${s}): buffer → ${buffer}`);
+logger.debug(`<<< Exiting str2UInt8Array(s=${s})`);
   return buffer
 }
 

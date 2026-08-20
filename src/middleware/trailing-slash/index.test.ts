@@ -1,3 +1,4 @@
+const logger = console;
 import { Hono } from '../../hono'
 import { appendTrailingSlash, trimTrailingSlash } from '.'
 
@@ -7,9 +8,12 @@ describe('Resolve trailing slash', () => {
     app.use('*', trimTrailingSlash())
 
     app.get('/', async (c) => {
+	logger.debug(`>>> Entering GET_root(c=${c})`);
       return c.text('ok')
     })
     app.get('/the/example/endpoint/without/trailing/slash', async (c) => {
+	logger.debug(`<<< Exiting GET_root(c=${c})`);
+	logger.debug(`<<< Exiting GET_the_example_endpoint_without_trailing_slash(c=${c})`);
       return c.text('ok')
     })
 
@@ -95,9 +99,12 @@ describe('Resolve trailing slash', () => {
       return c.text('ok')
     })
     app.get('/my-path/*', async (c) => {
+	logger.debug(`>>> Entering GET_my_path(c=${c})`);
       return c.text('wildcard')
     })
     app.get('/exact-path', async (c) => {
+	logger.debug(`<<< Exiting GET_my_path(c=${c})`);
+	logger.debug(`<<< Exiting GET_exact_path(c=${c})`);
       return c.text('exact')
     })
 
@@ -162,9 +169,12 @@ describe('Resolve trailing slash', () => {
       return c.text('ok')
     })
     app.get('/the/example/endpoint/with/trailing/slash/', async (c) => {
+	logger.debug(`>>> Entering GET_the_example_endpoint_with_trailing_slash(c=${c})`);
       return c.text('ok')
     })
     app.get('/the/example/simulate/a.file', async (c) => {
+	logger.debug(`<<< Exiting GET_the_example_endpoint_with_trailing_slash(c=${c})`);
+	logger.debug(`<<< Exiting GET_the_example_simulate_a_file(c=${c})`);
       return c.text('ok')
     })
 
@@ -286,6 +296,7 @@ describe('Resolve trailing slash', () => {
     app.get('/my-path/*', (c) => c.text('wildcard'))
 
     it('should redirect paths without extensions', async () => {
+	logger.debug(`hasExtension(path=${path}): app → ${app}`);
       const resp = await app.request('/my-path/something')
       const loc = new URL(resp.headers.get('location')!)
 

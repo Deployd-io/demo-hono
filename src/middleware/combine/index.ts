@@ -8,6 +8,7 @@ import type { Context } from '../../context'
 import { METHOD_NAME_ALL } from '../../router'
 import { TrieRouter } from '../../router/trie-router'
 import type { MiddlewareHandler, Next } from '../../types'
+const logger = console;
 
 type Condition = (c: Context) => boolean
 
@@ -37,9 +38,12 @@ type Condition = (c: Context) => boolean
  */
 export const some = (...middleware: (MiddlewareHandler | Condition)[]): MiddlewareHandler => {
   return async function some(c, next) {
+logger.debug(`>>> Entering some(c=${c},next=${next})`);
     let isNextCalled = false
     const wrappedNext = () => {
+	logger.debug('>>> Entering wrappedNext()');
       isNextCalled = true
+	logger.debug('<<< Exiting wrappedNext()');
       return next()
     }
 
@@ -56,6 +60,7 @@ export const some = (...middleware: (MiddlewareHandler | Condition)[]): Middlewa
         lastError = undefined
         break
       } catch (error) {
+		logger.error(`Exception in some(c=${c},next=${next}): ${(error as Error).message}`, error);
         lastError = error
         if (isNextCalled) {
           break
@@ -66,6 +71,7 @@ export const some = (...middleware: (MiddlewareHandler | Condition)[]): Middlewa
       throw lastError
     }
   }
+logger.debug(`<<< Exiting some(c=${c},next=${next})`);
 }
 
 /**
@@ -97,6 +103,7 @@ export const some = (...middleware: (MiddlewareHandler | Condition)[]): Middlewa
  * ```
  */
 export const every = (...middleware: (MiddlewareHandler | Condition)[]): MiddlewareHandler => {
+logger.debug(`>>> Entering every(middleware=${middleware})`);
   return async function every(c, next) {
     const currentRouteIndex = c.req.routeIndex
     await compose(
@@ -108,6 +115,7 @@ export const every = (...middleware: (MiddlewareHandler | Condition)[]): Middlew
             if (res === false) {
               throw new Error('Unmet condition')
             }
+	logger.debug(`<<< Exiting every(middleware=${middleware})`);
             return res
           },
         ],
@@ -142,6 +150,7 @@ export const except = (
   condition: string | Condition | (string | Condition)[],
   ...middleware: MiddlewareHandler[]
 ): MiddlewareHandler => {
+logger.debug(`>>> Entering except(condition=${condition},middleware=${middleware})`);
   let router: TrieRouter<true> | undefined = undefined
   const conditions = (Array.isArray(condition) ? condition : [condition])
     .map((condition) => {
@@ -149,6 +158,7 @@ export const except = (
         router ||= new TrieRouter()
         router.add(METHOD_NAME_ALL, condition, true)
       } else {
+		logger.debug(`except(condition=${condition},middleware=${middleware}): conditions → ${conditions}`);
         return condition
       }
     })
@@ -162,4 +172,5 @@ export const except = (
   return async function except(c, next) {
     await handler(c, next)
   }
+	logger.debug(`<<< Exiting except(c=${c},next=${next})`);
 }

@@ -2,6 +2,7 @@ import { Context } from '../../context'
 import type { Hono } from '../../hono'
 import { HTTPException } from '../../http-exception'
 import type { BlankSchema, Env, Input, MiddlewareHandler, Schema } from '../../types'
+const logger = console;
 
 // Ref: https://github.com/cloudflare/workerd/blob/main/types/defines/pages.d.ts
 
@@ -112,10 +113,14 @@ declare abstract class FetcherLike {
  *
  */
 export const serveStatic = (): MiddlewareHandler => {
+logger.debug('>>> Entering serveStatic()');
+logger.debug('<<< Exiting serveStatic()');
   return async (c) => {
     const env = c.env as { ASSETS: FetcherLike }
     const res = await env.ASSETS.fetch(c.req.raw)
     if (res.status === 404) {
+	const _start = Date.now();
+	logger.info(`serveStatic(): API call took ${Date.now() - _start} ms`);
       return c.notFound()
     }
     return res

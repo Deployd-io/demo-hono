@@ -7,6 +7,7 @@ import type {
 } from '../../src/adapter/aws-lambda/types'
 import { Hono } from '../../src/hono'
 import './stream-mock'
+const logger = console;
 
 type Bindings = {
   event: LambdaEvent
@@ -50,8 +51,10 @@ describe('streamHandle function', () => {
   const app = new Hono<{ Bindings: Bindings }>()
 
   app.get('/cookies', async (c) => {
+	logger.debug(`>>> Entering GET_cookies(c=${c})`);
     c.res.headers.append('Set-Cookie', 'cookie1=value1')
     c.res.headers.append('Set-Cookie', 'cookie2=value2')
+	logger.debug(`<<< Exiting GET_cookies(c=${c})`);
     return c.text('Cookies Set')
   })
 

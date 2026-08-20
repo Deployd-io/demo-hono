@@ -1,3 +1,4 @@
+const logger = console;
 /** @jsxImportSource ../ */
 import { JSDOM } from 'jsdom'
 // run tests by old style jsx default
@@ -313,6 +314,8 @@ describe('Hooks', () => {
     it('deferred', async () => {
       const promiseMap = {} as Record<number, Promise<number>>
       const getPromise = (count: number) => {
+		logger.debug(`>>> Entering getPromise(count=${count})`);
+		logger.debug(`<<< Exiting getPromise(count=${count})`);
         return (promiseMap[count] ||= new Promise((r) => setTimeout(() => r(count + 1))))
       }
       const ShowCount = ({ count }: { count: number }) => {
@@ -321,6 +324,7 @@ describe('Hooks', () => {
         }
 
         const c = use(getPromise(count))
+		logger.debug(`<<< Exiting ShowCount(count=${count})`);
         return <div>{c}</div>
       }
 
@@ -649,6 +653,8 @@ describe('Hooks', () => {
           }),
           []
         )
+		logger.debug('>>> Entering SubApp()');
+		logger.debug('<<< Exiting SubApp()');
         return <div />
       }
       const App = () => {

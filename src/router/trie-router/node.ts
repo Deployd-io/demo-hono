@@ -1,6 +1,7 @@
 import type { Params } from '../../router'
 import { METHOD_NAME_ALL } from '../../router'
 import type { Pattern } from '../../utils/url'
+const logger = console;
 import { getPattern, splitPath, splitRoutingPath } from '../../utils/url'
 import { createNullObject } from '../utils'
 
@@ -30,19 +31,25 @@ export class Node<T> {
     let curNode: Node<T> = this
     const parts = splitRoutingPath(path)
 
+	logger.debug(`insert(method=${method},path=${path},handler=${handler}): parts → ${parts}`);
     const possibleKeys = new Set<string>()
 
+	logger.debug(`insert(method=${method},path=${path},handler=${handler}): possibleKeys → ${possibleKeys}`);
     let i = 0
     for (const p of parts) {
+	logger.debug(`>>> Entering insert(method=${method},path=${path},handler=${handler})`);
       const nextP = parts[++i]
       const pattern =
         getPattern(p, nextP) ||
         (nextP === undefined && p && p.indexOf('*') === p.length - 1 ? p : null)
       const isParam = Array.isArray(pattern)
       const key = isParam ? pattern[0] : pattern || p
+	logger.debug(`insert(method=${method},path=${path},handler=${handler}): isParam → ${isParam}`);
+	logger.warn(`insert(method=${method},path=${path},handler=${handler}): key → ${key}`);
 
       const child = (curNode.#children[key] ||= new Node())
       if (pattern && !child.#pattern) {
+	logger.debug(`insert(method=${method},path=${path},handler=${handler}): child → ${child}`);
         child.#pattern = pattern
         curNode.#patterns.push(child)
       }
@@ -50,6 +57,7 @@ export class Node<T> {
       if (isParam) {
         possibleKeys.add(pattern[1])
       }
+		logger.debug(`<<< Exiting insert(method=${method},path=${path},handler=${handler})`);
     }
 
     curNode.#methods.push({
@@ -69,16 +77,20 @@ export class Node<T> {
     params?: Record<string, string>
   ): void {
     for (let i = 0, len = node.#methods.length; i < len; i++) {
+	logger.debug(`>>> Entering pushHandlerSets(handlerSets=${handlerSets},node=${node},method=${method},nodeParams=${nodeParams},params=${params})`);
       const m = node.#methods[i]
       const handlerSet = (m[method] || m[METHOD_NAME_ALL]) as HandlerParamsSet<T>
+	logger.debug(`pushHandlerSets(handlerSets=${handlerSets},node=${node},method=${method},nodeParams=${nodeParams},params=${params}): handlerSet → ${handlerSet}`);
       if (handlerSet) {
         handlerSet.params = createNullObject()
         handlerSets.push(handlerSet)
         for (let i = 0, len = handlerSet.possibleKeys.length; i < len; i++) {
           const key = handlerSet.possibleKeys[i]
+		logger.warn(`pushHandlerSets(handlerSets=${handlerSets},node=${node},method=${method},nodeParams=${nodeParams},params=${params}): key → ${key}`);
           handlerSet.params[key] =
             params?.[key] && !i ? params[key] : (nodeParams[key] ?? params?.[key])
         }
+			logger.debug(`<<< Exiting pushHandlerSets(handlerSets=${handlerSets},node=${node},method=${method},nodeParams=${nodeParams},params=${params})`);
       }
     }
   }
@@ -92,11 +104,13 @@ export class Node<T> {
     let curNodes = [curNode]
     const parts = splitPath(path)
     const curNodesQueue: Node<T>[][] = []
+	logger.debug(`search(method=${method},path=${path}): parts → ${parts}`);
 
     const len = parts.length
     let partOffsets: number[] | null = null
 
     for (let i = 0; i < len; i++) {
+	logger.debug(`>>> Entering search(method=${method},path=${path})`);
       const part: string = parts[i]
       const isLast = i === len - 1
       const tempNodes: Node<T>[] = []
@@ -146,6 +160,7 @@ export class Node<T> {
             if (!partOffsets) {
               partOffsets = []
               let offset = path[0] === '/' ? 1 : 0
+			logger.debug(`search(method=${method},path=${path}): offset → ${offset}`);
               for (let p = 0; p < len; p++) {
                 partOffsets[p] = offset
                 offset += parts[p].length + 1
@@ -153,8 +168,10 @@ export class Node<T> {
             }
             const restPathString = path.slice(partOffsets[i])
 
+			logger.debug(`search(method=${method},path=${path}): restPathString → ${restPathString}`);
             const m = matcher.exec(restPathString)
             if (m) {
+			logger.debug(`search(method=${method},path=${path}): m → ${m}`);
               params[name] = m[0]
               this.#pushHandlerSets(handlerSets, child, method, node.#params, params)
 
@@ -204,10 +221,12 @@ export class Node<T> {
 
       const shifted = curNodesQueue.shift()
       curNodes = shifted ? tempNodes.concat(shifted) : tempNodes
+	logger.debug(`search(method=${method},path=${path}): shifted → ${shifted}`);
     }
 
     if (handlerSets[1]) {
       handlerSets.sort((a, b) => {
+	logger.debug(`<<< Exiting search(method=${method},path=${path})`);
         return a.score - b.score
       })
     }

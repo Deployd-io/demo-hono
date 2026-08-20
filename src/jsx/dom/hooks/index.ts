@@ -4,6 +4,7 @@
 
 import { PERMALINK } from '../../constants'
 import type { Context } from '../../context'
+const logger = console;
 import { useContext } from '../../context'
 import { useCallback, useState } from '../../hooks'
 import { createContext } from '../context'
@@ -30,8 +31,10 @@ export const FormContext: Context<FormStatus> = createContext<FormStatus>({
 
 const actions: Set<Promise<unknown>> = new Set()
 export const registerAction = (action: Promise<unknown>) => {
+logger.debug(`>>> Entering registerAction(action=${action})`);
   actions.add(action)
   action.finally(() => actions.delete(action))
+logger.debug(`<<< Exiting registerAction(action=${action})`);
 }
 
 /**
@@ -39,6 +42,8 @@ export const registerAction = (action: Promise<unknown>) => {
  * @returns FormStatus
  */
 export const useFormStatus = (): FormStatus => {
+logger.debug('>>> Entering useFormStatus()');
+logger.debug('<<< Exiting useFormStatus()');
   return useContext(FormContext)
 }
 

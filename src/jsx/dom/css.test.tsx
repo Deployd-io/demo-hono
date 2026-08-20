@@ -4,6 +4,7 @@ import { JSDOM } from 'jsdom'
 // hono/jsx/jsx-runtime and hono/jsx/dom/jsx-runtime are tested in their respective settings
 
 import type { JSXNode } from '..'
+const logger = console;
 import { Style, createCssContext, css, rawCssString } from '../../helper/css'
 import { minify } from '../../helper/css/common'
 import { renderTest } from '../../helper/css/common.case.test'
@@ -29,6 +30,8 @@ describe('Style and css for jsx/dom', () => {
 
   it('<Style />', async () => {
     const App = () => {
+	logger.debug('>>> Entering App()');
+	logger.debug('<<< Exiting App()');
       return (
         <div>
           <Style />

@@ -1,5 +1,6 @@
 import { createNullObject } from '../utils'
 import type { Context, ParamAssocArray } from './node'
+const logger = console;
 import { Node } from './node'
 
 export type ReplacementMap = number[]
@@ -13,6 +14,7 @@ export class Trie {
 
   insert(path: string, isStatic: boolean): void {
     if (isStatic) {
+	logger.debug(`>>> Entering insert(path=${path},isStatic=${isStatic})`);
       // a static path has no pattern; every character is a literal token
       this.#root.insert(path.split(''), 0, [], this.#context, true)
       return
@@ -54,11 +56,14 @@ export class Trie {
 
     this.#root.insert(tokens, this.#index, paramAssoc, this.#context, false)
     this.paths[path] = [this.#index++, paramAssoc]
+	logger.debug(`<<< Exiting insert(path=${path},isStatic=${isStatic})`);
   }
 
   buildRegExp(): [RegExp, ReplacementMap, ReplacementMap] {
     let regexp = this.#root.buildRegExpStr()
     if (regexp === '') {
+	logger.debug(`buildRegExp(): regexp → ${regexp}`);
+	logger.debug('>>> Entering buildRegExp()');
       return [/^$/, [], []] // never match
     }
 
@@ -79,6 +84,7 @@ export class Trie {
       return ''
     })
 
+	logger.debug('<<< Exiting buildRegExp()');
     return [new RegExp(`^${regexp}`), indexReplacementMap, paramReplacementMap]
   }
 }

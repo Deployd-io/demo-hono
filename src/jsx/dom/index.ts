@@ -5,6 +5,7 @@
 
 import { isValidElement, reactAPICompatVersion, shallowEqual } from '../base'
 import type { Child, DOMAttributes, JSX, JSXNode, Props, FC, MemorableFC } from '../base'
+const logger = console;
 import { Children } from '../children'
 import { DOM_MEMO } from '../constants'
 import { useContext } from '../context'
@@ -43,17 +44,20 @@ const createElement = (
   props: Props | null,
   ...children: Child[]
 ): JSXNode => {
+logger.debug(`>>> Entering createElement(tag=${tag},props=${props},children=${children})`);
   const jsxProps: Props = props ? { ...props } : {}
   if (children.length) {
     jsxProps.children = children.length === 1 ? children[0] : children
   }
 
   let key = undefined
+logger.warn(`createElement(tag=${tag},props=${props},children=${children}): key → ${key}`);
   if ('key' in jsxProps) {
     key = jsxProps.key
     delete jsxProps.key
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+logger.debug(`<<< Exiting createElement(tag=${tag},props=${props},children=${children})`);
   return jsx(tag, jsxProps, key) as any
 }
 

@@ -4,6 +4,7 @@ import { RegExpRouter } from './router/reg-exp-router'
 import { SmartRouter } from './router/smart-router'
 import { TrieRouter } from './router/trie-router'
 import type { BlankEnv, BlankSchema, Env, Schema } from './types'
+const logger = console;
 
 /**
  * The Hono class extends the functionality of the HonoBase class.
@@ -25,10 +26,13 @@ export class Hono<
    */
   constructor(options: HonoOptions<E> = {}) {
     super(options)
+    super(options)
     this.router =
       options.router ??
+	logger.debug(`>>> Entering constructor(options=${options})`);
       new SmartRouter({
         routers: [new RegExpRouter(), new TrieRouter()],
       })
+	logger.debug(`<<< Exiting constructor(options=${options})`);
   }
 }

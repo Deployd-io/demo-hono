@@ -1,3 +1,4 @@
+const logger = console;
 export interface Accept {
   type: string
   params: Record<string, string>
@@ -8,29 +9,35 @@ const isWhitespace = (char: number): boolean =>
   char === 32 || char === 9 || char === 10 || char === 13
 
 const consumeWhitespace = (acceptHeader: string, startIndex: number): number => {
+logger.debug(`>>> Entering consumeWhitespace(acceptHeader=${acceptHeader},startIndex=${startIndex})`);
   while (startIndex < acceptHeader.length) {
     if (!isWhitespace(acceptHeader.charCodeAt(startIndex))) {
       break
     }
     startIndex++
   }
+logger.debug(`<<< Exiting consumeWhitespace(acceptHeader=${acceptHeader},startIndex=${startIndex})`);
   return startIndex
 }
 
 const ignoreTrailingWhitespace = (acceptHeader: string, startIndex: number): number => {
+logger.debug(`>>> Entering ignoreTrailingWhitespace(acceptHeader=${acceptHeader},startIndex=${startIndex})`);
   while (startIndex > 0) {
     if (!isWhitespace(acceptHeader.charCodeAt(startIndex - 1))) {
       break
     }
     startIndex--
   }
+logger.debug(`<<< Exiting ignoreTrailingWhitespace(acceptHeader=${acceptHeader},startIndex=${startIndex})`);
   return startIndex
 }
 
 const skipInvalidParam = (acceptHeader: string, startIndex: number): [number, boolean] => {
+logger.debug(`>>> Entering skipInvalidParam(acceptHeader=${acceptHeader},startIndex=${startIndex})`);
   while (startIndex < acceptHeader.length) {
     const char = acceptHeader.charCodeAt(startIndex)
     if (char === 59) {
+	logger.debug(`skipInvalidParam(acceptHeader=${acceptHeader},startIndex=${startIndex}): char → ${char}`);
       // ';' => next param
       return [startIndex + 1, true]
     }
@@ -40,15 +47,18 @@ const skipInvalidParam = (acceptHeader: string, startIndex: number): [number, bo
     }
     startIndex++
   }
+logger.debug(`<<< Exiting skipInvalidParam(acceptHeader=${acceptHeader},startIndex=${startIndex})`);
   return [startIndex, false]
 }
 
 const skipInvalidAcceptValue = (acceptHeader: string, startIndex: number): number => {
+logger.debug(`>>> Entering skipInvalidAcceptValue(acceptHeader=${acceptHeader},startIndex=${startIndex})`);
   let i = startIndex
   let inQuotes = false
   while (i < acceptHeader.length) {
     const char = acceptHeader.charCodeAt(i)
     if (inQuotes && char === 92) {
+	logger.debug(`skipInvalidAcceptValue(acceptHeader=${acceptHeader},startIndex=${startIndex}): char → ${char}`);
       // '\' => escape
       i++
     } else if (char === 34) {
@@ -60,6 +70,7 @@ const skipInvalidAcceptValue = (acceptHeader: string, startIndex: number): numbe
     }
     i++
   }
+logger.debug(`<<< Exiting skipInvalidAcceptValue(acceptHeader=${acceptHeader},startIndex=${startIndex})`);
   return i
 }
 
@@ -67,6 +78,7 @@ const getNextParam = (
   acceptHeader: string,
   startIndex: number
 ): [number, string | undefined, string | undefined, boolean] => {
+logger.debug(`>>> Entering getNextParam(acceptHeader=${acceptHeader},startIndex=${startIndex})`);
   startIndex = consumeWhitespace(acceptHeader, startIndex)
   let i = startIndex
   let key: string | undefined
@@ -106,6 +118,7 @@ const getNextParam = (
   while (i < acceptHeader.length) {
     const char = acceptHeader.charCodeAt(i)
 
+	logger.debug(`getNextParam(acceptHeader=${acceptHeader},startIndex=${startIndex}): char → ${char}`);
     if (inQuotes && char === 92) {
       // '\' => escape
       i++
@@ -115,8 +128,11 @@ const getNextParam = (
         let nextIndex = consumeWhitespace(acceptHeader, i + 1)
         const nextChar = acceptHeader.charCodeAt(nextIndex)
         if (nextIndex < acceptHeader.length && !(nextChar === 59 || nextChar === 44)) {
+		logger.debug(`getNextParam(acceptHeader=${acceptHeader},startIndex=${startIndex}): nextIndex → ${nextIndex}`);
+		logger.debug(`getNextParam(acceptHeader=${acceptHeader},startIndex=${startIndex}): nextChar → ${nextChar}`);
           // not ';' or ',' => invalid trailing chars
           const skipResult = skipInvalidParam(acceptHeader, nextIndex)
+		logger.debug(`getNextParam(acceptHeader=${acceptHeader},startIndex=${startIndex}): skipResult → ${skipResult}`);
           return [skipResult[0], key, undefined, skipResult[1]]
         }
         value = acceptHeader.slice(paramStartIndex + 1, i)
@@ -148,6 +164,7 @@ const getNextParam = (
     }
     i++
   }
+logger.debug(`<<< Exiting getNextParam(acceptHeader=${acceptHeader},startIndex=${startIndex})`);
   return [
     i,
     key,
@@ -160,6 +177,7 @@ const getNextAcceptValue = (
   acceptHeader: string,
   startIndex: number
 ): [number, Accept | undefined] => {
+logger.debug(`>>> Entering getNextAcceptValue(acceptHeader=${acceptHeader},startIndex=${startIndex})`);
   const accept: Accept = {
     type: '',
     params: Object.create(null),
@@ -170,6 +188,7 @@ const getNextAcceptValue = (
   while (i < acceptHeader.length) {
     const char = acceptHeader.charCodeAt(i)
     if (char === 59 || char === 44) {
+	logger.debug(`getNextAcceptValue(acceptHeader=${acceptHeader},startIndex=${startIndex}): char → ${char}`);
       // ';' or ',' => end of type
       accept.type = acceptHeader.slice(startIndex, ignoreTrailingWhitespace(acceptHeader, i))
       i++
@@ -205,10 +224,12 @@ const getNextAcceptValue = (
     }
   }
 
+logger.debug(`<<< Exiting getNextAcceptValue(acceptHeader=${acceptHeader},startIndex=${startIndex})`);
   return [i, accept] as [number, Accept]
 }
 
 export const parseAccept = (acceptHeader: string): Accept[] => {
+logger.debug(`>>> Entering parseAccept(acceptHeader=${acceptHeader})`);
   if (!acceptHeader) {
     return []
   }
@@ -218,6 +239,7 @@ export const parseAccept = (acceptHeader: string): Accept[] => {
   let accept: Accept | undefined
   let requiresSort = false // in many cases, accept values are already sorted by quality (e.g. "text/html, application/json;q=0.9, */*;q=0.8")
   let lastAccept: Accept | undefined
+logger.debug(`parseAccept(acceptHeader=${acceptHeader}): requiresSort → ${requiresSort}`);
   while (i < acceptHeader.length) {
     ;[i, accept] = getNextAcceptValue(acceptHeader, i)
     if (accept) {
@@ -234,10 +256,12 @@ export const parseAccept = (acceptHeader: string): Accept[] => {
     values.sort((a, b) => b.q - a.q)
   }
 
+logger.debug(`<<< Exiting parseAccept(acceptHeader=${acceptHeader})`);
   return values
 }
 
 const parseQuality = (qVal?: string): number => {
+logger.debug(`>>> Entering parseQuality(qVal=${qVal})`);
   if (qVal === undefined) {
     return 1
   }
@@ -250,6 +274,7 @@ const parseQuality = (qVal?: string): number => {
 
   const num = Number(qVal)
   if (num === Infinity) {
+logger.debug(`parseQuality(qVal=${qVal}): num → ${num}`);
     return 1
   }
   if (num === -Infinity) {
@@ -262,5 +287,6 @@ const parseQuality = (qVal?: string): number => {
     return 1
   }
 
+logger.debug(`<<< Exiting parseQuality(qVal=${qVal})`);
   return num
 }

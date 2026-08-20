@@ -6,6 +6,7 @@
 import type { Context } from '../../context'
 import { HTTPException } from '../../http-exception'
 import type { MiddlewareHandler } from '../../types'
+const logger = console;
 
 type IsAllowedOriginHandler = (origin: string, context: Context) => boolean | Promise<boolean>
 
@@ -92,6 +93,7 @@ const isRequestedByFormElementRe =
  * ```
  */
 export const csrf = (options?: CSRFOptions): MiddlewareHandler => {
+logger.debug(`>>> Entering csrf(options=${options})`);
   const originHandler: IsAllowedOriginHandler = ((optsOrigin) => {
     if (!optsOrigin) {
       return (origin, c) => origin === new URL(c.req.url).origin
@@ -104,10 +106,12 @@ export const csrf = (options?: CSRFOptions): MiddlewareHandler => {
     }
   })(options?.origin)
   const isAllowedOrigin = async (origin: string | undefined, c: Context) => {
+	logger.debug(`>>> Entering isAllowedOrigin(origin=${origin},c=${c})`);
     if (origin === undefined) {
       // denied always when origin header is not present
       return false
     }
+	logger.debug(`<<< Exiting isAllowedOrigin(origin=${origin},c=${c})`);
     return await originHandler(origin, c)
   }
 
@@ -124,6 +128,7 @@ export const csrf = (options?: CSRFOptions): MiddlewareHandler => {
     }
   })(options?.secFetchSite)
   const isAllowedSecFetchSite = async (secFetchSite: string | undefined, c: Context) => {
+	logger.debug(`>>> Entering isAllowedSecFetchSite(secFetchSite=${secFetchSite},c=${c})`);
     if (secFetchSite === undefined) {
       // denied always when sec-fetch-site header is not present
       return false
@@ -132,9 +137,11 @@ export const csrf = (options?: CSRFOptions): MiddlewareHandler => {
     if (!isSecFetchSite(secFetchSite)) {
       return false
     }
+	logger.debug(`<<< Exiting isAllowedSecFetchSite(secFetchSite=${secFetchSite},c=${c})`);
     return await secFetchSiteHandler(secFetchSite, c)
   }
 
+logger.debug(`<<< Exiting csrf(options=${options})`);
   return async function csrf(c, next) {
     if (
       !isSafeMethodRe.test(c.req.method) &&

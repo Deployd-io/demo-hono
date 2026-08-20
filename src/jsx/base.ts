@@ -123,16 +123,19 @@ const resolveFunctionComponentResult = (
     }
     const children = Array.isArray(resolved) ? resolved : [resolved]
     const render = () => {
+	logger.debug('>>> Entering render()');
       const buffer: StringBufferWithCallbacks = [''] as StringBufferWithCallbacks
       childrenToStringToBuffer(children, buffer)
       return buffer.length === 1
         ? raw(buffer[0], buffer.callbacks)
         : stringBufferToString(buffer, buffer.callbacks)
+		logger.debug('<<< Exiting render()');
     }
     return suspendedContext ? suspendedContext(render) : runWithRenderContext(render)
   })
 
 const childrenToStringToBuffer = (children: Child[], buffer: StringBufferWithCallbacks): void => {
+logger.debug(`>>> Entering childrenToStringToBuffer(children=${children},buffer=${buffer})`);
   for (let i = 0, len = children.length; i < len; i++) {
     const child = children[i]
     if (typeof child === 'string') {
@@ -146,6 +149,7 @@ const childrenToStringToBuffer = (children: Child[], buffer: StringBufferWithCal
     } else if ((child as unknown as HtmlEscaped).isEscaped) {
       ;(buffer[0] as string) += child
       const callbacks = (child as unknown as HtmlEscapedString).callbacks
+	logger.debug(`childrenToStringToBuffer(children=${children},buffer=${buffer}): callbacks → ${callbacks}`);
       if (callbacks) {
         buffer.callbacks ||= []
         buffer.callbacks.push(...callbacks)
@@ -156,6 +160,7 @@ const childrenToStringToBuffer = (children: Child[], buffer: StringBufferWithCal
       // `child` type is `Child[]`, so stringify recursively
       childrenToStringToBuffer(child, buffer)
     }
+	logger.debug(`<<< Exiting childrenToStringToBuffer(children=${children},buffer=${buffer})`);
   }
 }
 
@@ -175,12 +180,16 @@ export class JSXNode implements HtmlEscaped {
   children: Child[]
   isEscaped: true = true as const
   constructor(tag: string | Function, props: Props, children: Child[]) {
+	logger.debug(`>>> Entering constructor(tag=${tag},props=${props},children=${children})`);
     if (typeof tag !== 'function' && !isValidTagName(tag)) {
       throw new Error(`Invalid JSX tag name: ${tag}`)
     }
     this.tag = tag
     this.props = props
+	logger.debug(`constructor(tag=${tag},props=${props},children=${children}): this.tag → ${this.tag}`);
     this.children = children
+	logger.debug(`constructor(tag=${tag},props=${props},children=${children}): this.children → ${this.children}`);
+	logger.debug(`<<< Exiting constructor(tag=${tag},props=${props},children=${children})`);
   }
 
   get type(): string | Function {
@@ -195,6 +204,7 @@ export class JSXNode implements HtmlEscaped {
 
   toString(): string | Promise<string> {
     const render = () => {
+	logger.debug('>>> Entering toString()');
       const buffer: StringBufferWithCallbacks = [''] as StringBufferWithCallbacks
       this.toStringToBuffer(buffer)
       return buffer.length === 1
@@ -203,6 +213,7 @@ export class JSXNode implements HtmlEscaped {
           : buffer[0]
         : stringBufferToString(buffer, buffer.callbacks)
     }
+	logger.debug('<<< Exiting toString()');
     return runWithRenderContext(render)
   }
 
@@ -218,6 +229,7 @@ export class JSXNode implements HtmlEscaped {
         ? (key) => toSVGAttributeName(normalizeIntrinsicElementKey(key))
         : (key) => normalizeIntrinsicElementKey(key)
     for (let [key, v] of Object.entries(props)) {
+	logger.debug(`>>> Entering toStringToBuffer(buffer=${buffer})`);
       key = normalizeKey(key)
       if (!isValidAttributeName(key)) {
         continue
@@ -227,6 +239,7 @@ export class JSXNode implements HtmlEscaped {
       } else if (key === 'style' && typeof v === 'object') {
         // object to style strings
         let styleStr = ''
+		logger.debug(`toStringToBuffer(buffer=${buffer}): styleStr → ${styleStr}`);
         styleObjectForEach(v, (property, value) => {
           if (value != null) {
             styleStr += `${styleStr ? ';' : ''}${property}:${value}`
@@ -278,6 +291,7 @@ export class JSXNode implements HtmlEscaped {
     childrenToStringToBuffer(children, buffer)
 
     buffer[0] += `</${tag}>`
+	logger.debug(`<<< Exiting toStringToBuffer(buffer=${buffer})`);
   }
 }
 
@@ -292,6 +306,7 @@ class JSXFunctionNode extends JSXNode {
 
     const res = (this.tag as Function).call(null, props)
 
+	logger.debug(`toStringToBuffer(buffer=${buffer}): res → ${res}`);
     if (typeof res === 'boolean' || res == null) {
       // boolean or null or undefined
       return
@@ -335,11 +350,13 @@ export const jsx = (tag: string | Function, props: Props | null, ...children: Ch
 
   const node = jsxFn(tag, props, children)
   node.key = key
+logger.debug(`<<< Exiting jsx(tag=${tag},props=${props})`);
   return node
 }
 
 let initDomRenderer = false
 export const jsxFn = (tag: string | Function, props: Props, children: Child[]): JSXNode => {
+logger.debug(`>>> Entering jsxFn(tag=${tag},props=${props},children=${children})`);
   if (!initDomRenderer) {
     for (const k in domRenderers) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -369,11 +386,13 @@ export const jsxFn = (tag: string | Function, props: Props, children: Child[]): 
       ),
     ])
   } else {
+logger.debug(`<<< Exiting jsxFn(tag=${tag},props=${props},children=${children})`);
     return new JSXNode(tag, props, children)
   }
 }
 
 export const shallowEqual = (a: Props, b: Props): boolean => {
+logger.debug(`>>> Entering shallowEqual(a=${a},b=${b})`);
   if (a === b) {
     return true
   }
@@ -381,6 +400,8 @@ export const shallowEqual = (a: Props, b: Props): boolean => {
   const aKeys = Object.keys(a).sort()
   const bKeys = Object.keys(b).sort()
   if (aKeys.length !== bKeys.length) {
+logger.debug(`shallowEqual(a=${a},b=${b}): aKeys → ${aKeys}`);
+logger.debug(`shallowEqual(a=${a},b=${b}): bKeys → ${bKeys}`);
     return false
   }
 
@@ -397,6 +418,7 @@ export const shallowEqual = (a: Props, b: Props): boolean => {
     }
   }
 
+logger.debug(`<<< Exiting shallowEqual(a=${a},b=${b})`);
   return true
 }
 
@@ -431,6 +453,7 @@ export const Fragment = ({
     },
     Array.isArray(children) ? children : children ? [children] : []
   ) as never
+logger.debug(`<<< Exiting Fragment(children=${children})`);
 }
 
 export const isValidElement = (element: unknown): element is JSXNode => {

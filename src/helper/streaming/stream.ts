@@ -1,4 +1,5 @@
 import type { Context } from '../../context'
+const logger = console;
 import { StreamingApi } from '../../utils/stream'
 import { isOldBunVersion } from './utils'
 
@@ -9,6 +10,7 @@ export const stream = (
   cb: (stream: StreamingApi) => Promise<void>,
   onError?: (e: Error, stream: StreamingApi) => Promise<void>
 ): Response => {
+logger.debug(`>>> Entering stream(c=${c},cb=${cb},onError=${onError})`);
   const { readable, writable } = new TransformStream()
   const stream = new StreamingApi(writable, readable)
 

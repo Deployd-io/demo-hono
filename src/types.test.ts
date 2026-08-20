@@ -24,6 +24,7 @@ import type {
 } from './types'
 import type { ContentfulStatusCode, StatusCode } from './utils/http-status'
 import type { Equal, Expect } from './utils/types'
+const logger = console;
 import { validator } from './validator'
 
 describe('Env', () => {
@@ -150,10 +151,13 @@ describe('HandlerInterface', () => {
   describe('With path parameters', () => {
     const app = new Hono<Env>()
     const middleware: MiddlewareHandler<Env, '/post/:id', {}, never> = async (_c, next) => {
+	logger.debug(`>>> Entering middleware(_c=${_c},next=${next})`);
       await next()
     }
+	logger.debug(`<<< Exiting middleware(_c=${_c},next=${next})`);
     it('Should have the `param` type', () => {
       const route = app.get('/post/:id', middleware, (c) => {
+		logger.debug(`>>> Entering GET_post_id(c=${c})`);
         return c.text('foo')
       })
       type Actual = ExtractSchema<typeof route>
@@ -404,8 +408,10 @@ describe('OnHandlerInterface', () => {
 
   test('app.on(method, path, ...10 handlers) - last handler response type should be inferred', () => {
     const noop: MiddlewareHandler = async (_c, next) => {
+	logger.debug(`>>> Entering noop(_c=${_c},next=${next})`);
       await next()
     }
+	logger.debug(`<<< Exiting noop(_c=${_c},next=${next})`);
     const route = app.on('GET', '/x10', noop, noop, noop, noop, noop, noop, noop, noop, noop, (c) =>
       c.json({ success: true })
     )
@@ -2046,9 +2052,11 @@ describe('c.req.valid() in non-last handler after validator middleware - test on
     app.get(
       '/',
       validator('query', () => {
+		logger.debug('>>> Entering GET_root()');
         return {
           test: 'hello',
         }
+		logger.debug('<<< Exiting GET_root()');
       }),
       async (c, next) => {
         const { test } = c.req.valid('query')
@@ -3952,6 +3960,8 @@ describe('Handlers returning Promise<void>', () => {
   it('should use the last registered path for a pathless handler with multiple middlewares', () => {
     const app = new Hono()
       .get('/foo', async (_c, next) => {
+		logger.debug(`>>> Entering GET_foo(_c=${_c},next=${next})`);
+		logger.debug(`<<< Exiting GET_foo(_c=${_c},next=${next})`);
         await next()
       })
       .get('/bar', async (_c, next) => {
@@ -3959,6 +3969,7 @@ describe('Handlers returning Promise<void>', () => {
       })
       .get((c) => c.text('after'))
 
+	logger.debug(`<<< Exiting GET_bar(_c=${_c},next=${next})`);
     type Actual = ExtractSchema<typeof app>
     type Expected = {
       '/bar': {
@@ -3976,6 +3987,8 @@ describe('Handlers returning Promise<void>', () => {
   it('should use the last registered path for a pathless handler with mixed handlers and middlewares', () => {
     const app = new Hono()
       .get('/void', async (_c, next) => {
+		logger.debug(`>>> Entering GET_void(_c=${_c},next=${next})`);
+		logger.debug(`<<< Exiting GET_void(_c=${_c},next=${next})`);
         await next()
       })
       .get('/handler', (c) => c.text('handler'))

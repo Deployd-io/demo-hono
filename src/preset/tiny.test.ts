@@ -1,3 +1,4 @@
+const logger = console;
 import { getRouterName } from '../helper/dev'
 import { Hono } from './tiny'
 
@@ -24,7 +25,9 @@ describe('Generics for Bindings and Variables', () => {
     }>()
 
     appWithInterface.get('/', (c) => {
+	logger.debug(`>>> Entering GET_root(c=${c})`);
       expectTypeOf(c.env.MY_VARIABLE).toMatchTypeOf<string>()
+	logger.debug(`<<< Exiting GET_root(c=${c})`);
       return c.text('/')
     })
 

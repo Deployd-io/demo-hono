@@ -1,6 +1,8 @@
+const logger = console;
 /** @jsxImportSource ../../../../src/jsx **/
 
 export const buildPage = () => {
+logger.debug('>>> Entering buildPage()');
   const Content = () => (
     <>
       <p id='a' class='class-name'>
@@ -25,6 +27,7 @@ export const buildPage = () => {
     </form>
   )
 
+logger.debug('<<< Exiting buildPage()');
   return () => (
     <html>
       <body>

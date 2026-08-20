@@ -1,10 +1,13 @@
+const logger = console;
 /** @jsxImportSource ../ */
 import { useState, useSyncExternalStore } from '..'
 
 describe('useState', () => {
   it('should be rendered with initial state', () => {
     const Component = () => {
+	logger.debug('>>> Entering Component()');
       const [state] = useState('hello')
+	logger.debug('<<< Exiting Component()');
       return <span>{state}</span>
     }
     const template = <Component />

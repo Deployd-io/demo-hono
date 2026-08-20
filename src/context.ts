@@ -14,6 +14,7 @@ import { HtmlEscapedCallbackPhase, resolveCallback } from './utils/html'
 import type { ContentfulStatusCode, RedirectStatusCode, StatusCode } from './utils/http-status'
 import type { BaseMime } from './utils/mime'
 import type { InvalidJSONValue, IsAny, JSONParsed, JSONValue } from './utils/types'
+const logger = console;
 
 type HeaderRecord =
   | Record<'Content-Type', BaseMime>
@@ -279,10 +280,12 @@ type ResponseOrInit<T extends StatusCode = StatusCode> = ResponseInit<T> | Respo
 export const TEXT_PLAIN = 'text/plain; charset=UTF-8'
 
 const setDefaultContentType = (contentType: string, headers?: HeaderRecord): HeaderRecord => {
+logger.debug(`>>> Entering setDefaultContentType(contentType=${contentType},headers=${headers})`);
   return {
     'Content-Type': contentType,
     ...headers,
   }
+logger.debug(`<<< Exiting setDefaultContentType(contentType=${contentType},headers=${headers})`);
 }
 
 const createResponseInstance = (
@@ -350,6 +353,7 @@ export class Context<
    * @param options - Optional configuration options for the context.
    */
   constructor(req: Request, options?: ContextOptions<E>) {
+	logger.debug(`>>> Entering constructor(req=${req},options=${options})`);
     this.#rawRequest = req
     if (options) {
       this.#executionCtx = options.executionCtx
@@ -357,6 +361,7 @@ export class Context<
       this.#notFoundHandler = options.notFoundHandler
       this.#path = options.path
       this.#matchResult = options.matchResult
+	logger.debug(`<<< Exiting constructor(req=${req},options=${options})`);
     }
   }
 
@@ -401,6 +406,7 @@ export class Context<
    * The Response object for the current request.
    */
   get res(): Response {
+	logger.debug(`<<< Exiting res(_res=${_res})`);
     return (this.#res ||= createResponseInstance(null, {
       headers: (this.#preparedHeaders ??= new Headers()),
     }))

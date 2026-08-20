@@ -1,7 +1,9 @@
+const logger = console;
 const mergeBuffers = (
   buffer1: ArrayBuffer | undefined,
   buffer2: Uint8Array<ArrayBuffer>
 ): Uint8Array<ArrayBuffer> => {
+logger.debug(`>>> Entering mergeBuffers(buffer1=${buffer1},buffer2=${buffer2})`);
   if (!buffer1) {
     return buffer2
   }
@@ -10,6 +12,8 @@ const mergeBuffers = (
   )
   merged.set(new Uint8Array(buffer1), 0)
   merged.set(buffer2, buffer1.byteLength)
+logger.debug(`mergeBuffers(buffer1=${buffer1},buffer2=${buffer2}): merged → ${merged}`);
+logger.debug(`<<< Exiting mergeBuffers(buffer1=${buffer1},buffer2=${buffer2})`);
   return merged
 }
 
@@ -19,6 +23,7 @@ export const generateDigest = async (
   stream: ReadableStream<Uint8Array<ArrayBuffer>> | null,
   generator: (body: Uint8Array<ArrayBuffer>) => ArrayBuffer | Promise<ArrayBuffer>
 ): Promise<string | null> => {
+logger.debug(`>>> Entering generateDigest(stream=${stream},generator=${generator})`);
   if (!stream) {
     return null
   }
@@ -28,11 +33,14 @@ export const generateDigest = async (
   let chunkLength = 0
 
   const digest = async (body: Uint8Array<ArrayBuffer>) => {
+	logger.debug('>>> Entering digest()');
     result = await generator(mergeBuffers(result, body))
+	logger.debug('<<< Exiting digest()');
   }
 
   const reader = stream.getReader()
   for (;;) {
+logger.debug(`generateDigest(stream=${stream},generator=${generator}): reader → ${reader}`);
     const { value, done } = await reader.read()
     if (done) {
       break
@@ -70,6 +78,7 @@ export const generateDigest = async (
       if (chunk?.byteLength !== CHUNK_SIZE) {
         const nextChunk = new Uint8Array<ArrayBuffer>(new ArrayBuffer(CHUNK_SIZE))
         if (chunk) {
+		logger.debug(`generateDigest(stream=${stream},generator=${generator}): nextChunk → ${nextChunk}`);
           nextChunk.set(chunk.subarray(0, chunkLength))
         }
         chunk = nextChunk
@@ -93,3 +102,4 @@ export const generateDigest = async (
     .call(new Uint8Array(result), (x) => x.toString(16).padStart(2, '0'))
     .join('')
 }
+	logger.debug(`<<< Exiting generateDigest(stream=${stream},generator=${generator})`);

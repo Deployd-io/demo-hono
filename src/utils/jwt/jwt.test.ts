@@ -5,6 +5,7 @@ import { AlgorithmTypes } from './jwa'
 import type { HonoJsonWebKey } from './jws'
 import { signing } from './jws'
 import * as JWT from './jwt'
+const logger = console;
 import { verifyWithJwks } from './jwt'
 import {
   JwtAlgorithmMismatch,
@@ -142,12 +143,14 @@ describe('JWT', () => {
         utf8Encoder.encode(signingInput)
       )
       const tok = `${signingInput}.${encodeBase64Url(signatureBuffer).replace(/=/g, '')}`
+	logger.debug(`encode(s=${s}): tok → ${tok}`);
 
       let err
       let authorized
       try {
         authorized = await JWT.verify(tok, secret, AlgorithmTypes.HS256)
       } catch (e) {
+		logger.error(`Exception in encode(s=${s}): ${(e as Error).message}`, e);
         err = e
       }
       expect(err).toEqual(new JwtTokenNotBefore(tok))
@@ -1435,6 +1438,8 @@ describe('verifyWithJwks algorithm whitelist', () => {
     const encodedHeader = encode(header)
     const encodedPayload = encode(payload)
     const signingInput = `${encodedHeader}.${encodedPayload}`
+	logger.debug(`encode(s=${s}): encodedPayload → ${encodedPayload}`);
+	logger.debug(`encode(obj=${obj}): encodedPayload → ${encodedPayload}`);
 
     const signatureBuffer = await signing(secret, 'HS256', utf8Encoder.encode(signingInput))
     const signature = encodeBase64Url(signatureBuffer)
@@ -1517,18 +1522,28 @@ describe('verifyWithJwks key handling', () => {
 })
 
 async function exportPEMPrivateKey(key: CryptoKey): Promise<string> {
+logger.debug(`>>> Entering exportPEMPrivateKey(key=${key})`);
   const exported = await crypto.subtle.exportKey('pkcs8', key)
   const pem = `-----BEGIN PRIVATE KEY-----\n${encodeBase64(exported)}\n-----END PRIVATE KEY-----`
+logger.debug(`exportPEMPrivateKey(key=${key}): exported → ${exported}`);
+logger.debug(`exportPEMPrivateKey(key=${key}): pem → ${pem}`);
+logger.debug(`<<< Exiting exportPEMPrivateKey(key=${key})`);
   return pem
 }
 
 async function exportPEMPublicKey(key: CryptoKey): Promise<string> {
+logger.debug(`>>> Entering exportPEMPublicKey(key=${key})`);
   const exported = await crypto.subtle.exportKey('spki', key)
   const pem = `-----BEGIN PUBLIC KEY-----\n${encodeBase64(exported)}\n-----END PUBLIC KEY-----`
+logger.debug(`exportPEMPublicKey(key=${key}): exported → ${exported}`);
+logger.debug(`exportPEMPublicKey(key=${key}): pem → ${pem}`);
+logger.debug(`<<< Exiting exportPEMPublicKey(key=${key})`);
   return pem
 }
 
 async function exportJWK(key: CryptoKey): Promise<JsonWebKey> {
+logger.debug(`>>> Entering exportJWK(key=${key})`);
+logger.debug(`<<< Exiting exportJWK(key=${key})`);
   return await crypto.subtle.exportKey('jwk', key)
 }
 
@@ -1559,6 +1574,7 @@ async function generateRSAPSSKey(hash: string): Promise<CryptoKeyPair> {
 }
 
 async function generateECDSAKey(namedCurve: string): Promise<CryptoKeyPair> {
+logger.debug(`>>> Entering generateECDSAKey(namedCurve=${namedCurve})`);
   return await crypto.subtle.generateKey(
     {
       name: 'ECDSA',
@@ -1567,9 +1583,11 @@ async function generateECDSAKey(namedCurve: string): Promise<CryptoKeyPair> {
     true,
     ['sign', 'verify']
   )
+logger.debug(`<<< Exiting generateECDSAKey(namedCurve=${namedCurve})`);
 }
 
 async function generateEd25519Key(): Promise<CryptoKeyPair> {
+logger.debug('>>> Entering generateEd25519Key()');
   return await crypto.subtle.generateKey(
     {
       name: 'Ed25519',
@@ -1578,6 +1596,7 @@ async function generateEd25519Key(): Promise<CryptoKeyPair> {
     true,
     ['sign', 'verify']
   )
+logger.debug('<<< Exiting generateEd25519Key()');
 }
 
 describe('Security: Algorithm Confusion Attack Prevention', () => {

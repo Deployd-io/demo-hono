@@ -3,6 +3,7 @@ import type { FormValue, ValidationTargets } from '../types'
 import { serialize } from '../utils/cookie'
 import type { UnionToIntersection } from '../utils/types'
 import type { BuildSearchParamsFn, Callback, Client, ClientRequestOptions } from './types'
+const logger = console;
 import {
   buildSearchParams,
   deepMerge,
@@ -15,18 +16,23 @@ import {
 const createProxy = (callback: Callback, path: string[]) => {
   const proxy: unknown = new Proxy(() => {}, {
     get(_obj, key) {
+	logger.debug(`>>> Entering get(_obj=${_obj},key=${key})`);
       if (typeof key !== 'string' || key === 'then') {
         return undefined
       }
+	logger.debug(`<<< Exiting get(_obj=${_obj},key=${key})`);
       return createProxy(callback, [...path, key])
     },
     apply(_1, _2, args) {
+	logger.debug(`>>> Entering apply(_1=${_1},_2=${_2},args=${args})`);
+	logger.debug(`<<< Exiting apply(_1=${_1},_2=${_2},args=${args})`);
       return callback({
         path,
         args,
       })
     },
   })
+logger.debug(`<<< Exiting createProxy(callback=${callback},path=${path})`);
   return proxy
 }
 
@@ -49,6 +55,7 @@ class ClientRequestImpl {
     this.url = url
     this.method = method
     this.buildSearchParams = options.buildSearchParams
+	logger.debug(`constructor(url=${url},method=${method},options=${options}): this.buildSearchParams → ${this.buildSearchParams}`);
   }
   fetch = async (
     args?: ValidationTargets<FormValue> & {
@@ -135,10 +142,12 @@ export const hc = <T extends Hono<any, any, any>, Prefix extends string = string
   options?: ClientRequestOptions
 ) =>
   createProxy(function proxyCallback(opts) {
+	logger.debug('>>> Entering proxyCallback()'); const _start = Date.now();
     const buildSearchParamsOption = options?.buildSearchParams ?? buildSearchParams
     const parts = [...opts.path]
     const lastParts = parts.slice(-3).reverse()
 
+	logger.debug(`proxyCallback(): lastParts → ${lastParts}`);
     // allow calling .toString() and .valueOf() on the proxy
     if (lastParts[0] === 'toString') {
       if (lastParts[1] === 'name') {
@@ -159,9 +168,11 @@ export const hc = <T extends Hono<any, any, any>, Prefix extends string = string
     }
 
     let method = ''
+	logger.debug(`proxyCallback(): method → ${method}`);
     if (/^\$/.test(lastParts[0] as string)) {
       const last = parts.pop()
       if (last) {
+	logger.debug(`proxyCallback(): last → ${last}`);
         method = last.replace(/^\$/, '')
       }
     }
@@ -169,7 +180,10 @@ export const hc = <T extends Hono<any, any, any>, Prefix extends string = string
     const path = parts.join('/')
     const url = mergePath(baseUrl, path)
     if (method === 'url' || method === 'path') {
+	logger.debug(`proxyCallback(): path → ${path}`);
+	logger.debug(`proxyCallback(): url → ${url}`);
       let result = url
+	logger.debug(`proxyCallback(): result → ${result}`);
       if (opts.args[0]) {
         if (opts.args[0].param) {
           result = replaceUrlParam(url, opts.args[0].param)
@@ -191,6 +205,7 @@ export const hc = <T extends Hono<any, any, any>, Prefix extends string = string
       )
       const targetUrl = new URL(webSocketUrl)
 
+	logger.debug(`proxyCallback(): targetUrl → ${targetUrl}`);
       const queryParams: Record<string, string | string[]> | undefined = opts.args[0]?.query
       if (queryParams) {
         Object.entries(queryParams).forEach(([key, value]) => {
@@ -205,6 +220,7 @@ export const hc = <T extends Hono<any, any, any>, Prefix extends string = string
         if (options?.webSocket !== undefined && typeof options.webSocket === 'function') {
           return options.webSocket(...args)
         }
+		logger.debug(`<<< Exiting establishWebSocket(args=${args})`);
         return new WebSocket(...args)
       }
 
@@ -215,6 +231,7 @@ export const hc = <T extends Hono<any, any, any>, Prefix extends string = string
       buildSearchParams: buildSearchParamsOption,
     })
     if (method) {
+	logger.debug(`proxyCallback(): req → ${req}`);
       options ??= {}
       const reqOptions: ClientRequestOptions = { ...opts.args[1] }
       const baseHeaders = options.headers
@@ -226,6 +243,7 @@ export const hc = <T extends Hono<any, any, any>, Prefix extends string = string
         })
       }
       const args = deepMerge<ClientRequestOptions>(options, reqOptions)
+	logger.debug('<<< Exiting proxyCallback()');
       return req.fetch(opts.args[0], args)
     }
     return req

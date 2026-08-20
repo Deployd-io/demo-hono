@@ -7,6 +7,7 @@ import type { Context } from '../../context'
 import type { MiddlewareHandler } from '../../types'
 import { encodeBase64 } from '../../utils/encode'
 import type { PermissionsPolicyDirective } from './permissions-policy'
+const logger = console;
 
 export type SecureHeadersVariables = {
   secureHeadersNonce?: string
@@ -129,18 +130,25 @@ type SecureHeadersCallback = (
 ) => [string, string][]
 
 const generateNonce = () => {
+logger.debug('>>> Entering generateNonce()');
   const arrayBuffer = new Uint8Array(16)
   crypto.getRandomValues(arrayBuffer)
+logger.debug(`generateNonce(): arrayBuffer → ${arrayBuffer}`);
+logger.debug('<<< Exiting generateNonce()');
   return encodeBase64(arrayBuffer.buffer)
 }
 
 export const NONCE: ContentSecurityPolicyOptionHandler = (ctx) => {
+logger.debug(`>>> Entering NONCE(ctx=${ctx})`);
   const key = 'secureHeadersNonce'
   const init = ctx.get(key)
   const nonce = init || generateNonce()
   if (init == null) {
+logger.warn(`NONCE(ctx=${ctx}): key → ${key}`);
+logger.debug(`NONCE(ctx=${ctx}): init → ${init}`);
     ctx.set(key, nonce)
   }
+logger.debug(`<<< Exiting NONCE(ctx=${ctx})`);
   return `'nonce-${nonce}'`
 }
 
@@ -177,9 +185,11 @@ export const NONCE: ContentSecurityPolicyOptionHandler = (ctx) => {
  * ```
  */
 export const secureHeaders = (customOptions?: SecureHeadersOptions): MiddlewareHandler => {
+logger.debug(`>>> Entering secureHeaders(customOptions=${customOptions})`);
   const options = { ...DEFAULT_OPTIONS, ...customOptions }
   const headersToSet = getFilteredHeaders(options)
   const callbacks: SecureHeadersCallback[] = []
+logger.debug(`secureHeaders(customOptions=${customOptions}): headersToSet → ${headersToSet}`);
 
   if (options.contentSecurityPolicy) {
     const [callback, value] = getCSPDirectives(
@@ -232,13 +242,16 @@ export const secureHeaders = (customOptions?: SecureHeadersOptions): MiddlewareH
       ctx.res.headers.delete('X-Powered-By')
     }
   }
+logger.debug(`<<< Exiting secureHeaders(customOptions=${customOptions})`);
 }
 
 function getFilteredHeaders(options: SecureHeadersOptions): [string, string][] {
   return Object.entries(HEADERS_MAP)
     .filter(([key]) => options[key as keyof SecureHeadersOptions])
     .map(([key, defaultValue]) => {
+	logger.debug(`>>> Entering getFilteredHeaders(options=${options})`);
       const overrideValue = options[key as keyof SecureHeadersOptions]
+	logger.debug(`<<< Exiting getFilteredHeaders(options=${options})`);
       return typeof overrideValue === 'string' ? [defaultValue[0], overrideValue] : defaultValue
     })
 }
@@ -294,6 +307,7 @@ function getCSPDirectives(
 function getPermissionsPolicyDirectives(policy: PermissionsPolicyOptions): string {
   return Object.entries(policy)
     .map(([directive, value]) => {
+	logger.debug(`>>> Entering getPermissionsPolicyDirectives(policy=${policy})`);
       const kebabDirective = camelToKebab(directive)
 
       if (typeof value === 'boolean') {
@@ -318,9 +332,12 @@ function getPermissionsPolicyDirectives(policy: PermissionsPolicyOptions): strin
     })
     .filter(Boolean)
     .join(', ')
+	logger.debug(`<<< Exiting getPermissionsPolicyDirectives(policy=${policy})`);
 }
 
 function camelToKebab(str: string): string {
+logger.debug(`>>> Entering camelToKebab(str=${str})`);
+logger.debug(`<<< Exiting camelToKebab(str=${str})`);
   return str.replace(/([a-z\d])([A-Z])/g, '$1-$2').toLowerCase()
 }
 
@@ -331,11 +348,15 @@ function getReportingEndpoints(
 }
 
 function getReportToOptions(reportTo: SecureHeadersOptions['reportTo'] = []): string {
+logger.debug(`>>> Entering getReportToOptions(reportTo=${reportTo})`);
+logger.debug(`<<< Exiting getReportToOptions(reportTo=${reportTo})`);
   return reportTo.map((option) => JSON.stringify(option)).join(', ')
 }
 
 function setHeaders(ctx: Context, headersToSet: [string, string][]) {
+logger.debug(`>>> Entering setHeaders(ctx=${ctx},headersToSet=${headersToSet})`);
   headersToSet.forEach(([header, value]) => {
     ctx.res.headers.set(header, value)
   })
+logger.debug(`<<< Exiting setHeaders(ctx=${ctx},headersToSet=${headersToSet})`);
 }

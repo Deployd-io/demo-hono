@@ -1,6 +1,7 @@
 import { serveStatic as baseServeStatic } from '../../middleware/serve-static'
 import type { ServeStaticOptions as BaseServeStaticOptions } from '../../middleware/serve-static'
 import type { Env, MiddlewareHandler } from '../../types'
+const logger = console;
 import { getContentFromKVAsset } from './utils'
 
 export type ServeStaticOptions<E extends Env = Env> = BaseServeStaticOptions<E> & {
@@ -22,6 +23,7 @@ export const serveStatic = <E extends Env = Env>(
   options: ServeStaticOptions<E> = {}
 ): MiddlewareHandler => {
   return async function serveStatic(c, next) {
+logger.debug(`>>> Entering serveStatic(c=${c},next=${next})`);
     const getContent = async (path: string) => {
       return getContentFromKVAsset(path, {
         manifest: options.manifest,
@@ -33,7 +35,9 @@ export const serveStatic = <E extends Env = Env>(
             ? c.env.__STATIC_CONTENT
             : undefined,
       })
+	logger.debug(`<<< Exiting getContent(path=${path})`);
     }
+logger.debug(`<<< Exiting serveStatic(c=${c},next=${next})`);
     return baseServeStatic({
       ...options,
       getContent,
